@@ -1,8 +1,18 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 let clock=0,selected=new Set(['CANADA','UK','USA']),unknown=false,ambiguous=false,clicks=0,separate=false,dropdown=false,opened=false,native=false;
+let nestedMode='',nestedConflict=false,nativeMixed=false;
 let surface='legacy',paneOpened=false,paneClicks=0,blocked=false,delayUntil=0,filtersAmbiguous=false,duplicateFrame=false;
 class Clock extends Date{static now(){return clock;}}
-const visible=()=>[{}],control=name=>({tagName:'DIV',innerText:name,getClientRects:visible,getAttribute:k=>k==='aria-checked'&&!unknown?String(selected.has(name)):null,querySelector:s=>native&&s==='input[type="checkbox"]'?{tagName:'INPUT',type:'checkbox',get checked(){return selected.has(name);}}:null,contains:()=>false,dispatchEvent:e=>{clicks++;if(!e.ctrlKey)selected.clear();if(selected.has(name))selected.delete(name);else selected.add(name);}});
+const visible=()=>[{}],control=name=>{
+ const child={tagName:'SPAN',getAttribute:k=>k==='class'?'selection-marker':k==='data-selected'&&nestedMode==='data'?String(selected.has(name)):k==='aria-checked'&&nestedMode==='aria'?String(selected.has(name)):null};
+ const conflict={tagName:'SPAN',getAttribute:k=>k==='aria-selected'?String(!selected.has(name)):null};
+ return {tagName:'LI',innerText:name,getClientRects:visible,
+  get children(){return nestedMode?[child,...(nestedConflict?[conflict]:[])]:[];},
+  getAttribute:k=>k==='class'?'slicerItemContainer':k==='aria-checked'&&!unknown&&!nestedMode?String(selected.has(name)):null,
+  querySelectorAll:()=>nestedMode?[child,...(nestedConflict?[conflict]:[])]:native?[{tagName:'INPUT',type:'checkbox',get indeterminate(){return nativeMixed;},get checked(){return selected.has(name);}}]:[],
+  querySelector:s=>native&&s==='input[type="checkbox"]'?{tagName:'INPUT',type:'checkbox',get indeterminate(){return nativeMixed;},get checked(){return selected.has(name);}}:null,
+  contains:()=>false,dispatchEvent:e=>{clicks++;if(!e.ctrlKey)selected.clear();if(selected.has(name))selected.delete(name);else selected.add(name);}};
+};
 const controls=['CANADA','UK','USA'].map(control),heading={innerText:'SUBREGION',getClientRects:visible,getAttribute:()=>null},toggle={getClientRects:visible,getAttribute:k=>k==='role'?'combobox':k==='aria-expanded'?String(opened):null,contains:()=>false,dispatchEvent:()=>{opened=true;}},box={get innerText(){return separate?'CANADA UK USA':'SUBREGION';},getClientRects:visible,getAttribute:()=>null,contains:n=>controls.includes(n)||n===heading,querySelectorAll:s=>s.includes('[aria-label]')?(separate?controls:[heading,...controls]):s.includes('aria-expanded')?(dropdown?[toggle]:[]):dropdown?[]:controls},caption={innerText:'SUBREGION',getClientRects:visible,getAttribute:()=>null,contains:()=>false,querySelectorAll:()=>[]},portal={innerText:'CANADA UK USA',getClientRects:visible,getAttribute:k=>k==='role'?'listbox':null,contains:n=>controls.includes(n),querySelectorAll:s=>s.includes('[aria-label]')?[]:controls};
 const cell=v=>({get innerText(){return typeof v==='function'?v():v;},getClientRects:visible,getAttribute:()=>null,contains:()=>false});
 const headers=['SKU','Description','QTY AVAILABLE'].map(cell),cells=[cell('A'),cell('Used item'),cell(()=>String([...selected].reduce((sum,r)=>sum+({CANADA:3,UK:7,USA:20}[r]),0)))];
@@ -27,12 +37,33 @@ vm.runInContext(fs.readFileSync('project/inside-sales-toolbox-team/used-powerbi-
  // Modern visual containers and delayed control rendering must not be treated as absent immediately.
  surface='modern';delayUntil=clock+1000;await R.ensureRegion('USA');assert.deepEqual([...R.regionState().selected],['USA']);assert(clock>=delayUntil);delayUntil=0;
  // The table is in the top document; a custom slicer lives in an accessible about:blank frame.
- surface='iframe';await R.ensureRegion('UK+USA');assert.deepEqual([...R.regionState().selected],['UK','USA']);r=await R.read();assert.equal(r.rows[0].values[2],'27');assert.deepEqual([...r.regions],['UK','USA']);let diagnostic=R.diagnostic();assert.equal(diagnostic.readerVersion,'1.2.0');assert.equal(diagnostic.subregionSelectors.documents,2);assert.equal(diagnostic.embeddedFrames[0].documentAccessible,true);
+ surface='iframe';await R.ensureRegion('UK+USA');assert.deepEqual([...R.regionState().selected],['UK','USA']);r=await R.read();assert.equal(r.rows[0].values[2],'27');assert.deepEqual([...r.regions],['UK','USA']);let diagnostic=R.diagnostic();assert.equal(diagnostic.readerVersion,'1.2.1');assert.equal(diagnostic.subregionSelectors.documents,2);assert.equal(diagnostic.embeddedFrames[0].documentAccessible,true);
  const frameClicks=clicks;blocked=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);assert.equal(clicks,frameClicks);assert.equal(R.diagnostic().embeddedFrames[0].documentAccessible,false);blocked=false;
  duplicateFrame=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);assert.equal(clicks,frameClicks);duplicateFrame=false;
  // Open the explicitly collapsed Filters pane, then its named SUBREGION dropdown.
  surface='pane';paneOpened=false;dropdown=true;opened=false;await R.ensureRegion('CANADA+USA');assert.equal(paneClicks,1);assert.equal(opened,true);assert.deepEqual([...R.regionState().selected],['CANADA','USA']);await R.ensureRegion('CANADA');assert.equal(paneClicks,1);
  paneOpened=false;opened=false;filtersAmbiguous=true;const paneBefore=clicks;await assert.rejects(R.ensureRegion('UK'),/introuvable/);assert.equal(paneClicks,1);assert.equal(clicks,paneBefore);filtersAmbiguous=false;surface='legacy';dropdown=false;
+ // Indeterminate native checkboxes never authorize changing filters or reading quantities.
+ native=true;unknown=true;nativeMixed=true;const mixedClicks=clicks;
+ assert.equal(R.regionState().verified,false);await assert.rejects(R.ensureRegion('CANADA'),/accessible/);assert.equal(clicks,mixedClicks);
+ native=false;unknown=false;nativeMixed=false;
+ // Country LI elements without ARIA can carry explicit state on descendants.
+ for(const mode of ['data','aria']){
+  nestedMode=mode;
+  for(const scope of ['CANADA','UK','USA','CANADA+UK','CANADA+USA','UK+USA','ALL']){
+   await R.ensureRegion(scope);
+   assert.deepEqual([...R.regionState().selected],scope==='ALL'?['CANADA','UK','USA']:scope.split('+'));
+   const probe=R.regionProbe();assert.equal(probe.subregionSelectors.controls[0].states[0].descendants[0].tag,'SPAN');
+   assert.equal(typeof probe.subregionSelectors.controls[0].states[0].state,'boolean');
+  }
+ }
+ nestedConflict=true;const conflictClicks=clicks;
+ assert.equal(R.regionState().verified,false);await assert.rejects(R.ensureRegion('CANADA'),/contradictoire/);assert.equal(clicks,conflictClicks);
+ nestedConflict=false;nestedMode='';
+ // Class names without explicit selection evidence must remain unknown.
+ unknown=true;assert.equal(R.regionState().verified,false);const probe=R.regionProbe();
+ assert.equal(probe.subregionSelectors.controls[0].states[0].classes,'slicerItemContainer');
+ assert.equal(probe.subregionSelectors.controls[0].states[0].state,null);
  unknown=true;const before=clicks;await assert.rejects(R.ensureRegion('CANADA'),/accessible/);assert.equal(clicks,before);unknown=false;ambiguous=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);
- console.log('PASS all seven SUBREGION combinations, separate caption, modern containers, delayed rendering, same-origin custom slicers, blocked/ambiguous frame guards, collapsed Filters pane/dropdown opening, native checkbox states and no clicks on unreadable or ambiguous selectors');
+ console.log('PASS nested data-selected/ARIA, conflicting and indeterminate states, safe structural diagnostics, all seven SUBREGION combinations, separate caption, modern containers, delayed rendering, same-origin custom slicers, blocked/ambiguous frame guards, collapsed Filters pane/dropdown opening, native checkbox states and no clicks on unreadable or ambiguous selectors');
 })().catch(e=>{console.error(e);process.exitCode=1;});

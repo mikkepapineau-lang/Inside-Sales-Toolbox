@@ -10,7 +10,7 @@ Extension locale Microsoft Edge pour les ventes internes. Les utilisateurs conse
 | Guide 2.0.1 | Documentation historique seulement, dans `docs/`. |
 | Checkpoint basé sur 3.5.6 | Source et tests originaux dans `archives/Inside-Sales-Toolbox-Working-Source.json`. Ce checkpoint ne constitue pas le ZIP de publication 3.5.6. |
 | 3.5.7 | ZIP original et sources correspondantes, référence Git `v3.5.7`. |
-| 3.5.8 de test | ZIP de test disponible. Le correctif Power BI reste à valider dans la session de l'utilisateur. |
+| 3.5.8 de test | Sources courantes et ZIP de test, référence Git `v3.5.8-test`. Le correctif Power BI reste à valider dans la session de l'utilisateur. |
 
 ## Téléchargements
 
@@ -46,3 +46,11 @@ Le fichier de prévisualisation généré est local. Exécuter ensuite les tests
 Le simulateur `checks/redesign-preview/demo.js` annonce encore la version 3.5.6. Avec le manifest 3.5.7, `work-area.test.cjs` échoue sur cette différence de version : 42 scripts réussissent, deux sont bloqués et un échoue sur ce point de simulation. Les fichiers originaux ont été préservés.
 
 La comparaison complète montre 69 fichiers d'extension identiques entre le checkpoint et le ZIP 3.5.7. Les quatre différences concernent le numéro de version et la documentation. Le lecteur Power BI 1.2.0 est présent dans les deux sources malgré la mention « non exporté » du checkpoint.
+
+## Correctif 3.5.8 de test
+
+Le lecteur Power BI 1.2.1 lit aussi les indicateurs explicites de sélection dans les sous-éléments des boutons SUBREGION. Une sélection inconnue, contradictoire ou indéterminée bloque toujours la lecture. Le diagnostic montre une structure limitée des boutons pour permettre une analyse sans exporter le texte métier.
+
+Les dix scripts ciblés suivants ont réussi sur cette version : `used-subregion-reader`, `used-embedded-frames`, `used-region-diagnostic`, `used-regional-worker`, `used-routing`, `used-prices-worker`, `used-regions`, `full-catalogue`, `full-catalogue-worker` et `used-catalogue-worker` (fichiers `checks/*.test.cjs`). La suite complète n'a pas été réexécutée sur cette version. Les deux entrées manquantes et l'écart de version du simulateur restent à traiter.
+
+Les autres modules et le LAB sont inchangés. Aucun test authentifié du correctif 1.2.1 n'a encore confirmé la résolution dans le rapport de l'utilisateur.
