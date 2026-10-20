@@ -34,7 +34,7 @@
   return records;
  }
  const regionNames=['CANADA','UK','USA'];
- const readerVersion='1.2.0';
+ const readerVersion='1.2.1';
  const regionRoots='.visualContainer,visual-container,.visual-container-component,.slicerContainer,[data-visualtype="slicer"],[role="group"],[role="listbox"],[role="combobox"],[role="region"],filter-card,.filterCard,.filter-card,.chicletSlicer,.chiclet-slicer,.slicer';
  const regionOptions='[role="option"],[role="checkbox"],[role="menuitemcheckbox"],[role="button"],button,input[type="checkbox"],.slicerItemContainer,.chiclet,.chicletItem,.slicerText,.slicerItemText,.chicletItemText';
  const regionLabel=e=>[e.getAttribute?.('aria-label'),e.getAttribute?.('title'),text(e),...[...e.labels||[]].map(text)].filter(Boolean).map(value=>String(value).trim().toUpperCase()).filter(value=>new Set(value.match(/\b(?:CANADA|UK|USA)\b/g)||[]).size===1).map(value=>value.match(/^(CANADA|UK|USA)(?:$|[\s,;(:.])/)).find(Boolean)?.[1]||null;
@@ -69,16 +69,60 @@
   return {named,candidates,documents,rootCount:roots.length};
  }
  function regionControls(){const {candidates}=discoverRegions();return candidates.length===1?candidates[0]:null;}
+ const selectionAttributes=['aria-selected','aria-checked','aria-pressed','data-selected'];
+ const selectionSelector=selectionAttributes.map(name=>'['+name+']').join(',')+',input[type="checkbox"]';
+ function selectionSignals(node){
+  const values=[];let invalid=false;
+  if(node?.tagName==='INPUT'&&node.type==='checkbox'){
+   if(node.indeterminate||typeof node.checked!=='boolean')invalid=true;else values.push(node.checked);
+  }
+  for(const name of selectionAttributes){
+   const value=node?.getAttribute?.(name);
+   if(value==='true'||value==='false')values.push(value==='true');
+   else if(value!==null&&value!==undefined)invalid=true;
+  }
+  return {values,invalid};
+ }
+ function selectionState(control,root){
+  const nested=control.querySelectorAll?[...control.querySelectorAll(selectionSelector)]:[
+   control.querySelector?.('input[type="checkbox"]'),
+   control.querySelector?.(selectionSelector),
+   control.querySelector?.('[aria-checked],[aria-selected],[aria-pressed]')
+  ].filter(Boolean);
+  if(nested.length>24)return null;
+  const signals=[control,...new Set(nested)].map(selectionSignals);
+  if(signals.some(signal=>signal.invalid))return null;
+  const values=signals.flatMap(signal=>signal.values),distinct=[...new Set(values)];
+  if(distinct.length)return distinct.length===1?distinct[0]:null;
+  // Never inherit a state from the shared SUBREGION container or another country.
+  for(let node=control.parentElement,depth=0;node&&node!==root&&depth<3;node=node.parentElement,depth++){
+   if(regionLabel(node)!==regionLabel(control))break;
+   const signal=selectionSignals(node),states=[...new Set(signal.values)];
+   if(signal.invalid||states.length>1)return null;
+   if(states.length)return states[0];
+  }
+  return null;
+ }
+ function regionControlDiagnostic(control,root){
+  const describe=node=>({tag:node.tagName||'',role:node.getAttribute?.('role')||'',
+   classes:String(node.getAttribute?.('class')||'').slice(0,160),
+   attributes:Object.fromEntries(selectionAttributes.map(name=>[name,node.getAttribute?.(name)]).filter(([,value])=>value!==null&&value!==undefined)),
+   ...(node.tagName==='INPUT'&&node.type==='checkbox'?{checked:!!node.checked,indeterminate:!!node.indeterminate}:{})});
+  const descendants=[];
+  function visit(node,depth){
+   if(depth>3||descendants.length>=16)return;
+   for(const child of node.children||[]){
+    if(descendants.length>=16)break;
+    descendants.push({...describe(child),depth});visit(child,depth+1);
+   }
+  }
+  visit(control,1);
+  return {country:regionLabel(control),...describe(control),state:selectionState(control,root),descendants};
+ }
  function regionState(){
   const group=regionControls();if(!group)return {verified:false,selected:[],reason:'Sélecteur SUBREGION introuvable ou ambigu.'};
-  const states=group.controls.map(control=>{
-   const input=control.tagName==='INPUT'?control:control.querySelector?.('input[type="checkbox"]');if(input?.type==='checkbox')return !!input.checked;
-   const child=control.querySelector?.('[aria-checked],[aria-selected],[aria-pressed]');
-   const state=e=>{for(const attr of ['aria-selected','aria-checked','aria-pressed','data-selected']){const value=e?.getAttribute?.(attr);if(value==='true'||value==='false')return value==='true';}return null;};
-   const own=state(control);if(own!==null)return own;const nested=state(child);if(nested!==null)return nested;
-   for(let e=control.parentElement,depth=0;e&&depth<3;depth++,e=e.parentElement){const value=state(e);if(value!==null)return value;if(e===group.root)break;}return null;
-  });
-  if(states.some(value=>value===null))return {verified:false,selected:[],reason:'L’état du sélecteur SUBREGION n’est pas accessible.'};
+  const states=group.controls.map(control=>selectionState(control,group.root));
+  if(states.some(value=>value===null))return {verified:false,selected:[],reason:'L’état du sélecteur SUBREGION n’est pas accessible ou est contradictoire.'};
   const empty=states.every(value=>value===false),selected=empty?[...regionNames]:regionNames.filter((_,i)=>states[i]);return {verified:true,selected,empty};
  }
  const filterPaneNames=new Set(['filters','filtres','filterpane','filterspane','voletdesfiltres','showfilters','showfilterpane','showfilterspane','expandfilterpane','expandfilterspane','afficherlesfiltres','afficherlevoletdesfiltres','developperlevoletdesfiltres']);
@@ -112,7 +156,7 @@
    await new Promise(resolve=>setTimeout(resolve,200));discovery=discoverRegions();if(discovery.candidates.length)return;
   }while(Date.now()<deadline);
  }
- function regionDiagnostic(){const found=discoverRegions();return {documents:found.documents.length,rootCount:found.rootCount,namedRoots:found.named.length,candidateGroups:found.candidates.length,filterPaneButtons:filterPaneButtons(found.documents).slice(0,5).map(node=>({label:node.getAttribute?.('aria-label')||node.getAttribute?.('title')||text(node),expanded:node.getAttribute?.('aria-expanded')||'',enabled:enabled(node)})),controls:found.candidates.slice(0,5).map(group=>({labelled:group.named,role:group.root.getAttribute?.('role')||'',countries:group.controls.map(regionLabel),states:group.controls.map(control=>({country:regionLabel(control),tag:control.tagName||'',role:control.getAttribute?.('role')||'',classes:String(control.getAttribute?.('class')||'').slice(0,160),attributes:Object.fromEntries(['aria-selected','aria-checked','aria-pressed','data-selected'].map(name=>[name,control.getAttribute?.(name)]).filter(([,value])=>value!==null&&value!==undefined))}))})),named:found.named.slice(0,8).map(root=>({tag:root.tagName||'',role:root.getAttribute?.('role')||'',label:root.getAttribute?.('aria-label')||root.getAttribute?.('title')||'',expanded:root.getAttribute?.('aria-expanded')||''}))};}
+ function regionDiagnostic(){const found=discoverRegions();return {documents:found.documents.length,rootCount:found.rootCount,namedRoots:found.named.length,candidateGroups:found.candidates.length,filterPaneButtons:filterPaneButtons(found.documents).slice(0,5).map(node=>({label:node.getAttribute?.('aria-label')||node.getAttribute?.('title')||text(node),expanded:node.getAttribute?.('aria-expanded')||'',enabled:enabled(node)})),controls:found.candidates.slice(0,5).map(group=>({labelled:group.named,role:group.root.getAttribute?.('role')||'',countries:group.controls.map(regionLabel),states:group.controls.map(control=>regionControlDiagnostic(control,group.root))})),named:found.named.slice(0,8).map(root=>({tag:root.tagName||'',role:root.getAttribute?.('role')||'',label:root.getAttribute?.('aria-label')||root.getAttribute?.('title')||'',expanded:root.getAttribute?.('aria-expanded')||''}))};}
  async function ensureRegion(region='ALL',options={}){
   const requested=region==='ALL'?[...regionNames]:Array.isArray(region)?region:typeof region==='string'?region.split('+'):[];
   if(!requested.length||requested.length>3||requested.some(name=>!regionNames.includes(name)))throw Error('Sous-région invalide.');
