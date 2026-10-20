@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+const C=require('./company.js'),B=require('./model.js');
+const fixture='<script type="application/ld+json">'+JSON.stringify({'@type':'PerformingArtsTheater',name:'Al Whittle Theatre',address:{'@type':'PostalAddress',streetAddress:'450 Main St',addressLocality:'Wolfville',addressRegion:'NS',postalCode:'B4P 2A1',addressCountry:'CA'}})+'</script>';
+assert.equal(C.extract(fixture,'https://example.ca')[0].city,'Wolfville');
+assert.deepEqual(C.extract('<script type="application/ld+json">bad</script>','x'),[]);
+assert.equal(C.extract(fixture+fixture,'x').length,1);
+assert.deepEqual(C.extract('<script>throw Error("must not execute")</script>','x'),[]);
+const listeners=[];const calls=[];let permit=true;
+const context={Bridge:B,CompanyLookup:C,importScripts(){},URL,AbortController,TextDecoder,setTimeout,clearTimeout,chrome:{permissions:{contains:async()=>permit},runtime:{id:'test',onMessage:{addListener:fn=>listeners.push(fn)}}},fetch:async(url,options)=>{calls.push({url,options});const r=new Response(fixture,{headers:{'content-type':'text/html'}});Object.defineProperty(r,'url',{value:url});return r;}};
+vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(__dirname,'background.js'),'utf8'),context);
+const send=domain=>new Promise(resolve=>{for(const listener of listeners)if(listener({kind:'companyLookup',domain},{id:'test'},resolve))break;});
+(async()=>{const result=await send('example.ca');assert.equal(result.candidates.length,1);assert.equal(result.candidates[0].company,'Al Whittle Theatre');assert.ok(calls.every(c=>c.options.credentials==='omit'&&!c.url.includes('@')));permit=false;const denied=await send('example.ca');assert.ok(denied.error);assert.equal(calls.length,2);console.log('OK — extraction, JSON invalide, dédoublonnage, recherche arrière-plan simulée et refus de permission.');})().catch(e=>{console.error(e);process.exitCode=1;});

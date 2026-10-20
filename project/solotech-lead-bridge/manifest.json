@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Solotech • Lead vers D365",
+  "version": "1.7.2",
+  "description": "Transférer un lead Salesforce, créer un prospect et une soumission D365 après confirmation.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Lead vers D365"
+  },
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

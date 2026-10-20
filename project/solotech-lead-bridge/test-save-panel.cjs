@@ -1,0 +1,18 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const text=fs.readFileSync(__dirname+'/page.js','utf8');
+const script=text.slice(text.indexOf('const savedButtons='),text.indexOf('globalThis.solotechBridge='));
+let mainClicks=0,panelClicks=0;
+const main={innerText:'Save',getAttribute:()=>null,click:()=>mainClicks++};
+const child={innerText:'Save',getAttribute:()=>null,click:()=>panelClicks++};
+const body={};const panel={parentElement:body,contains:e=>e===child};
+const heading={textContent:'Create prospect',parentElement:panel};
+const elements=new Map();
+const c={document:{body},scan(){},query:s=>s.startsWith('h1')?[heading]:s==='span,div'?[]:[main,child],visible:()=>true,norm:s=>(s||'').toLowerCase(),elements};
+vm.createContext(c);vm.runInContext(script,c);
+assert.equal(c.prospectSaveButton(),child);
+elements.set('required',{getAttribute:()=>null,required:true,value:''});
+assert.throws(()=>c.createProspect(),/manquants/);assert.equal(panelClicks,0);
+elements.clear();c.createProspect();assert.equal(panelClicks,1);assert.equal(mainClicks,0);
+assert.throws(()=>c.createProspect(),/déjà/);
+panel.contains=()=>false;assert.throws(()=>c.prospectSaveButton(),/introuvable/);assert.equal(mainClicks,0);
+console.log('OK — deux Save présents, seul Save du panneau ciblé; jamais de repli sur Save arrière, contrôles requis et anti-double clic.');
