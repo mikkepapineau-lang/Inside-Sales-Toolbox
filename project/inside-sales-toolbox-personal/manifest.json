@@ -1,16 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "Solotech • Lead vers D365 - Michaël (essais)",
-  "version": "1.7.4",
-  "description": "Version personnelle de test, incluant la création de soumission en développement.",
+  "name": "Solotech · Inside Sales Toolbox - Michaël",
+  "version": "1.8.18",
+  "description": "Boîte à outils personnelle : Salesforce vers D365, coordonnées client et vérificateur HS.",
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "contextMenus",
+    "sidePanel"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Lead vers D365",
+    "default_title": "Inside Sales Toolbox",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
@@ -29,5 +31,11 @@
     "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
+  },
+  "optional_permissions": [
+    "clipboardWrite"
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
   }
 }

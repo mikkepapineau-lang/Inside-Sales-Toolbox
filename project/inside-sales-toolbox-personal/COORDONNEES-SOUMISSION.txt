@@ -1,0 +1,5 @@
+v1.8.10
+Language : la langue renseignée dans le Toolbox remplace désormais la langue préremplie du prospect même quand les autres valeurs existantes sont conservées. La préférence du lead, par exemple fr-CA, a priorité.
+Après OK, le Toolbox attend le formulaire de la nouvelle soumission et vérifie son numéro avant de remplir Internal Notes et Delivery Contact Information. Il utilise le contact du lead, le téléphone avec poste et le courriel en minuscules, selon le module Coordonnées client. Le nom de compagnie reste celui du prospect.
+Les deux champs sont remplis dans la soumission en mode Edit. Vérifie puis enregistre la soumission dans D365. Si les champs ou le numéro ne sont pas accessibles, un message indique de compléter les coordonnées sans recréer la soumission.
+Remplace les fichiers puis actualise dans edge://extensions.

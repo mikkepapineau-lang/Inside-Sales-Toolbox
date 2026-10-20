@@ -1,0 +1,4 @@
+v1.8.18
+Le vérificateur de surtaxes utilise désormais le thème visuel du Toolbox : fond clair, titres indigo, pictogramme harmonisé, champs et boutons cohérents, résultats en fiches et source dans un panneau.
+Le changement français/anglais, la recherche HS et l’actualisation Canada.ca sont conservés. Les données et le moteur de calcul sont inchangés.
+Remplace les fichiers puis actualise dans edge://extensions. Ferme et rouvre le Toolbox si l’ancien style est encore affiché.

@@ -3,12 +3,15 @@ const D365_URL=D365_ORIGIN+'/?cmp=CAOP&mi=smmBusinessRelationsListPage';
 const pauseD365=ms=>new Promise(r=>setTimeout(r,ms));
 let d365Busy=false;let activeProgress=null;let progressSequence=0;
 function correctCompany(url){try{const u=new URL(url);return u.origin===D365_ORIGIN&&u.searchParams.get('cmp')?.toUpperCase()==='CAOP';}catch{return false;}}
-async function targetD365(create=true){
+async function targetD365(action='fill'){
  if(!await chrome.permissions.contains({origins:[D365_ORIGIN+'/*']}))throw Error('Autorise l’accès à D365 depuis le bouton de l’extension.');
  const state=await chrome.storage.session.get('d365TargetId');let tab;
- if(state.d365TargetId){try{const candidate=await chrome.tabs.get(state.d365TargetId);if(correctCompany(candidate.url))tab=candidate;}catch{}}
- if(!tab){const candidates=(await chrome.tabs.query({url:D365_ORIGIN+'/*'})).filter(t=>correctCompany(t.url));if(candidates.length===1)tab=candidates[0];else if(candidates.length>1)throw Error('Plusieurs onglets D365 CAOP sont ouverts. Ferme ceux inutilisés pour sélectionner le bon.');}
- if(!tab){if(!create)throw Error('Onglet D365 introuvable. Remplis le prospect pour le rouvrir.');tab=await chrome.tabs.create({url:D365_URL,active:false});}
+ const prospectModules=['smmBusinessRelationsListPage','smmBusRelTable'];
+ const continuationModules=[...prospectModules,'SalesQuotationTable'];
+ if(action!=='fill'&&state.d365TargetId){try{const candidate=await chrome.tabs.get(state.d365TargetId);if(ToolboxTabs.matches(candidate,continuationModules))tab=candidate;}catch{}}
+ // A new prospect starts from All prospects. Product Search and orders are never targets.
+ if(!tab)tab=await ToolboxTabs.find(action==='fill'?['smmBusinessRelationsListPage']:prospectModules,state.d365TargetId);
+ if(!tab){if(!['fill','show'].includes(action))throw Error('Onglet All prospects introuvable. Ouvre le prospect à utiliser dans D365.');tab=await chrome.tabs.create({url:D365_URL,active:false});}
  await chrome.storage.session.set({d365TargetId:tab.id});
  const end=Date.now()+25000;while(Date.now()<end){tab=await chrome.tabs.get(tab.id);if(tab.status==='complete')break;await pauseD365(300);}
  if(!correctCompany(tab.url))throw Error('Connexion D365 nécessaire. Clique sur Afficher D365, connecte-toi, puis réessaie depuis Salesforce.');
@@ -18,8 +21,8 @@ async function targetD365(create=true){
 async function d365Run(action,args){
  if(d365Busy)throw Error('Une opération D365 est déjà en cours.');d365Busy=true;
  await chrome.storage.session.set({d365Status:'Opération D365 en cours…'});
- try{if(action==='show'){const stored=await chrome.storage.session.get('d365TargetId');if(stored.d365TargetId){try{await chrome.tabs.update(stored.d365TargetId,{active:true});return {message:'D365 affiché.'};}catch{}}const t=await chrome.tabs.create({url:D365_URL,active:true});await chrome.storage.session.set({d365TargetId:t.id});return {message:'D365 affiché.'};}
- const tab=await targetD365(action==='fill');
+ try{if(action==='show'){const t=await targetD365('show');await chrome.tabs.update(t.id,{active:true});await chrome.windows.update(t.windowId,{focused:true});return {message:'D365 affiché.'};}
+ const tab=await targetD365(action);
  if(!['fill','confirm','quote','diagnose'].includes(action))throw Error('Action D365 inconnue.');
  await chrome.scripting.executeScript({target:{tabId:tab.id},files:['model.js','d365-controls.js','page.js','quotation.js','d365-flow.js']});
  const record=await chrome.storage.session.get('d365Record');

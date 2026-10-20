@@ -1,0 +1,4 @@
+v1.8.7
+Après Utiliser ces coordonnées, le Toolbox ouvre une recherche Google Maps dans un onglet et tente de lire l’adresse affichée sur la fiche. Il reprend rue et ville selon Google si une seule adresse complète correspond au numéro civique et au code postal confirmés.
+Le résultat est enregistré même si le popup se ferme. Si la fiche manque, propose plusieurs résultats ou ne correspond pas, l’adresse du site est conservée et un message demande de vérifier l’onglet Google.
+Cette lecture dépend de l’interface Google Maps. Aucun format Google n’est inventé si la lecture échoue. La première version prend en charge les adresses canadiennes avec code postal.

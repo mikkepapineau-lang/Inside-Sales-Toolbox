@@ -1,0 +1,5 @@
+v1.8.16
+Dans Coordonnées client, clique Reprendre le contact du lead Salesforce. Le nom du contact, le téléphone avec poste et le courriel sont repris des données actuelles du lead déjà récupéré dans Salesforce vers Dynamics. Le nom de compagnie n’est pas utilisé comme nom du contact.
+Les coordonnées sont préremplies et conservées dans le module. Vérifie puis utilise Copier les notes ou Remplir dans D365. Le bouton ne modifie pas directement D365. Les données manquantes sont signalées pour correction.
+Si aucun lead récent n’est disponible (conservation du lead : 8 heures), récupère le lead de nouveau. Tes coordonnées existantes restent intactes si la reprise échoue.
+Remplace les fichiers puis actualise dans edge://extensions.

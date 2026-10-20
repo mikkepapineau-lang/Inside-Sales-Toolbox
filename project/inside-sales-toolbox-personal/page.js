@@ -1,5 +1,5 @@
 (()=>{
-if(globalThis.solotechBridge?.version==='1.7.0')return;
+if(globalThis.solotechBridge?.version==='1.8.10')return;
 const visible=e=>!!(e.getClientRects().length)&&getComputedStyle(e).visibility!=='hidden';
 const norm=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[*:]/g,'').replace(/\s+/g,' ').trim();
 function roots(){const out=[document];for(let i=0;i<out.length;i++)for(const e of out[i].querySelectorAll('*'))if(e.shadowRoot)out.push(e.shadowRoot);return out;}
@@ -76,7 +76,7 @@ const seen=new Set();for(const i of items){if(seen.has(i.key))throw Error('Un m�
 const report=[];
 for(const item of items){
 let e=elements.get(item.key);if(e&&!e.isConnected&&e.id)e=document.getElementById(e.id);if(!e?.isConnected||!visible(e)||e.disabled||e.readOnly){report.push(item.label+' : champ indisponible');continue;}
-if(!overwrite&&e.value.trim()&&e.value.trim()!==item.value){report.push(item.label+' : valeur existante conservée');continue;}
+if(!overwrite&&item.field!=='language'&&e.value.trim()&&e.value.trim()!==item.value){report.push(item.label+' : valeur existante conservée');continue;}
 try{
 let v=item.value;if(e.tagName==='SELECT'){const o=Array.from(e.options).find(o=>norm(o.text)===norm(v)||norm(o.value)===norm(v));if(!o){report.push(item.label+' : option à sélectionner manuellement');continue;}v=o.value;}
 e.focus();const proto=e.tagName==='SELECT'?HTMLSelectElement.prototype:e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true,composed:true}));e.dispatchEvent(new Event('change',{bubbles:true}));e.blur();await new Promise(r=>setTimeout(r,220));report.push(item.label+(e.value===v?' : saisi — à vérifier dans D365':' : valeur non retenue, saisir manuellement'));
@@ -152,5 +152,5 @@ function createProspect(){
  savedButtons.add(button);button.click();
  return {clicked:true,message:'Save a été cliqué. Vérifie la confirmation ou les erreurs affichées dans D365 avant de passer à la soumission.'};
 }
-globalThis.solotechBridge={version:'1.7.0',read,scan,fill,setType,createProspect,prospectSaveButton};
+globalThis.solotechBridge={version:'1.8.10',read,scan,fill,setType,createProspect,prospectSaveButton};
 })();

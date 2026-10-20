@@ -1,0 +1,4 @@
+v1.8.15
+Product Search : l’extension cherche un onglet Product Search CAOP déjà ouvert, même si son identifiant mémorisé a été perdu lors d’une mise à jour. Elle réutilise en priorité celui mémorisé, puis un onglet actif ou utilisé récemment. Elle crée un onglet seulement si aucun onglet de ce module n’existe.
+Salesforce vers prospect : cible All prospects CAOP pour remplir un nouveau prospect, en ignorant Product Search et les commandes. Elle garde l’onglet du parcours pour la confirmation et la soumission. Si plusieurs onglets All prospects sont ouverts, celui mémorisé est préféré, puis l’actif ou le plus récent. Les vérifications du prospect attendu restent en place.
+Remplace les fichiers puis actualise dans edge://extensions.

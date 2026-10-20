@@ -1,0 +1,4 @@
+v1.8.6
+Quand Company est vide ou identique au nom du client, un domaine de courriel d’entreprise permet de proposer un nom de compagnie à vérifier. Les noms de compagnie explicites sont conservés.
+La recherche lit les adresses structurées et les adresses canadiennes visibles dans le texte, y compris le pied de page. Si aucune adresse n’est trouvée, elle suit les liens Contact/Contactez-nous/Info/À propos du même site, puis essaie les chemins courants.
+Les coordonnées et leur source sont proposées avant import. Le nom et le téléphone du contact sont conservés.

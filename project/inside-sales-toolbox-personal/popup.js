@@ -10,16 +10,16 @@ for(const [title,keys] of [['Identité',['type','company','first','last']],['Con
 for(const [key,label] of B.fields){if(data.type==='Person'&&key==='company'||data.type==='Organization'&&['first','last'].includes(key))continue;
 const l=document.createElement('label');l.textContent=key==='type'?'Organisation ou Personne ?':label;let input;
 if(key==='type'||key==='tax'){input=document.createElement('select');const choices=key==='type'?['Organization','Person']:['',...Object.values(B.tax)];for(const value of choices){const o=new Option(key==='type'?(value==='Organization'?'Organisation':'Personne'):(value||'À choisir'),value);input.add(o);}}else input=document.createElement('input');
-input.id='value-'+key;input.value=data[key]||'';input.addEventListener('change',async()=>{if(key==='type')B.switchType(data,input.value);else data[key]=input.value;if(key==='phone'){const parsed=B.phone(input.value);data.phone=parsed.value;input.value=data.phone;if(parsed.extension){data.extension=parsed.extension;const ext=$('value-extension');if(ext)ext.value=data.extension;}}if(['street','city','state','postal','country','phone'].includes(key))quoteDefaults();if(['phone','state','postal','country'].includes(key)){B.updateTax(data);const t=$('value-tax');if(t)t.value=data.tax;$('taxNote').textContent=data.taxNote;}if(key==='tax'){data.taxSource='manual';data.taxNote='Taxe choisie manuellement.';$('taxNote').textContent=data.taxNote;}await save();input.value=data[key]||'';if(key==='type'){currentScan=null;render();}});l.append(input);if(['type','company','street','email','tax'].includes(key))l.classList.add('full');(groupMap[key]||$('editor')).append(l);
+input.id='value-'+key;input.value=data[key]||'';input.addEventListener(input.tagName==='SELECT'?'change':'input',async()=>{if(key==='type')B.switchType(data,input.value);else data[key]=input.value;if(key==='phone'){const parsed=B.phone(input.value);data.phone=parsed.value;input.value=data.phone;if(parsed.extension){data.extension=parsed.extension;const ext=$('value-extension');if(ext)ext.value=data.extension;}}if(['street','city','state','postal','country','phone'].includes(key))quoteDefaults();if(['phone','state','postal','country'].includes(key)){B.updateTax(data);const t=$('value-tax');if(t)t.value=data.tax;$('taxNote').textContent=data.taxNote;}if(key==='tax'){data.taxSource='manual';data.taxNote='Taxe choisie manuellement.';$('taxNote').textContent=data.taxNote;}await save();input.value=data[key]||'';if(key==='type'){currentScan=null;render();}});l.append(input);if(['type','company','street','email','tax'].includes(key))l.classList.add('full');(groupMap[key]||$('editor')).append(l);
 } updateLeadBanner();$('taxNote').textContent=data.taxNote||B.taxForData(data).note;quoteDefaults();
 }
 async function active(){const [t]=await chrome.tabs.query({active:true,currentWindow:true});if(!t?.id)throw Error('Onglet introuvable.');return t;}
 async function page(method,arg,target){const t=target||await active();await chrome.scripting.executeScript({target:{tabId:t.id},files:['page.js']});const [r]=await chrome.scripting.executeScript({target:{tabId:t.id},func:async(m,a)=>{try{return {value:await globalThis.solotechBridge[m](a)}}catch(e){return {error:e.message}}},args:[method,arg||null]});if(r.result?.error)throw Error(r.result.error);if(!r.result)throw Error('Page inaccessible.');return r.result.value;}
 function safe(fn){return async()=>{try{await fn();}catch(e){status(e.message);}};}
-$('capture').onclick=safe(async()=>{$('successCard').hidden=true;const result=await page('read');data=B.updateTax(B.normalize(result.data));quoteAddress='';$('quote').disabled=false;await chrome.storage.session.remove(['d365Record','d365LastResult','d365Status']);await chrome.storage.session.set({lead:{data,at:Date.now(),source:result.url},report:[]});currentScan=null;$('report').textContent='';render();$('source').textContent=result.url;status(['Lead récupéré. Vérifie le nom, la compagnie, l’adresse et la taxe.',data.type==='Person'?'Courriel personnel reconnu : Personne proposée. Vérifie le prénom et le nom.':'Organisation sélectionnée par défaut. Complète le nom de compagnie au besoin.',...result.warnings].filter(Boolean).join('\n'));});
+$('capture').onclick=safe(async()=>{$('successCard').hidden=true;const result=await page('read');data=B.updateTax(B.normalize(result.data));quoteAddress='';$('quote').disabled=false;await chrome.storage.session.remove(['d365Record','d365LastResult','d365Status','googleAddressStatus']);await chrome.storage.session.set({lead:{data,at:Date.now(),source:result.url},report:[]});currentScan=null;$('report').textContent='';render();$('source').textContent=result.url;status(['Lead récupéré. Vérifie le nom, la compagnie, l’adresse et la taxe.',data.type==='Person'?'Courriel personnel reconnu : Personne proposée. Vérifie le prénom et le nom.':'Organisation sélectionnée par défaut. Complète le nom de compagnie au besoin.',data.companyNote,...result.warnings].filter(Boolean).join('\n'));});
 
 
-async function allowD365(){if(!await chrome.permissions.contains({origins:['https://solotech.operations.dynamics.com/*']}))throw Error('Clique sur Préparer tous les accès avant de continuer.');}
+async function allowD365(){if(!await chrome.permissions.contains({origins:['https://solotech.operations.dynamics.com/*']}))throw Error('Accès Dynamics manquant. Clique sur Autoriser tous les accès en haut du Toolbox.');}
 $('prepareAccess').onclick=safe(async()=>{
  const allowed=await chrome.permissions.request({origins:['https://*/*']});
  $('accessStatus').textContent=allowed?'Accès prêts : D365, localisation et recherche de compagnie.':'Accès non accordés. Tu peux réessayer avec ce bouton.';
@@ -39,7 +39,14 @@ $('fill').onclick=safe(async()=>{
 $('createProspect').onclick=safe(async()=>{
  await allowD365();await resolveTerritory();await save();$('createProspect').disabled=true;try{const r=await d365Action('confirm',{expectedName:expectedName(),data,territory:data.territory||'MONTREAL',office:data.office||'MONTREAL'});status(r.message);showSuccess(r);}catch(e){$('createProspect').disabled=false;throw e;}
 });
-$('showD365').onclick=safe(async()=>{await allowD365();await d365Action('show');});
+$('showD365').onclick=safe(async()=>{
+ const url='https://solotech.operations.dynamics.com/?cmp=CAOP&mi=DefaultDashboard';
+ const allowed=await chrome.permissions.contains({origins:['https://solotech.operations.dynamics.com/*']});
+ const tabs=allowed?await chrome.tabs.query({url:'https://solotech.operations.dynamics.com/*'}):[];
+ const target=tabs.find(t=>{try{return new URL(t.url).searchParams.get('cmp')?.toUpperCase()==='CAOP';}catch{return false;}})||tabs[0];
+ if(target){await chrome.tabs.update(target.id,{active:true});if(target.windowId!==undefined)await chrome.windows.update(target.windowId,{focused:true});}
+ else await chrome.tabs.create({url});
+});
 function emailDomain(){const d=B.domain(data.email);if(!d)throw Error('Domaine d’entreprise absent ou courriel personnel.');return d;}
 
 $('searchCompany').onclick=safe(async()=>{
@@ -50,13 +57,13 @@ $('searchCompany').onclick=safe(async()=>{
  if(!allowed)throw Error('Accès au site non accordé. Tu peux saisir les coordonnées manuellement.');
  const email=data.email;await save();$('searchCompany').disabled=true;status('Recherche des coordonnées en cours…');$('companyResults').replaceChildren();
  try{const result=await chrome.runtime.sendMessage({kind:'companyLookup',domain});if(result?.error)throw Error(result.error);if(data.email!==email)return;
- if(!result?.candidates?.length)throw Error('Aucune coordonnée structurée exploitable trouvée sur le site. Vérifie l’adresse manuellement.');
+ if(!result?.candidates?.length)throw Error('Aucune adresse exploitable trouvée sur l’accueil ou les pages de contact. Vérifie l’adresse manuellement.');
  showCompany(result,domain);status('Coordonnées trouvées : vérifie la proposition avant de l’utiliser.');
  }finally{$('searchCompany').disabled=false;}
 });
 function showCompany(result,domain){
  $('companyResults').replaceChildren();for(const candidate of result.candidates){const box=document.createElement('div');const info=document.createElement('p');info.textContent=[candidate.company,candidate.street,candidate.city,candidate.state,candidate.postal,candidate.country].filter(Boolean).join(' — ');const source=document.createElement('p');source.textContent='Source : '+candidate.source;
- const use=document.createElement('button');use.textContent='Utiliser ces coordonnées';use.onclick=safe(async()=>{if(emailDomain()!==domain)throw Error('Le courriel a changé. Relance la recherche.');B.applyCompany(data,candidate);await save();render();$('companyResults').replaceChildren();status('Coordonnées reprises et taxe recalculée selon l’adresse. La langue du lead est conservée.');});box.append(info,source,use);$('companyResults').append(box);}
+ const use=document.createElement('button');use.textContent='Utiliser ces coordonnées';use.onclick=safe(async()=>{if(emailDomain()!==domain)throw Error('Le courriel a changé. Relance la recherche.');B.applyCompany(data,candidate);await save();render();$('companyResults').replaceChildren();status('Adresse confirmée. Recherche du format Google Maps…');const result=await chrome.runtime.sendMessage({kind:'googleAddress',candidate,email:data.email});if(result?.error)throw Error(result.error);if(result?.value?.data){data=result.value.data;render();status(result.value.message);}});box.append(info,source,use);$('companyResults').append(box);}
 }
 
 const addressKey=()=>[data.street,data.city,data.state,data.postal,data.country,data.phone].join('|');
@@ -96,12 +103,15 @@ $('quote').onclick=safe(async()=>{
  status('Préparation de la soumission…');
  await allowD365();await resolveTerritory();await save();if(!Territories.names.includes(data.territory)||!['YUL-01','QUE-01','TOR-01','OTT-01'].includes(data.warehouse))throw Error('Choisis le territoire et l’entrepôt.');
  $('quote').disabled=true;status('Ouverture du prospect et création de soumission en arrière-plan…');
- try{const result=await d365Action('quote',{territory:data.territory,office:data.office||'MONTREAL',warehouse:data.warehouse,expectedName:expectedName()});status(result.message);await chrome.storage.session.set({quoteResult:result});}catch(e){$('quote').disabled=false;throw e;}
+ let contacts=null,contactWarning='';try{contacts=ContactModel.values({name:data.phoneName||data.contact||[data.first,data.last].filter(Boolean).join(' '),phone:data.phone+(data.extension?' #'+data.extension:''),email:data.email});}catch{contactWarning='Coordonnées du contact incomplètes : utilise le module Coordonnées client pour les compléter.';}
+ try{const result=await d365Action('quote',{warehouse:data.warehouse,expectedName:expectedName(),contacts,contactWarning});status(result.message);await chrome.storage.session.set({quoteResult:result});}catch(e){$('quote').disabled=false;throw e;}
 });
 $('clear').onclick=safe(async()=>{$('successCard').hidden=true;await chrome.storage.session.clear();data=B.normalize({});currentScan=null;$('report').textContent='';$('source').textContent='';$('companyResults').replaceChildren();render();selectStep('lead');status('Données du lead effacées.');});
-(async()=>{const s=await chrome.storage.session.get(['lead','report','d365Status','d365LastResult']);if(s.lead&&Date.now()-s.lead.at<TTL){data=s.lead.data;if(!data.taxSource)B.updateTax(data);if(data.territory)quoteAddress=addressKey();$('territory').value=data.territory||'';$('warehouse').value=data.warehouse||'';$('source').textContent=s.lead.source||'';$('report').textContent=(s.report||[]).join('\n');}else await chrome.storage.session.clear();render();if(s.d365Status)status(s.d365Status);showSuccess(s.d365LastResult);if(s.d365LastResult?.report)$('report').textContent=[...s.d365LastResult.report,'',...(s.d365LastResult.actual||[])].join('\n');})();
+(async()=>{const s=await chrome.storage.session.get(['lead','report','d365Status','d365LastResult']);if(s.lead&&Date.now()-s.lead.at<TTL){data=s.lead.data;if(!data.taxSource)B.updateTax(data);if(data.territory)quoteAddress=addressKey();$('territory').value=data.territory||'';$('warehouse').value=data.warehouse||'';$('source').textContent=s.lead.source||'';$('report').textContent=(s.report||[]).join('\n');}else await chrome.storage.session.clear();render();if(s.d365Status)status(s.d365Status);const g=await chrome.storage.session.get('googleAddressStatus');if(g.googleAddressStatus)status(g.googleAddressStatus);showSuccess(s.d365LastResult);if(s.d365LastResult?.report)$('report').textContent=[...s.d365LastResult.report,'',...(s.d365LastResult.actual||[])].join('\n');})();
 
 chrome.storage.onChanged.addListener((changes,area)=>{
+ if(area==='session'&&changes.googleAddressStatus)status(changes.googleAddressStatus.newValue||'');
+ if(area==='session'&&changes.lead?.newValue?.data?.addressGoogleAt&&changes.lead.newValue.data.addressGoogleAt!==data.addressGoogleAt){data=changes.lead.newValue.data;render();}
  if(area==='session'&&changes.d365Status)status(changes.d365Status.newValue||'');
 });
 $('diagnose').onclick=safe(async()=>{

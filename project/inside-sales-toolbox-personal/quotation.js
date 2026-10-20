@@ -1,5 +1,5 @@
 (()=>{
-if(globalThis.solotechQuotation?.version==='1.7.4')return;
+if(globalThis.solotechQuotation?.version==='1.8.10')return;
 const visible=e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
 const norm=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[*:]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -72,7 +72,7 @@ function diagnostics(){
  let sales;try{const e=button('Sales quotation');sales={found:true,tag:e.tagName,id:e.id||'',role:e.getAttribute('role')||''};}catch(e){sales={found:false,error:e.message};}
  let save;try{const e=globalThis.solotechBridge.prospectSaveButton();save={found:true,tag:e.tagName,id:e.id||''};}catch(e){save={found:false,error:e.message};}
  const technicalDimensions=[...dimensionNames].map(name=>{try{const e=globalThis.D365Controls?.find('smmBusRelTable','DimensionEntryControl_DECValue_'+name,'field')||globalThis.D365Controls?.find('smmBusRelTable','DimensionEntryControl_DECRowGroup_'+name,'field');return {dimension:name,found:!!e,id:e?.id||''};}catch(e){return {dimension:name,error:e.message};}});
- return {version:'1.7.4',technicalDimensions,prospectSave:save,salesQuotation:sales,dimensions:rows,recognizedFields:fields.map(e=>label(e)).filter(v=>['account','first name','last name','name','sales origin','payment','warehouse'].includes(norm(v)))};
+ return {version:'1.8.10',technicalDimensions,prospectSave:save,salesQuotation:sales,dimensions:rows,recognizedFields:fields.map(e=>label(e)).filter(v=>['account','first name','last name','name','sales origin','payment','warehouse'].includes(norm(v)))};
 }
 async function until(fn,ms=30000){const end=Date.now()+ms;let error;while(Date.now()<end){try{const value=fn();if(value)return value;}catch(e){error=e;}await sleep(200);}throw error||Error('D365 ne répond pas encore. Vérifie la page avant de réessayer.');}
 function failIfInvalid(){const invalid=all('input,select,textarea').filter(e=>visible(e)&&!e.disabled&&(e.getAttribute('aria-invalid')==='true'||e.required&&!e.value.trim()||e.validity&&!e.validity.valid));if(invalid.length)throw Error('D365 signale un champ invalide : '+label(invalid[0]));}
@@ -109,8 +109,33 @@ async function fillDimensions({territory='MONTREAL',office='MONTREAL',expectedNa
  dirtyDimensionAccounts.delete(account);
  return {account,territory:territory||'MONTREAL'};
 }
+async function fillCreatedContacts(number,contacts){
+ if(!number)throw Error('Numéro de soumission indisponible : coordonnées non appliquées automatiquement.');
+ let editClicked=false;
+ await until(()=>{
+  // Only proceed on the new quotation form with its matching quotation number.
+  const quoteInputs=all('input,textarea').filter(e=>visible(e)&&[e.id,e.name,e.getAttribute('data-dyn-formname')].some(v=>/salesquotationtable/i.test(v||'')));
+  if(!quoteInputs.some(e=>String(e.value||'').trim()===number))return false;
+  const notes=D365Controls.find('SalesQuotationTable','SOLInternalNotes','field');
+  const delivery=D365Controls.find('SalesQuotationTable','SOLDocumentDeliveryContact','field');
+  if(notes&&delivery)return true;
+  if(!editClicked){try{button('Edit').click();editClicked=true;}catch{/* Wait for the quotation to finish loading. */}}
+  return false;
+ },18000);
+ const controls=[['SOLInternalNotes',contacts.notes,'Internal Notes'],['SOLDocumentDeliveryContact',contacts.delivery,'Delivery Contact Information']];
+ // Resolve and check both before changing either field.
+ for(const [id,value,label] of controls){const e=D365Controls.find('SalesQuotationTable',id,'field');if(!e)throw Error(label+' introuvable.');if(e.maxLength>0&&value.length>e.maxLength)throw Error(label+' : texte trop long.');}
+ for(const [id,value,label] of controls){
+  const e=D365Controls.find('SalesQuotationTable',id,'field');if(!e)throw Error(label+' indisponible.');
+  e.focus();const proto=e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(proto,'value').set.call(e,value);
+  e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));e.blur();await sleep(200);
+  const actual=D365Controls.find('SalesQuotationTable',id,'field');if(!actual||actual.value!==value)throw Error(label+' non retenu. Vérifie la soumission.');failIfInvalidValue(actual);
+ }
+ return {filled:true,report:['Internal Notes','Delivery Contact Information']};
+}
 let running=false;const submitted=new WeakSet();
-async function create({territory='MONTREAL',office='MONTREAL',warehouse,expectedName,expectedAccount,onProgress=async()=>{}}){
+async function create({warehouse,expectedName,expectedAccount,contacts=null,contactWarning='',onProgress=async()=>{}}){
  let stage='Vérification du prospect';
  const progress=async message=>{stage=message;await onProgress(message);};
  if(running)throw Error('Création déjà en cours.');
@@ -121,11 +146,9 @@ async function create({territory='MONTREAL',office='MONTREAL',warehouse,expected
  let account;
  const isQuote=(()=>{try{return !!field('Sales origin');}catch{return false;}})();
  if(!isQuote){
-  await progress('1/4 · Vérification du prospect ouvert…');
+  await progress('1/3 · Vérification du prospect ouvert…');
   account=assertProspect(expectedName,expectedAccount);
-  await progress('2/4 · Remplissage et enregistrement des dimensions financières…');
-  await fillDimensions({territory,office,expectedName,expectedAccount:account});
-  await progress('3/4 · Ouverture de Sales quotation…');
+  await progress('2/3 · Ouverture de New Sales Quotation…');
   // New is a ribbon group under Sell, not the global New prospect button.
   try{button('Sales quotation');}catch{let tab;try{tab=button('Sell');}catch{tab=button('Sales');}tab.click();await until(()=>button('Sales quotation'));}
   button('Sales quotation').click();await until(()=>field('Sales origin'));
@@ -133,14 +156,22 @@ async function create({territory='MONTREAL',office='MONTREAL',warehouse,expected
  if(expectedAccount&&account!==expectedAccount)throw Error('Numéro de prospect différent.');
  if(!/^CAOP-\d+$/i.test(account)||field('Prospect',false).value!==account||norm(field('Name of prospect',false).value)!==norm(expectedName))throw Error('La soumission ne vise pas le prospect attendu.');
  const ok=button('OK');if(submitted.has(ok))throw Error('OK a déjà été cliqué. Vérifie le résultat dans D365.');
- await progress('4/4 · Saisie de la soumission…');
- for(const [name,value] of [['Sales origin','ECOMM'],['Payment','PAYMENT IN ADVANCE'],['Warehouse',warehouse]])await write(name,value);
- failIfInvalid();
+ await progress('3/3 · Saisie des paramètres de la soumission…');
+ const quoteValues=[['Sales origin','ECOMM'],['Payment','PAYMENT IN ADVANCE'],['Warehouse',warehouse]];
+ for(const [name,value] of quoteValues)await write(name,value);
+ // Only validate the fields written in this quotation, never unrelated prospect fields.
+ for(const [name] of quoteValues)failIfInvalidValue(field(name));
  if(field('Prospect',false).value!==account)throw Error('Le prospect a changé.');
  const number=(()=>{try{return field('Quotation',false).value;}catch{return '';}})();
  submitted.add(ok);ok.click();
- return {clicked:true,account,number,message:'OK a été cliqué'+(number?' pour '+number:'')+'. Vérifie la confirmation de création dans D365.'};
+ const result={clicked:true,account,number,message:'OK a été cliqué'+(number?' pour '+number:'')+'. Vérifie la confirmation de création dans D365.'};
+ if(!contacts)return {...result,contactsPending:true,message:result.message+' '+(contactWarning||'Coordonnées du contact indisponibles.')};
+ try{
+  await progress('Remplissage des coordonnées dans la nouvelle soumission…');
+  const contactResult=await fillCreatedContacts(number,contacts);
+  return {...result,contacts:contactResult,message:'Soumission '+number+' ouverte : Internal Notes et Delivery Contact Information remplis. Vérifie puis enregistre la soumission dans D365.'};
+ }catch(e){return {...result,contactsPending:true,message:result.message+' Ne recrée pas la soumission. Coordonnées à compléter : '+e.message};}
  }catch(e){throw Error(stage+'\n'+e.message);}finally{running=false;}
 }
-globalThis.solotechQuotation={version:'1.7.4',create,fillDimensions,diagnostics};
+globalThis.solotechQuotation={version:'1.8.10',create,fillDimensions,fillCreatedContacts,diagnostics};
 })();
