@@ -8,7 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / 'project/inside-sales-toolbox-team'
-DEST = Path('/workspace/toolbox-used-preview.html')
+DEST = Path('/workspace/toolbox-order-contacts-preview.html' if '--orders' in sys.argv else '/workspace/toolbox-used-preview.html')
 
 def read(path):
     return path.read_text(encoding='utf-8')
@@ -48,6 +48,8 @@ doc = re.sub(r'<link[^>]+href="([^"]+)"[^>]*>', lambda m: '<style>' + css(APP / 
 doc = re.sub(r'(<img\b[^>]*\bsrc=")([^"]+)(")', lambda m: m[1] + uri(APP / m[2]) + m[3], doc)
 hs = {lang: hs_document(lang) for lang in ['fr', 'en']}
 demo = read(ROOT / 'checks/redesign-preview/demo.js')
+if '--orders' in sys.argv:
+    demo = demo.replace("module:'used',at:now", "module:'powerbi',at:now")
 if '--prospect' in sys.argv:
     demo = demo.replace("module:'used',at:now", "module:'bridge',at:now").replace("uiStep:'lead'", "uiStep:'prospect'")
 if '--quote' in sys.argv:
@@ -76,7 +78,7 @@ assert not re.search(r'<(?:script|link)\b[^>]+(?:src|href)=', doc)
 if '--document-only' in sys.argv:
     print('Actual UI document rebuilt for script checks; published preview unchanged.')
     raise SystemExit(0)
-fragment = read(DEST)
+fragment = read(ROOT / 'checks/redesign-preview/order-contacts-preview.html') if '--orders' in sys.argv else read(DEST)
 if 'TOOLBOX_DOCUMENT' in fragment:
     fragment = fragment.replace('TOOLBOX_DOCUMENT', html.escape(doc, quote=True))
 else:

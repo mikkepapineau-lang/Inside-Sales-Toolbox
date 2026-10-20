@@ -2,7 +2,7 @@
 (()=>{
  const empty={addListener(){}},listeners=[],refreshedScopes=new Set(),now=Date.now();
  const lead={type:'Organization',company:'Équipements Démo',first:'Alex',last:'Martin',phoneName:'Alex Martin',emailName:'Alex Martin',phone:'(514) 555-0123',email:'alex@example.test',street:'100 rue Exemple',city:'Montréal',state:'QC',postal:'H2X 1Y4',country:'CAN',language:'fr-CA',currency:'CAD',typeId:'Prospect',territory:'MONTREAL',office:'MONTREAL',warehouse:'YUL-01',tax:'GST_QST'};
- const orders={headers:['Sales Order Number','Account Name','Total Not Invoiced','Physical Reserve Qty','ModeOfDelivery','Payment','Status','Customer Reference','Sales Rep Name'],rows:Array.from({length:8},(_,i)=>({values:['SO-CA'+(100001+i),['Studio Démo','Productions Exemple','École Démo'][i%3],['1 250,00','3 850,75','727,10'][i%3],String(i+2),i%2?'GROUND':'PICK UP',i%3?'NET30':'PAYÉ','Open order','DEMO-2026-'+i,i%2?'ALEX MARTIN':'JULIE EXEMPLE'],href:''})),at:now};
+ const orders={headers:['Sales Order Number','Account Name','Total Not Invoiced','Physical Reserve Qty','ModeOfDelivery','Payment','Status','Customer Reference','Sales Rep Name','Internal Notes'],rows:Array.from({length:8},(_,i)=>({values:['SO-CA'+(100001+i),['Studio Démo','Productions Exemple','École Démo'][i%3],['1 250,00','3 850,75','727,10'][i%3],String(i+2),i%2?'GROUND':'PICK UP',i%3?'NET30':'PAYÉ','Open order','DEMO-2026-'+i,i%2?'ALEX MARTIN':'JULIE EXEMPLE',i===1||i===7?'':[['Camille Dubois','Alex Martin','Sam Tremblay'][i%3],'514 555-01'+String(i).padStart(2,'0'),['camille','alex','sam'][i%3]+'@example.test'].join('\n')],href:'',...(i===7?{unreadColumns:[9]}:{})})),at:now};
  const headers=['Category','SubCategory','Manufacturer','SKU','D365 Item ID','Description','QTY OWNED','MAX QTY TO SELL','QTY AVAILABLE','Sell Price','NBV','Margin','Usage %','PurchaseCost','AVG_Age','MODEL','DimsAndWeight','HS Code','MadeIn','Product Web Link','Rules'];
  const samples=[
   ['AUDIO','AUDIO MICROPHONE','SHURE','SM58-LC','100700001','Microphone dynamique cardioïde','7','7','3','65','40','38 %','12 %','110','4','SM58'],
@@ -22,7 +22,12 @@
  const delay=ms=>new Promise(r=>setTimeout(r,ms));
  function toast(message){let box=document.getElementById('demo-toast');if(!box){box=document.createElement('div');box.id='demo-toast';box.setAttribute('role','status');document.body.append(box);}box.textContent=message;box.hidden=false;clearTimeout(box.timer);box.timer=setTimeout(()=>box.hidden=true,1800);}
  globalThis.__demoCopy=async()=>toast(saved.toolboxLanguage==='en'?'Copied in this demo.':'Copie illustrée dans l’aperçu.');
- const chrome={storage:{local:area(saved,'local'),session:area(session,'session'),onChanged:{addListener:f=>listeners.push(f)}},permissions:{contains:async()=>true,request:async()=>true,onAdded:empty,onRemoved:empty},runtime:{id:'preview',getManifest:()=>({version:'3.5.6'}),onMessage:empty,sendMessage:async m=>{
+ const chrome={storage:{local:area(saved,'local'),session:area(session,'session'),onChanged:{addListener:f=>listeners.push(f)}},permissions:{contains:async()=>true,request:async()=>true,onAdded:empty,onRemoved:empty},runtime:{id:'preview',getManifest:()=>({version:'3.5.8'}),onMessage:empty,sendMessage:async m=>{
+  if(m.kind==='powerBIOrderNotes'){
+   await delay(550);const data=saved.toolboxPowerBI;
+   await write(saved,{toolboxPowerBI:{...data,rows:data.rows.map(r=>r.values[0]===m.order?{...r,internalNotes:{order:m.order,value:'Alex Martin\n514 555-0123\nalex@example.test',source:'D365',at:Date.now()}}:r)}},'local');
+   return {value:{order:m.order,matched:1}};
+  }
   if(m.kind==='pricingRate'){await delay(500);return {value:{rate:'1.40',date:'2026-10-15',checkedAt:now,demo:true}};}
   if(m.kind==='usedPowerBIInit')return {value:{count:used.rows.length}};
   if(m.kind==='workspacePrepare'){await delay(400);await write(saved,{toolboxWorkspaceDay:{date:ToolboxUsedCatalogue.day(Date.now()),status:'prepared'}},'local');return {value:{total:4,opened:2,reused:2}};}

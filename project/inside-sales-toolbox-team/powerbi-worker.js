@@ -1,11 +1,16 @@
-const POWERBI_REPORT_URL='https://app.powerbi.com/links/lNdArEWzXE?ctid=c2f120b6-e8fc-402c-9972-fa891cb53927&pbi_source=linkShare&bookmarkGuid=ff596301-8009-4b69-be11-40ae01525ce3';
+const POWERBI_REPORT_URL='https://app.powerbi.com/groups/me/reports/37ddaf7f-5526-4fd7-b85e-bc6630d5ae33/ReportSection16a57238ce9621584668?ctid=c2f120b6-e8fc-402c-9972-fa891cb53927&pbi_source=shareVisual&visual=e012a952be9d5b6b572d&height=519.74&width=1280.00&bookmarkGuid=80a177f0-91d7-4d7e-a04e-282a39ddbc81';
 let powerBIBusy=false;
 const isPowerBI=tab=>{try{return new URL(tab.url).origin==='https://app.powerbi.com';}catch{return false;}};
+function readyPowerBIId(value){try{const u=new URL(value);if(u.origin!=='https://app.powerbi.com'||u.username||u.password)return '';const ids=/^\/reportEmbed\/?$/i.test(u.pathname)?u.searchParams.getAll('reportId'):[u.pathname.match(/\/reports\/([\da-f-]{36})(?:\/|$)/i)?.[1]||''];return ids.length===1&&/^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(ids[0])?ids[0].toLowerCase():'';}catch{return '';}}
+function isReadyPowerBI(tab,known=''){
+ try{const value=tab?.pendingUrl||tab?.url,u=new URL(value),id=readyPowerBIId(value),knownId=readyPowerBIId(known);return u.origin==='https://app.powerbi.com'&&!u.username&&!u.password&&!/singleSignOn|signin|login/i.test(u.pathname)&&id!=='458f40a9-2b3f-4518-a3cb-d699fef65baa'&&(id==='37ddaf7f-5526-4fd7-b85e-bc6630d5ae33'||/^\/links\/lNdArEWzXE\/?$/.test(u.pathname)||!!known&&(value===known||!!id&&id===knownId));}catch{return false;}
+}
 async function powerBITab(){
- const saved=await chrome.storage.session.get(['powerBITab','powerBIResolvedURL']);
+ const [saved,local]=await Promise.all([chrome.storage.session.get(['powerBITab','powerBIResolvedURL']),chrome.storage.local.get('toolboxPowerBIResolvedURL')]);
+ const known=saved.powerBIResolvedURL||local.toolboxPowerBIResolvedURL||'';
  let tab;try{if(saved.powerBITab)tab=await chrome.tabs.get(saved.powerBITab);}catch{}
- if(!isPowerBI(tab))tab=null;
- if(!tab){const tabs=await chrome.tabs.query({url:'https://app.powerbi.com/*'});const matches=tabs.filter(t=>t.url===saved.powerBIResolvedURL||t.url.includes('/links/lNdArEWzXE'));if(matches.length===1)tab=matches[0];}
+ if(!isReadyPowerBI(tab,known))tab=null;
+ if(!tab){const tabs=await chrome.tabs.query({url:'https://app.powerbi.com/*'}),matches=tabs.filter(t=>isReadyPowerBI(t,known));tab=matches.find(t=>{try{return new URL(t.pendingUrl||t.url).searchParams.get('visual')==='e012a952be9d5b6b572d';}catch{return false;}})||matches.find(t=>t.active)||matches[0];}
  if(!tab)tab=await chrome.tabs.create({url:POWERBI_REPORT_URL,active:false});
  await chrome.storage.session.set({powerBITab:tab.id});await ToolboxTabGroup.add(tab);return tab;
 }
