@@ -1,0 +1,4 @@
+# Sorties locales de la prévisualisation et de Python.
+checks/redesign-preview/preview-document.html
+__pycache__/
+*.pyc

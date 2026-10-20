@@ -1,0 +1,16 @@
+e61effeab2f3e94a7668457b535dccebee42a7102e862e12e7a27940c19d84b6  archives/Inside-Sales-Toolbox-Working-Source-2026-10-19.json.gz
+b3a16c520871ff3843e27a70cd9fc6f1094c5d6609b5433d34029171043e147c  archives/Inside-Sales-Toolbox-Working-Source.json
+d8ef3661fbdd5683650568ec217e39ff053e816dee4a54ecf626c4ac7a68ecd9  docs/Inside-Sales-Toolbox-Guide-Equipe-v2.0.1-Solotech-2025.pdf
+6ae98e641cf08638dc887a340fb0b7bbeea4387bdc81ea2869ea475182e10481  docs/Inside-Sales-Toolbox-Guide-Equipe-v2.0.1-Style-Classique-Solotech.pdf
+98148fb021de1b0f66f14804d235405b962e62aa68fa7f7b5f77ceaa38b74726  docs/Installation-Extension-Solotech-Edge.pdf
+00424d1d6570ecd93a606505be9627b11f4c099beda72f02f4957b7cfd512b5b  docs/Salesforce-D365-Guide-Ventes-Internes.pdf
+b04aaafc1ca2dd543578bb351483c83f467e12c880d024983bd54fb9b2a0fc42  downloads/Inside-Sales-Toolbox-Equipe-v3.5.10.zip
+1d47348165fe2ee7355daece7da0343ef68ca3a1b93b4c73a7d0dab9c05bf5d3  downloads/Inside-Sales-Toolbox-Equipe-v3.5.11.zip
+e3c709ce0ab9c847ea2a1048d9adfdc0a0a5aab273548b5f8732135657a0c9a5  downloads/Inside-Sales-Toolbox-Equipe-v3.5.7.zip
+0449d8a800ee166e8132558b4ac5493af31e8cdd9abd993d95806be570ecb347  downloads/Inside-Sales-Toolbox-Equipe-v3.5.8-test.zip
+9d7ab84a1ac327b3cd411440e61c2444aace7c6a9dff38f79bd47854395c5cb4  downloads/Inside-Sales-Toolbox-Equipe-v3.5.9.zip
+ef2c604298963f13d511383b0eb0f031c3b4a767dd15fb896c87f59bc334e25a  downloads/Inside-Sales-Toolbox-Michael-v1.8.18.zip
+e18de18a0b1ef542888b14e99352bfe1fa1523ca91bc44c60ee5e4860aa0b54b  downloads/Solotech-Lead-D365-Equipe-v1.7.5.zip
+93f2cd9ee8035bedc76da2f254a778520d50226886e328633d183170c012fcfe  downloads/Solotech-Lead-D365-Michael-v1.7.4.zip
+d48e314df41daeacc93661085b9e7032b2e0e716793726a44a6e6477f9998a17  downloads/Solotech-Lead-vers-D365-Edge-v1.7.2.zip
+9402920aca8972c5d16c1b1a31c9ff99dbd5adb2ad930bd5c4b12bca1c166d18  downloads/price-list-finder-lab-v07.zip

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'none'; img-src 'self' data:; object-src 'none'; base-uri 'none'">
+  <title>Price List Finder | Laboratoire 0.7</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brandmark">S</span><div><div class="eyebrow">INSIDE SALES TOOLBOX <span class="dot">·</span> PROTOTYPE INDÉPENDANT</div><h1>Price List Finder <span>Lab</span></h1></div></div>
+      <span class="badge">LECTURE SEULE</span>
+    </header>
+    <p class="subhead">LAB 0.7 : fiabiliser le lien entre fabricant, SKU, prix public Excel et rabais du Procurement Portal. Les PDF demeurent des références à vérifier manuellement.</p>
+    <section class="card portal" aria-labelledby="portalTitle">
+      <div class="portal-heading">
+        <div><div class="step">ÉTAPE 01 · PROCUREMENT PORTAL <span>Procurement Portal</span></div><h2 id="portalTitle">Lire les règles de la fiche Salesforce</h2></div>
+        <span class="tag">ACTIVATION MANUELLE</span>
+      </div>
+      <p><strong>1.</strong> Ouvre la fiche « Price List » de MDG (ou d’un autre fournisseur) dans Salesforce. <strong>2.</strong> Sur cet onglet, clique sur l’icône du <strong>LAB 0.7</strong> dans la barre Edge. <strong>3.</strong> Dans la page qui s’ouvre, clique ici :</p>
+      <div class="actions"><button id="analyzePortal" class="button primary">Analyser la fiche Salesforce <span class="arr">→</span></button></div>
+      <div id="portalStatus" class="notice" role="status" aria-live="polite">En attente de l’onglet Salesforce…</div>
+      <div id="portalResults" hidden>
+        <div class="portal-result-header"><div><span class="eyebrow">FICHE EXTRAITE</span><h3 id="portalPage">Price List</h3></div><span id="portalCount" class="count">0 champ</span></div>
+        <div id="portalFields" class="portal-grid"></div>
+        <div class="portal-warning" id="portalWarnings" hidden></div>
+        <p class="portal-disclosure" id="portalDisclosure"></p>
+        <button class="button ghost" id="copyPortalDiagnostic" disabled>Copier le diagnostic SANS valeurs confidentielles</button>
+      </div>
+      <div class="notice muted">Une analyse lit uniquement les champs de la fiche courante. Aucune permission permanente sur Salesforce, aucun téléchargement réseau, aucun stockage, aucune écriture. Ne transmets pas de captures contenant des données confidentielles si les règles internes l’interdisent.</div>
+    </section>
+    <div class="moduleSeparator"><span>ÉTAPE 02 · RECHERCHE EXCEL / CSV + PDF</span></div>
+    <div class="cols">
+      <section class="card" aria-labelledby="step1title">
+        <div class="step">01 <span>Connecter</span></div>
+        <h2 id="step1title">Dossier de listes de prix</h2>
+        <p>Sélectionne <strong>Procurement Portal Canada</strong> pour toutes les marques, ou un dossier comme <strong>Shure</strong> pour un premier essai rapide.</p>
+        <button id="choose" class="button primary"><span class="symbol">▣</span> Choisir le dossier OneDrive</button>
+        <div class="selection" id="folder" role="status">Aucun dossier sélectionné</div>
+        <div class="metrics" id="metrics" hidden>
+          <div><strong id="currentCount">0</strong><small>Excel / CSV courants</small></div>
+          <div><strong id="archiveCount">0</strong><small>Excel / CSV archivés</small></div>
+          <div><strong id="pdfCount">0</strong><small>PDF disponibles</small></div>
+          <div><strong id="errCount">0</strong><small>Erreurs dossier</small></div>
+        </div>
+        <div class="notice" id="folderStatus" role="status" aria-live="polite">L'accès est temporaire. Tu choisiras le dossier de nouveau en rouvrant ce test.</div>
+      </section>
+      <section class="card" aria-labelledby="step2title">
+        <div class="step">02 <span>Rechercher</span></div>
+        <h2 id="step2title">Trouver un SKU</h2>
+        <div class="fields">
+          <div class="field"><label for="sku">SKU / Manufacturer Part Number</label><input type="text" id="sku" placeholder="Ex. ULXD4-G50" autocomplete="off" spellcheck="false"></div>
+          <div class="field"><label for="brand">Fabricant / dossier (facultatif)</label><input type="text" id="brand" placeholder="Ex. Shure" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <label class="checkbox"><input type="checkbox" id="includePdf" checked> <span>Inclure les <strong>PDF</strong> (lecture de texte expérimentale, vérification manuelle)</span></label>
+        <label class="checkbox"><input type="checkbox" id="archives"> <span>Inclure les dossiers <strong>Archived / Archives</strong> (anciens prix)</span></label>
+        <div class="actions"><button id="search" class="button primary" disabled>Rechercher les prix (Excel / PDF) <span class="arr">→</span></button><button id="cancel" class="button ghost" disabled>Arrêter</button></div>
+        <div class="notice muted">Priorité aux Excel/CSV courants. Si un PDF est sélectionné, le moteur recherche le SKU dans le texte lorsqu’il est extractible, sans choisir de prix automatiquement. Les archives sont exclues par défaut.</div>
+      </section>
+    </div>
+    <section class="card results" id="resultPanel" hidden>
+      <div class="resultHeader"><div><div class="step">03 <span>Vérifier</span></div><h2>Résultats de recherche</h2></div><span id="resultCount" class="count">0 correspondance</span></div>
+      <div class="progressArea"><div class="progressTrack"><div class="progressValue" id="progressBar"></div></div><p id="progressText" role="status" aria-live="polite"></p></div>
+      <div id="results" class="resultList"></div>
+      <details class="errors" id="errorsBox" hidden><summary>Fichiers ignorés ou impossibles à analyser (<span id="errorNum">0</span>)</summary><div id="errorsList"></div></details>
+    </section>
+
+    <section class="card cost" id="costPanel" aria-labelledby="costTitle">
+      <div class="step">04 <span>Calculer · LAB 0.7</span></div>
+      <h2 id="costTitle">Coût négocié · calcul assisté</h2>
+      <p>Sélectionne explicitement un prix <strong>public / Retail</strong> trouvé dans Excel/CSV. Pour un PDF, vérifie le document et saisis le prix manuellement. Confirme la catégorie et le programme tarifaire : aucune règle spéciale n’est appliquée automatiquement.</p>
+      <div class="costMeta"><strong id="costSupplier">Aucune fiche Procurement Portal analysée</strong><span id="costSourceRule">Analyse une fiche Salesforce pour charger les conditions tarifaires.</span></div>
+      <div class="fields">
+        <div class="field"><label for="costPublic">Prix de base de la liste</label><input id="costPublic" type="text" inputmode="decimal" autocomplete="off" placeholder="Ex. 427,00"></div>
+        <div class="field"><label for="costCurrency">Devise du prix de base</label><input id="costCurrency" type="text" maxlength="3" placeholder="CAD" autocomplete="off"></div>
+      </div>
+      <div id="costCandidate" class="notice muted">Aucune source active. Choisis le prix public dans un résultat Excel ou une référence PDF pour saisie manuelle. Une nouvelle sélection remplace la précédente.</div>
+      <div id="costMatch" class="costCaution"></div>
+      <div class="field"><label for="costCategory">Catégorie du produit (confirmation requise pour les règles MDG)</label>
+        <select id="costCategory">
+          <option value="">Sélectionne ou confirme la catégorie...</option>
+          <option value="fog">Liquide à fumée / Fog fluids</option>
+          <option value="generator">Génératrice / Accessoires</option>
+          <option value="other">Autre ou catégorie non identifiée</option>
+        </select>
+      </div>
+      <div class="field"><label for="costProgram">Règle / programme tarifaire (sélection manuelle)</label><select id="costProgram"><option value="">Sélectionne un programme ou un rabais...</option></select></div>
+      <div id="costCustomWrap" class="field" hidden><label for="costCustom">Rabais manuel, en %</label><input type="text" id="costCustom" inputmode="decimal" autocomplete="off" placeholder="Ex. 30"></div>
+      <div id="costRentalNote" class="notice bad" hidden>Des modalités « Discount for Rental » ont été trouvées dans la fiche. Elles ne sont pas proposées comme règle standard : vérifie les conditions particulières si c’est une opération de location.</div>
+      <div class="costOutput"><span>COÛT ESTIMÉ · NON CONFIRMÉ D365</span><strong id="costResult">À calculer</strong><div id="costFormula"></div></div>
+      <label class="checkbox costCheck"><input type="checkbox" id="costConfirm"> <span>J’ai vérifié le produit, la bonne liste, la devise, la catégorie, les dates et l’applicabilité du programme.</span></label>
+      <div id="costStatus" class="notice" aria-live="polite">En attente.</div>
+      <div class="actions"><button type="button" id="costCopy" class="button primary">Copier le coût estimé</button><button type="button" id="costClear" class="button ghost">Effacer le prix</button></div>
+      <div class="notice muted">Traitement local uniquement, sans envoi de données ni modification de D365. Le lecteur PDF est expérimental : il ne comprend pas les tableaux complexes, les PDF numérisés ou certains encodages de police. Vérification humaine obligatoire.</div>
+    </section>
+    <footer>
+      <div><strong>Ce que cette version fait</strong><p>Lit localement les .xlsx, .xlsm et .csv; cherche les SKU; affiche le coût candidat et son origine; tente de repérer les SKU dans les PDF texte (lecture expérimentale).</p></div>
+      <div><strong>Ce qu’elle ne fait pas encore</strong><p>Pas de lecture fiable de tous les tableaux PDF ni d’OCR, pas de .xls ancien format, pas de validation automatique des dates ou des conditions spéciales; aucune lecture ni écriture D365.</p></div>
+      <div class="privacy">Permission temporaire activeTab uniquement sur l’onglet où tu cliques · Aucun serveur · Aucun prix sauvegardé · Aucun fichier modifié · Traitement dans Edge seulement</div>
+    </footer>
+  </main>
+  <script src="cost-lab.js"></script>
+  <script src="portal.js"></script>
+  <script src="xlsx-lite.js"></script>
+  <script src="price-extractor.js"></script>
+  <script src="pdf-lite.js"></script>
+  <script src="lab.js"></script>
+</body>
+</html>

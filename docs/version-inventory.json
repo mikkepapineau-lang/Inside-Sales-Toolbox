@@ -1,0 +1,573 @@
+{
+  "schema_version": 1,
+  "recovered_at": "2026-10-20",
+  "scope": "Inside Sales Toolbox et son précurseur Salesforce vers D365",
+  "reconstruction": "Historique reconstruit à partir des fichiers conservés. Les dates Git sont des dates d’importation, non les dates originales de développement. Les parents entre états expriment un ordre de classement, pas une filiation de code prouvée.",
+  "snapshots": [
+    {
+      "edition": "lead",
+      "version": "1.7.2",
+      "kind": "release-archive",
+      "git_ref": "versions/lead-v1.7.2",
+      "source_path": "downloads/Solotech-Lead-vers-D365-Edge-v1.7.2.zip",
+      "source_sha256": "d48e314df41daeacc93661085b9e7032b2e0e716793726a44a6e6477f9998a17",
+      "source_bytes": 53222,
+      "source_prefix": "solotech-lead-bridge/",
+      "source_root": "project/solotech-lead-bridge",
+      "source_file_count": 25,
+      "observed_modified_at": "2026-09-29T00:04:41.551688Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "michael",
+      "version": "1.7.4",
+      "kind": "release-archive",
+      "git_ref": "versions/michael-v1.7.4",
+      "source_path": "downloads/Solotech-Lead-D365-Michael-v1.7.4.zip",
+      "source_sha256": "93f2cd9ee8035bedc76da2f254a778520d50226886e328633d183170c012fcfe",
+      "source_bytes": 41725,
+      "source_prefix": "solotech-lead-bridge/",
+      "source_root": "project/inside-sales-toolbox-personal",
+      "source_file_count": 19,
+      "observed_modified_at": "2026-10-02T13:28:33.704445Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "equipe",
+      "version": "1.7.5",
+      "kind": "release-archive",
+      "git_ref": "versions/equipe-v1.7.5",
+      "source_path": "downloads/Solotech-Lead-D365-Equipe-v1.7.5.zip",
+      "source_sha256": "e18de18a0b1ef542888b14e99352bfe1fa1523ca91bc44c60ee5e4860aa0b54b",
+      "source_bytes": 38304,
+      "source_prefix": "solotech-lead-bridge/",
+      "source_root": "project/inside-sales-toolbox-team",
+      "source_file_count": 19,
+      "observed_modified_at": "2026-10-02T14:12:53.858419Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.18",
+      "kind": "release-archive",
+      "git_ref": "versions/michael-v1.8.18",
+      "source_path": "downloads/Inside-Sales-Toolbox-Michael-v1.8.18.zip",
+      "source_sha256": "ef2c604298963f13d511383b0eb0f031c3b4a767dd15fb896c87f59bc334e25a",
+      "source_bytes": 181677,
+      "source_prefix": "",
+      "source_root": "project/inside-sales-toolbox-personal",
+      "source_file_count": 54,
+      "observed_modified_at": "2026-10-14T13:46:10.498763Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "equipe",
+      "version": "base-3.5.6-20261017",
+      "kind": "working-checkpoint",
+      "git_ref": "checkpoints/equipe-base3.5.6-20261017",
+      "source_path": "archives/Inside-Sales-Toolbox-Working-Source.json",
+      "source_sha256": "b3a16c520871ff3843e27a70cd9fc6f1094c5d6609b5433d34029171043e147c",
+      "stored_sha256": "b3a16c520871ff3843e27a70cd9fc6f1094c5d6609b5433d34029171043e147c",
+      "source_bytes": 6305100,
+      "source_file_count": 124,
+      "source_root": "project/inside-sales-toolbox-team",
+      "base_release": "3.5.6",
+      "checkpoint_updated_at": "2026-10-17T22:25:40.226806+00:00",
+      "status": "Unexported: registered related-frame reader and coordinated SUBREGION/table extraction"
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.7",
+      "kind": "release-archive",
+      "git_ref": "versions/equipe-v3.5.7",
+      "source_path": "downloads/Inside-Sales-Toolbox-Equipe-v3.5.7.zip",
+      "source_sha256": "e3c709ce0ab9c847ea2a1048d9adfdc0a0a5aab273548b5f8732135657a0c9a5",
+      "source_bytes": 1164028,
+      "source_prefix": "",
+      "source_root": "project/inside-sales-toolbox-team",
+      "source_file_count": 73,
+      "observed_modified_at": "2026-10-18T04:13:01.429761Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.8",
+      "kind": "release-archive",
+      "git_ref": "versions/equipe-v3.5.8-test",
+      "source_path": "downloads/Inside-Sales-Toolbox-Equipe-v3.5.8-test.zip",
+      "source_sha256": "0449d8a800ee166e8132558b4ac5493af31e8cdd9abd993d95806be570ecb347",
+      "source_bytes": 1187600,
+      "source_prefix": "",
+      "source_root": "project/inside-sales-toolbox-team",
+      "source_file_count": 73,
+      "observed_modified_at": "2026-10-19T15:30:38.570430Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.9",
+      "kind": "release-archive",
+      "git_ref": "versions/equipe-v3.5.9",
+      "source_path": "downloads/Inside-Sales-Toolbox-Equipe-v3.5.9.zip",
+      "source_sha256": "9d7ab84a1ac327b3cd411440e61c2444aace7c6a9dff38f79bd47854395c5cb4",
+      "source_bytes": 1169411,
+      "source_prefix": "",
+      "source_root": "project/inside-sales-toolbox-team",
+      "source_file_count": 75,
+      "observed_modified_at": "2026-10-19T17:26:32.845884Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.10",
+      "kind": "release-archive",
+      "git_ref": "versions/equipe-v3.5.10",
+      "source_path": "downloads/Inside-Sales-Toolbox-Equipe-v3.5.10.zip",
+      "source_sha256": "b04aaafc1ca2dd543578bb351483c83f467e12c880d024983bd54fb9b2a0fc42",
+      "source_bytes": 1171660,
+      "source_prefix": "",
+      "source_root": "project/inside-sales-toolbox-team",
+      "source_file_count": 75,
+      "observed_modified_at": "2026-10-19T17:54:18.998663Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.11",
+      "kind": "release-archive",
+      "git_ref": "versions/equipe-v3.5.11",
+      "source_path": "downloads/Inside-Sales-Toolbox-Equipe-v3.5.11.zip",
+      "source_sha256": "1d47348165fe2ee7355daece7da0343ef68ca3a1b93b4c73a7d0dab9c05bf5d3",
+      "source_bytes": 1172558,
+      "source_prefix": "",
+      "source_root": "project/inside-sales-toolbox-team",
+      "source_file_count": 75,
+      "observed_modified_at": "2026-10-19T18:31:12.317430Z",
+      "date_meaning": "Dernière modification du fichier conservé; pas nécessairement la date de publication."
+    },
+    {
+      "edition": "equipe",
+      "version": "after-3.5.11-20261019",
+      "kind": "working-checkpoint",
+      "git_ref": "work/after-v3.5.11",
+      "source_path": "archives/Inside-Sales-Toolbox-Working-Source-2026-10-19.json.gz",
+      "source_sha256": "c6fa97799e5963f231d98329f77dbb07c22c08c07f5fe1321c06ceabd7316645",
+      "stored_sha256": "e61effeab2f3e94a7668457b535dccebee42a7102e862e12e7a27940c19d84b6",
+      "source_bytes": 6379483,
+      "source_file_count": 133,
+      "source_root": "project/inside-sales-toolbox-team",
+      "base_release": "3.5.11",
+      "checkpoint_updated_at": "2026-10-19T18:44:32.353224+00:00",
+      "status": "Unexported: reader 2.2.0 manipulates the measured custom Power BI scrollbar; all supplied Open Orders URLs reuse the report tab"
+    }
+  ],
+  "documentary_versions": [
+    {
+      "edition": "lead",
+      "version": "1",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.1",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.1.2",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.2.1",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.3.1",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.5",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.6",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.6.1",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.6.2",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.7",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "lead",
+      "version": "1.7.1",
+      "kind": "documentary-only",
+      "period": "2026-09-21 / 2026-09-29",
+      "evidence": "Conversations de développement retrouvées; première livraison nommée Solotech-Lead-vers-D365-Edge-v1.zip.",
+      "summary": "Précurseur Salesforce vers Dynamics; source complète non retrouvée pour ces versions.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.0",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.2",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.3",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.4",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.5",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.6",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.7",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.8",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.9",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.10",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.11",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.12",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.13",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.14",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.15",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.16",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "michael",
+      "version": "1.8.17",
+      "kind": "documentary-only",
+      "period": "2026-10-13 / 2026-10-14",
+      "evidence": "Conversations retrouvées; certains numéros sont corroborés par les notices conservées dans le ZIP 1.8.18.",
+      "summary": "Passage au Toolbox: coordonnées, HS, panneau latéral, recherche de produits et refonte visuelle. Le détail par version reste partiel.",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "2.0.0",
+      "kind": "documentary-only",
+      "period": "2026-10-14",
+      "evidence": "Conversations retrouvées; guide 2.0.1 conservé.",
+      "summary": "Refonte équipe, FR/EN, commandes Power BI, inventaire usagé et gestion des onglets.",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "2.0.1",
+      "kind": "documentary-only",
+      "period": "2026-10-14",
+      "evidence": "Conversations retrouvées; guide 2.0.1 conservé.",
+      "summary": "Refonte équipe, FR/EN, commandes Power BI, inventaire usagé et gestion des onglets.",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "2.1.0",
+      "kind": "documentary-only",
+      "period": "2026-10-14",
+      "evidence": "Conversations retrouvées; guide 2.0.1 conservé.",
+      "summary": "Refonte équipe, FR/EN, commandes Power BI, inventaire usagé et gestion des onglets.",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "2.1.1",
+      "kind": "documentary-only",
+      "period": "2026-10-14",
+      "evidence": "Conversations retrouvées; guide 2.0.1 conservé.",
+      "summary": "Refonte équipe, FR/EN, commandes Power BI, inventaire usagé et gestion des onglets.",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "2.1.2",
+      "kind": "documentary-only",
+      "period": "2026-10-14",
+      "evidence": "Conversations retrouvées; guide 2.0.1 conservé.",
+      "summary": "Refonte équipe, FR/EN, commandes Power BI, inventaire usagé et gestion des onglets.",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "2.1.4",
+      "kind": "documentary-only",
+      "period": "2026-10-14",
+      "evidence": "Conversations retrouvées; guide 2.0.1 conservé.",
+      "summary": "Refonte équipe, FR/EN, commandes Power BI, inventaire usagé et gestion des onglets.",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "2.2.0",
+      "kind": "documentary-only",
+      "period": "2026-10-14",
+      "evidence": "Conversations retrouvées; guide 2.0.1 conservé.",
+      "summary": "Refonte équipe, FR/EN, commandes Power BI, inventaire usagé et gestion des onglets.",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.0.0",
+      "kind": "documentary-only",
+      "period": "2026-10-15",
+      "evidence": "Conversation de développement retrouvée.",
+      "summary": "",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.4.1",
+      "kind": "documentary-only",
+      "period": "2026-10-16",
+      "evidence": "Conversations retrouvées; notices 3.5.4 et 3.5.5 conservées dans LIRE-MOI.html des ZIP récents.",
+      "summary": "",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.0",
+      "kind": "documentary-only",
+      "period": "2026-10-16",
+      "evidence": "Conversations retrouvées; notices 3.5.4 et 3.5.5 conservées dans LIRE-MOI.html des ZIP récents.",
+      "summary": "",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.1",
+      "kind": "documentary-only",
+      "period": "2026-10-16",
+      "evidence": "Conversations retrouvées; notices 3.5.4 et 3.5.5 conservées dans LIRE-MOI.html des ZIP récents.",
+      "summary": "",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.2",
+      "kind": "documentary-only",
+      "period": "2026-10-16",
+      "evidence": "Conversations retrouvées; notices 3.5.4 et 3.5.5 conservées dans LIRE-MOI.html des ZIP récents.",
+      "summary": "",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.3",
+      "kind": "documentary-only",
+      "period": "2026-10-16",
+      "evidence": "Conversations retrouvées; notices 3.5.4 et 3.5.5 conservées dans LIRE-MOI.html des ZIP récents.",
+      "summary": "",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.4",
+      "kind": "documentary-only",
+      "period": "2026-10-16",
+      "evidence": "Conversations retrouvées; notices 3.5.4 et 3.5.5 conservées dans LIRE-MOI.html des ZIP récents.",
+      "summary": "",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.5",
+      "kind": "documentary-only",
+      "period": "2026-10-16",
+      "evidence": "Conversations retrouvées; notices 3.5.4 et 3.5.5 conservées dans LIRE-MOI.html des ZIP récents.",
+      "summary": "",
+      "source_recovered": false
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.6",
+      "kind": "documentary-only",
+      "period": "2026-10-17",
+      "evidence": "Checkpoint baseRelease=3.5.6 et notices du ZIP 3.5.7.",
+      "summary": "Un checkpoint basé sur cette version existe; il ne constitue pas le ZIP original 3.5.6.",
+      "source_recovered": false
+    }
+  ],
+  "unconfirmed": [
+    "1.8.1",
+    "2.1.3",
+    "autres numéros intermédiaires non explicitement retrouvés"
+  ],
+  "notes": [
+    "Les noms et versions internes des notices anciennes peuvent être obsolètes. Le manifest et les empreintes des sources font foi pour chaque archive.",
+    "Les copies identiques du guide, du ZIP 3.5.7 et du checkpoint ancien sont dédupliquées.",
+    "Aucun ZIP manquant n’a été recréé depuis une version ultérieure.",
+    "Les références versions/* et checkpoints/* sont des branches Git; les tags préexistants sont conservés."
+  ]
+}

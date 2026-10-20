@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Inside Sales Toolbox | Price List Finder LAB",
+  "version": "0.7.0",
+  "description": "LAB local lecture seule : règles Procurement Portal Salesforce, recherche de SKU Excel OneDrive, calcul de coûts et liaison sécurisée des prix Excel et contrôle des sources PDF.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_title": "Analyser la fiche Procurement Portal avec Price List Finder LAB"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

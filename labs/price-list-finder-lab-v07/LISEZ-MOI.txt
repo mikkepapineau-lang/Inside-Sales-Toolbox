@@ -1,0 +1,49 @@
+PRICE LIST FINDER LAB 0.7 | Inside Sales Toolbox
+=============================================
+PROTOTYPE INDÉPENDANT, LECTURE SEULE (le Toolbox principal est inchangé)
+
+OBJECTIF DE LA 0.7
+Fiabiliser la source du prix : relier un produit et un tarif Excel au bon
+fabricant et à une règle du Procurement Portal sans mélanger les documents.
+Une reconnaissance contrôlée des listes MDG (A = SKU, B = description,
+C = montant) est ajoutée à titre de SUGGESTION, pas de preuve définitive.
+
+INSTALLATION
+1. Décompresse le ZIP dans un nouveau dossier.
+2. Ouvre edge://extensions et désactive le LAB 0.6 (garde le Toolbox principal actif).
+3. En mode développeur, clique « Charger l'extension décompressée ».
+4. Sélectionne price-list-finder-lab-v07 (le dossier contenant manifest.json).
+5. Ouvre dans Edge la fiche « Price List : MDG » du Procurement Portal.
+6. Clique sur l'icône du LAB 0.7 depuis cet onglet, puis « Analyser la fiche Salesforce ».
+7. Choisis ton dossier OneDrive « MDG ».
+8. Recherche NF-B4, PDF inclus, archives décochées.
+9. Sous la correspondance Excel, cherche « Vérifier et utiliser la colonne C ».
+10. Vérifie dans Excel que C correspond bien au prix PUBLIC de NF-B4.
+11. Clique pour récupérer le montant et la SOURCE Excel dans le calculateur.
+12. Choisis « Liquide à fumée », puis « 30 % · DISCOUNT ON FOG FLUIDS ».
+13. Le coût estimé doit être 298,90 CAD si le prix public est 427,00 CAD.
+14. Coche la confirmation après avoir vérifié liste/date/devise/produit.
+15. Optionnel : sélectionne « Référence PDF → calculateur » : le prix
+    Excel doit être EFFACÉ, car le PDF n'est pas lu comme tableau fiable.
+
+CORRECTIFS
+- Nettoie « Preview » dans les champs Manufacturer et Preferred Supplier.
+- N'interprète plus « VIR/GIR Program / Dealer Registration / Competitive Flip »
+  comme un prix « Upcoming Increase » dans une section vide.
+- Change de fabricant, de dossier, de SKU ou de source = réinitialisation du
+  prix et de la confirmation précédents pour éviter de mélanger les coûts.
+- Vérifie que la catégorie sélectionnée est compatible avec le rabais MDG.
+- Le prix Excel modifié à la main est signalé comme tel.
+- Les fichiers Archives/Archived sont exclus par défaut.
+
+CONFIDENTIALITÉ / LIMITES
+- Le dossier OneDrive est choisi via File System Access, lecture seule.
+- La fiche Salesforce n'est lue que dans l'onglet autorisé par un clic.
+- Aucun serveur externe, aucune donnée enregistrée, aucune écriture D365.
+- Pas d'OCR, ni de reconstruction fiable des tableaux PDF.
+- L'accès aux fichiers OneDrive « en ligne seulement » dépend de OneDrive.
+- Pour MDG, la colonne C est un montant CANDIDAT sans en-tête détecté.
+  La validité de la liste, la devise et la catégorie doivent être confirmées.
+- Les règles Rental / seuils volumes ne sont jamais appliquées automatiquement.
+- Un coût estimé n'est pas une preuve du coût réel D365.
+- Respecte les politiques de sécurité et de confidentialité de Solotech.
