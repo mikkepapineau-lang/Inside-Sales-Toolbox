@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Solotech · Lead vers D365</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+<header class="app-header"><div class="brand"><img class="bridge-logo" src="icons/bridge.svg" alt="Salesforce vers Dynamics 365"><div><span class="eyebrow">SOLOTECH</span><h1>Lead <span>→</span> D365</h1></div></div><button id="showD365" class="toolbar-button" title="Afficher l’onglet Dynamics 365">Ouvrir D365 <span aria-hidden="true">↗</span></button></header>
+<div class="lead-banner"><div class="avatar" id="leadInitials" aria-hidden="true">—</div><div class="lead-meta"><strong id="leadTitle">Aucun lead sélectionné</strong><span id="leadSubtitle">Commence par une fiche Salesforce</span></div><span class="version">v1.7.4 · Michael</span></div>
+<nav class="steps" role="tablist" aria-label="Étapes de création"><button id="tab-lead" role="tab" aria-selected="true" aria-controls="panel-lead" data-step="lead"><span>1</span> Lead</button><button id="tab-prospect" role="tab" aria-selected="false" aria-controls="panel-prospect" data-step="prospect" tabindex="-1"><span>2</span> Prospect</button><button id="tab-quote" role="tab" aria-selected="false" aria-controls="panel-quote" data-step="quote" tabindex="-1"><span>3</span> Soumission</button></nav>
+<div class="status-bar"><span class="status-dot" aria-hidden="true"></span><p id="status" role="status" aria-live="polite">Prêt à récupérer ton lead.</p></div>
+<section class="access-card"><button id="prepareAccess" class="secondary">Préparer tous les accès</button><p id="accessStatus">Autorise D365, la localisation et les sites HTTPS des compagnies.</p></section><main>
+<div id="panel-lead" role="tabpanel" aria-labelledby="tab-lead">
+<div class="panel-heading"><div><span class="eyebrow">ÉTAPE 01</span><h2>Les bonnes coordonnées.</h2></div></div>
+<button id="capture" class="primary">Récupérer le lead Salesforce <span aria-hidden="true">↓</span></button>
+<p id="source" class="source"></p>
+<div id="editor"></div>
+<p id="taxNote" class="note"></p>
+<details class="company-card"><summary>Retrouver les coordonnées de la compagnie</summary><p class="muted">À partir du domaine du courriel. Tu vérifies les coordonnées avant de les importer.</p><button id="searchCompany" class="secondary">Rechercher les coordonnées</button><div id="companyResults"></div></details>
+<button class="next-button" data-go="prospect">Suivant : créer le prospect <span aria-hidden="true">→</span></button>
+</div>
+<div id="successCard" class="success-card" role="status" hidden><span class="success-check">✓</span><strong>Prospect créé et vérifié dans D365</strong><p id="successAccount"></p></div><div id="panel-prospect" role="tabpanel" aria-labelledby="tab-prospect" hidden>
+<div class="panel-heading"><div><span class="eyebrow">ÉTAPE 02</span><h2>Créer le prospect.</h2><p class="muted">Prépare les champs, vérifie, puis confirme.</p></div><span class="company-tag">CAOP</span></div>
+<section class="action-card"><div class="action-title"><span class="number">01</span><div><h3>Préparer le formulaire</h3><p>Transférer les données vérifiées dans D365.</p></div></div><button id="fill" class="primary">Remplir le prospect</button><details class="report-card"><summary>Rapport du remplissage</summary><pre id="report">Le rapport apparaîtra après le remplissage.</pre></details></section>
+<section class="action-card"><div class="action-title"><span class="number">02</span><div><h3>Enregistrer le prospect</h3><p>Confirmer les données et créer le compte.</p></div></div><button id="createProspect" class="primary">Confirmer et créer le prospect</button><p class="fine-print">Enregistre le prospect, puis remplit et enregistre les dimensions financières ci-dessous.</p></section>
+<section class="dimension-card" hidden><div class="section-label">DIMENSIONS FINANCIÈRES</div><dl class="dimension-grid"><div><dt>Activity</dt><dd>ECOMM</dd></div><div><dt>Department</dt><dd>021</dd></div><div><dt>Division</dt><dd>003</dd></div><div><dt>Office</dt><dd>MONTREAL</dd></div></dl><label for="territory">Territory</label><select id="territory"></select><button id="locate" class="text-button">Proposer selon l’adresse <span aria-hidden="true">↗</span></button><p class="fine-print">MONTREAL si aucune adresse exploitable. La localisation transmet l’adresse à Photon/OpenStreetMap.</p><div id="locations"></div></section>
+<button class="next-button" data-go="quote">Continuer vers la soumission <span aria-hidden="true">→</span></button>
+</div>
+<div id="panel-quote" role="tabpanel" aria-labelledby="tab-quote" hidden>
+<div class="panel-heading"><div><span class="eyebrow">ÉTAPE 03</span><h2>Soumission - en développement.</h2><p class="muted">À partir du prospect créé dans D365.</p></div></div>
+<section class="quote-card"><div class="section-label">PARAMÈTRES DE LA SOUMISSION</div><div class="quote-setting"><span>Sales origin</span><b>ECOMM</b></div><div class="quote-setting"><span>Payment</span><b>PAYMENT IN ADVANCE</b></div><label for="warehouse">Warehouse</label><select id="warehouse"></select><div class="route"><span>Sell</span><i aria-hidden="true">→</i><span>Sales quotation</span><small>Colonne New</small></div><button id="quote" class="primary">Créer la soumission <span aria-hidden="true">→</span></button><p class="fine-print">Vérifie les dimensions, ouvre Sales quotation, remplit les paramètres et confirme avec OK.</p></section>
+<div class="help-card"><span class="help-icon" aria-hidden="true">?</span><div><h3>Une étape bloque ?</h3><p>Le message en haut indique où le parcours s’arrête. Le diagnostic aide à repérer les champs.</p><button id="diagnose" class="text-button">Diagnostic D365</button></div></div><textarea id="diagnostic" readonly hidden aria-label="Diagnostic à copier" rows="10"></textarea>
+<button class="next-button" data-go="prospect"><span aria-hidden="true">←</span> Revenir au prospect</button>
+</div>
+</main>
+<footer><span>Conservé pour cette session · 8 h</span><button id="clear" class="clear-button">Effacer le lead</button></footer>
+<script src="model.js"></script><script src="territory.js"></script><script src="popup.js"></script>
+</body></html>
