@@ -1,5 +1,5 @@
 (()=>{
-if(globalThis.solotechBridge?.version==='1.7.0')return;
+if(globalThis.solotechBridge?.version==='1.8.12')return;
 const visible=e=>!!(e.getClientRects().length)&&getComputedStyle(e).visibility!=='hidden';
 const norm=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[*:]/g,'').replace(/\s+/g,' ').trim();
 function roots(){const out=[document];for(let i=0;i<out.length;i++)for(const e of out[i].querySelectorAll('*'))if(e.shadowRoot)out.push(e.shadowRoot);return out;}
@@ -68,52 +68,73 @@ async function creditLimitYes(){
  if(['yes','oui'].includes(norm(e.value)))return 'Mandatory credit limit : Yes';
  return 'Mandatory credit limit : sélectionner Yes manuellement';
 }
-async function fill({scanToken,items,overwrite,type}){
+async function fill({scanToken,items,overwrite,type,onProgress=async()=>{}}){
 if(token!==scanToken)throw Error('Le formulaire a changé. Clique de nouveau sur Repérer les champs.');
 const identity=items.filter(i=>type==='Person'?['first','last'].includes(i.field):i.field==='company');
 if(!identity.length)throw Error('Champs d’identité introuvables. Vérifie le Type sélectionné dans D365.');
 const seen=new Set();for(const i of items){if(seen.has(i.key))throw Error('Un même champ D365 est associé deux fois. Corrige les associations.');seen.add(i.key);const e=elements.get(i.key);if(!e?.isConnected||!visible(e))throw Error('Le formulaire a changé. Repère les champs de nouveau.');}
-const report=[];
-for(const item of items){
+const report=[],total=items.length+1;
+const progress=async(current,label,state)=>{try{await onProgress({message:current+' / '+total+' · '+label+' · '+({writing:'en cours…',filled:'saisi',kept:'valeur conservée',warning:'à vérifier'}[state]),fields:{current,total,label,state}});}catch{/* Display updates must never interrupt a field commit. */}};
+for(let index=0;index<items.length;index++){
+const item=items[index];await progress(index,item.label,'writing');let outcome='warning';
+try{
 let e=elements.get(item.key);if(e&&!e.isConnected&&e.id)e=document.getElementById(e.id);if(!e?.isConnected||!visible(e)||e.disabled||e.readOnly){report.push(item.label+' : champ indisponible');continue;}
-if(!overwrite&&e.value.trim()&&e.value.trim()!==item.value){report.push(item.label+' : valeur existante conservée');continue;}
+if(!overwrite&&item.field!=='language'&&e.value.trim()&&e.value.trim()!==item.value){outcome='kept';report.push(item.label+' : valeur existante conservée');continue;}
 try{
 let v=item.value;if(e.tagName==='SELECT'){const o=Array.from(e.options).find(o=>norm(o.text)===norm(v)||norm(o.value)===norm(v));if(!o){report.push(item.label+' : option à sélectionner manuellement');continue;}v=o.value;}
-e.focus();const proto=e.tagName==='SELECT'?HTMLSelectElement.prototype:e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true,composed:true}));e.dispatchEvent(new Event('change',{bubbles:true}));e.blur();await new Promise(r=>setTimeout(r,220));report.push(item.label+(e.value===v?' : saisi — à vérifier dans D365':' : valeur non retenue, saisir manuellement'));
+e.focus();const proto=e.tagName==='SELECT'?HTMLSelectElement.prototype:e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true,composed:true}));e.dispatchEvent(new Event('change',{bubbles:true}));e.blur();await new Promise(r=>setTimeout(r,220));const current=e.isConnected?e:document.getElementById(e.id);outcome=current?.value===v&&current.getAttribute('aria-invalid')!=='true'?'filled':'warning';report.push(item.label+(outcome==='filled'?' : saisi, à vérifier dans D365':' : valeur non retenue, saisir manuellement'));
 }catch(err){report.push(item.label+' : saisie manuelle requise');}
+}finally{await progress(index+1,item.label,outcome);}
 }
-report.push(await creditLimitYes());
+await progress(items.length,'Mandatory credit limit','writing');const credit=await creditLimitYes();report.push(credit);await progress(total,'Mandatory credit limit',/ : Yes$/.test(credit)?'filled':'warning');
 return report;
 }
 
-async function changeType(type){
- scan();
- const candidates=Array.from(elements.values()).filter(e=>norm((Array.from(e.labels||[]).map(l=>l.innerText).join(' ')||e.getAttribute('aria-label')||document.getElementById(e.getAttribute('aria-labelledby'))?.textContent||''))==='type');
- if(candidates.length!==1)throw Error('Sélectionne '+type+' dans le champ Type de D365, puis réessaie.');
- const e=candidates[0];if(norm(e.value)===norm(type)||e.tagName==='SELECT'&&norm(e.selectedOptions[0]?.text)===norm(type))return;
- if(e.tagName==='SELECT'){const option=Array.from(e.options).find(o=>norm(o.text)===norm(type));if(!option)throw Error('Choisis '+type+' dans D365.');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(e,option.value);e.dispatchEvent(new Event('change',{bubbles:true}));}
- else{e.click();await new Promise(r=>setTimeout(r,250));const opts=query('[role=option]').filter(o=>visible(o)&&norm(o.innerText)===norm(type));if(opts.length!==1)throw Error('Choisis '+type+' dans D365 puis clique de nouveau sur Remplir.');opts[0].click();}
- await new Promise(r=>setTimeout(r,100));
+const typeValue=value=>({person:'Person',personne:'Person',organization:'Organization',organisation:'Organization'}[norm(value)]||'');
+function typeControl(){
+ const C=globalThis.D365Controls,label=e=>Array.from(e.labels||[]).map(l=>l.innerText).join(' ')||e.getAttribute('aria-label')||String(e.getAttribute('aria-labelledby')||'').split(/\s+/).map(id=>document.getElementById(id)?.textContent||'').join(' ');
+ let found=query('input,select,[role="combobox"]').filter(e=>visible(e)&&!e.disabled&&/^type(?:\s+(?:value|valeur))?(?:\s+(?:organization|organisation|person|personne))?$/.test(norm(label(e))));
+ found=found.filter(e=>!found.some(other=>other!==e&&e.contains?.(other)));
+ const scoped=C?found.filter(e=>C.formMatch(e,'DirPartyQuickCreateForm')):[];if(scoped.length)found=scoped;
+ if(found.length>1)throw Error('Champ Type ambigu dans Create prospect. Aucun choix automatique.');
+ return found[0]||null;
 }
-async function setType(type){
- const end=Date.now()+30000;
- // The heading appears before the form controls and before the type re-render completes.
- while(true){
-  try{scan();if(Array.from(elements.values()).some(e=>norm(Array.from(e.labels||[]).map(l=>l.innerText).join(' ')||e.getAttribute('aria-label')||document.getElementById(e.getAttribute('aria-labelledby'))?.textContent||'')==='type'))break;}catch{}
-  if(Date.now()>end)throw Error('Le formulaire prospect ne charge pas ses champs. Affiche D365 pour vérifier.');
-  await new Promise(r=>setTimeout(r,250));
+function selectedType(e){return typeValue(e?.selectedOptions?.[0]?.text)||typeValue(e?.getAttribute('aria-valuetext'))||typeValue(e?.value);}
+async function setType(type,{onBlocked}={}){
+ if(!['Person','Organization'].includes(type))throw Error('Type de prospect non reconnu.');
+ const wait=globalThis.D365Controls?.waitFor||async function(check,{timeout=18000}={}){const end=Date.now()+timeout;while(Date.now()<end){const value=check();if(value)return value;await new Promise(r=>setTimeout(r,200));}throw Error('Le formulaire prospect ne charge pas ses champs.');};
+ let control=await wait(()=>typeControl(),{onBlocked});
+ if(selectedType(control)!==type){
+  if(control.tagName==='SELECT'){
+   const option=Array.from(control.options).find(o=>typeValue(o.text)===type);
+   if(!option)throw Error('Option '+type+' introuvable dans le champ Type.');
+   control.focus();Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(control,option.value);
+   control.dispatchEvent(new Event('input',{bubbles:true}));control.dispatchEvent(new Event('change',{bubbles:true}));control.blur();
+  }else{
+   // F&O dropdowns may expose a read-only input. Select the real option instead of typing a label.
+   control.focus();control.click();let keyboardOpened=false;
+   const option=await wait(()=>{
+    const current=typeControl();if(!current)return false;
+    const ids=String(current.getAttribute('aria-controls')||current.getAttribute('aria-owns')||'').split(/\s+/).filter(Boolean),panels=ids.map(id=>document.getElementById(id)).filter(Boolean);
+    let options=query('[role="option"],[role="menuitemradio"]').filter(o=>visible(o)&&typeValue(o.innerText||o.textContent)===type);
+    if(panels.length)options=options.filter(o=>panels.some(p=>p===o||p.contains(o)));
+    if(options.length>1)throw Error('Option '+type+' ambiguë dans le champ Type. Aucun clic automatique.');
+    if(options.length===1)return options[0];
+    if(!keyboardOpened&&typeof KeyboardEvent!=='undefined'){keyboardOpened=true;current.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',code:'ArrowDown',altKey:true,bubbles:true}));}
+    return false;
+   },{timeout:12000,onBlocked});
+   option.click();
+  }
  }
- await changeType(type);
  let previous='',stable=0;
- while(Date.now()<end){
+ await wait(()=>{
+  control=typeControl();if(!control||selectedType(control)!==type)return false;
   const snapshot=scan(),map=Bridge.mapFields(snapshot.fields,type);
   const ready=(type==='Person'?['first','last']:['company']).every(k=>map[k]!==undefined);
   const signature=JSON.stringify(snapshot.fields.map(f=>[f.id,f.label]));
   stable=ready&&signature===previous?stable+1:0;previous=signature;
-  if(stable>=3)return;
-  await new Promise(r=>setTimeout(r,250));
- }
- throw Error('Les champs '+type+' ne sont pas prêts dans D365.');
+  return stable>=3;
+ },{onBlocked});
 }
 const savedButtons=new WeakSet();
 function prospectSaveButton(){
@@ -152,5 +173,5 @@ function createProspect(){
  savedButtons.add(button);button.click();
  return {clicked:true,message:'Save a été cliqué. Vérifie la confirmation ou les erreurs affichées dans D365 avant de passer à la soumission.'};
 }
-globalThis.solotechBridge={version:'1.7.0',read,scan,fill,setType,createProspect,prospectSaveButton};
+globalThis.solotechBridge={version:'1.8.12',read,scan,fill,setType,createProspect,prospectSaveButton};
 })();

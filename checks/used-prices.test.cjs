@@ -1,0 +1,18 @@
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+const c=vm.createContext({URL,Intl});vm.runInContext(fs.readFileSync('project/inside-sales-toolbox-team/used-catalogue.js','utf8'),c);const C=c.ToolboxUsedCatalogue;
+const headers=['SKU','D365 Item ID','QTY OWNED','MAX QTY TO SELL','QTY AVAILABLE','Sell Price','NBV','Description','Margin'];
+const base=C.create({headers,currency:'CAD',rows:[{values:['A','1','7','5','3','100','45','Original A','55 %']},{values:['B','2','8','6','2','200','90','Original B','55 %']}]},{at:Date.parse('2026-10-15T14:00:00Z')});
+const at=Date.parse('2026-10-16T14:00:00Z'),copy=x=>JSON.parse(JSON.stringify(x)),original=JSON.stringify(base);
+const incoming={headers,currency:'CAD',regions:['CANADA','UK','USA'],rows:[{values:['A','1','999','999','999','CAD $250.50','0','Different description','1 %']},{values:['B','2','999','999','999','500','','Different B','1 %']},{values:['NEW','3','9','9','9','30','10','New item','1 %']}]};
+let result=C.updatePrices(base,incoming,{at});assert.equal(JSON.stringify(base),original);assert.equal(result.rows.length,2);assert.equal(result.rows[0].values[5],'250.5');assert.equal(result.rows[0].values[6],'0');assert.equal(result.rows[0].values[7],'Original A');assert.equal(result.rows[0].values[8],'55 %');assert.deepEqual(copy(result.rows[0].values.slice(2,5)),['7','5','3']);assert.deepEqual(copy(result.rows[1]),copy(base.rows[1]));
+for(const key of ['at','dailyDate','quantityBatch','lastQuantityAt','lastQuantitySource','lastImport','lastImportStats'])assert.equal(result[key],base[key]);
+for(const key of ['qtyAt','qtySource','qtyBatch','qtyPartial'])assert.equal(result.rows[0][key],base.rows[0][key]);
+assert.equal(result.catalogueAt,at);assert.equal(result.lastFinancialUpdate.stats.updated,1);assert.equal(result.lastFinancialUpdate.stats.retained,1);assert.equal(result.lastFinancialUpdate.stats.incomplete,1);assert.equal(result.lastFinancialUpdate.stats.newItems,1);
+let data=copy(incoming);data.rows[0].values[5]='2 590,98 $';data.rows[0].values[6]='CAD 1,500.00';result=C.updatePrices(base,data,{at});assert.equal(result.rows[0].values[5],'2590.98');assert.equal(result.rows[0].values[6],'1500');
+data=copy(incoming);data.rows[0].values[5]='USD $250';assert.throws(()=>C.updatePrices(base,data,{at}),/numérique/);
+assert.throws(()=>C.updatePrices(base,{...incoming,currency:'USD'},{at}),/devise/);assert.throws(()=>C.updatePrices(base,{...incoming,currency:''},{at}),/devise/);
+data=copy(incoming);data.headers[6]='Other';assert.throws(()=>C.updatePrices(base,data,{at}),/Sell Price et NBV/);
+data=copy(incoming);data.rows=[data.rows[0],copy(data.rows[0])];assert.throws(()=>C.updatePrices(base,data,{at}),/correspond/);
+data=copy(incoming);data.rows=[data.rows[2]];assert.throws(()=>C.updatePrices(base,data,{at}),/correspond/);
+assert.equal(JSON.stringify(base),original);
+console.log('PASS financial-only updates, zero NBV, localized currency amounts, quantity/date/batch preservation, no item loss or fabricated new stock, blank/ambiguous match handling and currency guards');

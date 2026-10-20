@@ -1,0 +1,34 @@
+(()=>{
+ let language='fr';const originals=new WeakMap(),attrs=new WeakMap();let queued=false;
+ const raw='.source-value,input,textarea,pre,script,style,.used-card dd,.powerbi-customer,.powerbi-card dd,#powerbi-rep option,.product-sku,.product-description,.product-meta,.product-location,.product-all-values dd,.product-source-line h4,.product-warehouse-heading h4,#companyResults p,#locations p';
+ function translate(value){
+  if(language!=='en')return value;
+  const text=String(value),trim=text.trim(),dictionary=globalThis.ToolboxDictionary;
+  if(dictionary[trim])return text.replace(trim,dictionary[trim]);
+  const templates=[[/^((?:CANADA|UK|USA)(?: \+ (?:CANADA|UK|USA))*) · Clique sur Quantités pour charger cette sélection\.$/,'$1 · Click Quantities to load this selection.'],[/^(\d+) articles actualisés · (\d+) prix et NBV conservés\.$/,'$1 items updated · $2 prices and NBV preserved.'],[/^Combinaison Site \/ Warehouse invalide : (.+) \/ (.+)\. Choisis un entrepôt appartenant au site\.$/,'Invalid Site / Warehouse combination: $1 / $2. Select a warehouse belonging to the site.'],[/^Quantités ((?:CANADA|UK|USA)(?: \+ (?:CANADA|UK|USA))*) selon les filtres Power BI · Prix et NBV du catalogue\.$/,'$1 quantities under Power BI filters · Catalogue prices and NBV.'],[/^Aucun relevé vérifié pour (CANADA|UK|USA)\. Actualise les quantités\.$/,'No verified $1 snapshot. Refresh quantities.'],[/^(\d+) onglets ouverts ou réutilisés · groupe réduit\.$/,'$1 tabs opened or reused · group collapsed.'],[/^(\d+) actif\(s\)$/,'$1 active'],[/^(\d+) sélection\(s\)$/,'$1 selected'],[/^(\d+) \/ (\d+) valeur\(s\)$/,'$1 / $2 value(s)'],[/^Prix et NBV · Excel du /,'Prices and NBV · Excel dated '],[/^Prix et NBV · /,'Prices and NBV · '],[/^Dernier import prix et NBV · /,'Latest price and NBV import · '],[/ · total Power BI non confirmé$/,' · Power BI total unverified'],[/^Catalogue Excel · (\d+) lignes$/,'Excel catalogue · $1 rows'],[/^(\d+) mis à jour · (\d+) nouveaux · (\d+) conservés sans nouvelle quantité/,'$1 updated · $2 new · $3 kept without new quantities'],[/ · (\d+) correspondances ambiguës ignorées$/,' · $1 ambiguous matches skipped'],[/^Quantités récupérées · /,'Quantities retrieved · '],[/^Quantités · Excel du /,'Quantities · Excel dated '],[/^Prix et NBV importés · /,'Prices and NBV imported · '],[/^Prix et NBV · Excel du /,'Prices and NBV · Excel dated '],[/^(\d+) lignes source$/,'$1 source rows'],[/^(\d+) lignes récupérées · chargement en cours…$/,'$1 rows retrieved · loading…'],[/^Lecture partielle · (\d+) \/ (\d+) lignes annoncées$/,'Partial read · $1 / $2 reported rows'],[/^(\d+) article\(s\) · (\d+) \/ (\d+) ligne\(s\)$/,'$1 item(s) · $2 / $3 row(s)'],[/^Ligne source (\d+)$/,'Source row $1'],[/^(\d+) article\(s\) · (\d+) ligne\(s\) D365 affichée\(s\)$/,'$1 item(s) · $2 D365 row(s) displayed'],[/^v([\d.]+) · Équipe$/,'v$1 · Team'],[/^(\d+) ligne\(s\) chargée\(s\) depuis D365\.$/,'$1 row(s) loaded from D365.'],[/^Toutes les informations · (\d+) ligne\(s\)$/,'All details · $1 row(s)'],[/^Disponible : (.+)$/,'Available: $1'],[/^Emplacement : (.+)$/,'Location: $1'],[/^Ligne D365 (\d+) · emplacement non renseigné$/,'D365 row $1 · location not provided'],[/^Ligne D365 (\d+)$/,'D365 row $1'],[/^(\d+) article\(s\) · (\d+) ligne\(s\) D365 chargée\(s\)(.*)$/,'$1 item(s) · $2 D365 row(s) loaded$3'],[/ · (\d+) résultat\(s\) annoncés par D365$/,' · $1 result(s) reported by D365'],[/^À compléter : (.+)\.$/,'To complete: $1.'],[/^Accès à autoriser : (.+)$/,'Permissions to allow: $1'],[/^Accès manquant : (.+)\. Clique sur « Autoriser tous les accès » en haut du Toolbox\.$/,'Missing permission: $1. Click Allow all access at the top of the Toolbox.'],[/^(.+) remplis\. Vérifie puis enregistre dans D365\.$/,'$1 filled. Review and save in D365.']];
+  let output=text;for(const [pattern,replacement] of templates)output=output.replace(pattern,replacement);
+  if(output!==text){for(const [fr,en] of [['nom','name'],['téléphone valide','valid phone'],['courriel valide','valid email']])output=output.replace(new RegExp('\\b'+fr+'\\b','g'),en);return output;}
+  if(text.includes('\n'))return text.split('\n').map(translate).join('\n');return text;
+ }
+ function apply(){
+  queued=false;document.documentElement.lang=language==='en'?'en-CA':'fr-CA';
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
+  while(n=walker.nextNode()){
+   if(!n.nodeValue.trim()||n.parentElement?.closest(raw))continue;
+   let record=originals.get(n);if(!record||n.nodeValue!==record.last)record={fr:n.nodeValue,last:n.nodeValue};
+   const value=translate(record.fr);record.last=value;originals.set(n,record);if(n.nodeValue!==value)n.nodeValue=value;
+  }
+  for(const e of document.querySelectorAll('[placeholder],[title],[aria-label]')){
+   if(e.closest('.product-card'))continue;
+   let record=attrs.get(e)||{};
+   for(const name of ['placeholder','title','aria-label']){const current=e.getAttribute(name);if(current===null)continue;let r=record[name];if(!r||current!==r.last)r={fr:current,last:current};const next=translate(r.fr);r.last=next;record[name]=r;if(next!==current)e.setAttribute(name,next);}attrs.set(e,record);
+  }
+  for(const b of document.querySelectorAll('[data-ui-language]')){const v=String(b.dataset.uiLanguage===language);if(b.getAttribute('aria-pressed')!==v)b.setAttribute('aria-pressed',v);}
+ }
+ function schedule(){if(!queued){queued=true;queueMicrotask(apply);}}
+ for(const b of document.querySelectorAll('[data-ui-language]'))b.addEventListener('click',()=>{language=b.dataset.uiLanguage;apply();chrome.storage.local.set({toolboxLanguage:language});});
+ chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&changes.toolboxLanguage){language=changes.toolboxLanguage.newValue==='en'?'en':'fr';apply();}});
+ new MutationObserver(schedule).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label']});
+ chrome.storage.local.get(['toolboxLanguage','hsLanguage']).then(s=>{language=(s.toolboxLanguage||s.hsLanguage)==='en'?'en':'fr';apply();if(!s.toolboxLanguage)chrome.storage.local.set({toolboxLanguage:language});});
+ globalThis.ToolboxI18n={t:translate,get language(){return language;},apply};apply();
+})();

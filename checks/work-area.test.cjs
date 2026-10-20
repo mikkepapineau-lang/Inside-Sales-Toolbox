@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict'),{get,root,context:c,click,ready}=require('./redesign-preview/runtime.cjs');
+(async()=>{await ready;
+ const main=get('bridge-work-area'),bridge=get('tool-bridge');
+ assert.equal(main.children[0].id,'bridge-module-header');assert.equal(main.children[1].getAttribute('role'),'tablist');assert(main.contains(get('tab-lead')));assert.equal(bridge.querySelectorAll('.module-header').length,1);assert.equal(get('bridge-module-header').querySelector('h2').textContent,'Salesforce vers Dynamics');assert(!get('leadTitle').parentElement.parentElement.contains(root.querySelector('#tool-bridge .version')));
+ assert(main.contains(get('leadTitle')));assert(main.contains(get('status')));assert(main.contains(get('clear')));assert(main.contains(get('editor')));
+ assert(!main.contains(get('bridge-next')));assert(!main.contains(get('quote')));assert.equal(get('bridge-next').parentElement.parentElement,bridge);
+ assert.equal(root.querySelector('#panel-lead [data-go]'),null);assert.equal(root.querySelector('#tool-bridge .version').textContent,'v'+require('../project/inside-sales-toolbox-team/manifest.json').version+' · Équipe');
+ const fullStatus=get('status').textContent;await click(get('capture'));assert.equal(get('bridge-status-summary').textContent,get('status').textContent.split('\n')[0]);assert(get('status').textContent.includes('\n'));assert.equal(get('status').closest('details').open,false);assert.equal(get('capture-feedback').hidden,false);
+ const permissions=c.chrome.permissions,originalContains=permissions.contains,originalRequest=permissions.request;
+ permissions.contains=async()=>false;permissions.request=async()=>false;await c.ToolboxAccess.check();assert.equal(get('tool-access').hidden,false);assert.equal(root.querySelector('.access-details').open,false);
+ await c.ToolboxAccess.grant();assert.equal(root.querySelector('.access-details').open,true);assert(get('tool-access-state').textContent.includes('Certains accès'));
+ permissions.contains=originalContains;permissions.request=originalRequest;await c.ToolboxAccess.check();assert.equal(get('tool-access').hidden,true);
+ await click(get('bridge-next'));assert.equal(get('panel-prospect').hidden,false);assert.equal(get('bridge-next').hidden,false);
+ await click(get('bridge-next'));assert.equal(get('panel-quote').hidden,false);assert.equal(get('quote').hidden,false);assert.equal(get('bridge-next').hidden,true);
+ console.log('PASS scrolling context/messages/session actions, persistent Next/Create, one forward action per step, current version, summary/full messages, permission details and accepted-access dismissal');
+})().catch(e=>{console.error(e);process.exitCode=1;});
