@@ -32,8 +32,8 @@
  }
  function render(){
   const root=el('powerbi-results');root.replaceChildren();el('powerbi-refresh').disabled=status.state==='loading';
-  el('powerbi-status').textContent=status.state==='loading'?(status.message||'Lecture du rapport Power BI…'):status.state==='error'?status.message:data?'Lecture terminée.':'Clique sur Actualiser. Ready to PIK sera sélectionné automatiquement dans le rapport.';
-  el('powerbi-status').dataset.state=status.state||'idle';el('powerbi-status').hidden=!!data&&status.state!=='loading'&&status.state!=='error';
+  el('powerbi-status').textContent=status.state==='loading'?(status.message||'Lecture du rapport Power BI…'):status.message||(data?'Lecture terminée.':'Clique sur Actualiser. Ready to PIK sera sélectionné automatiquement dans le rapport.');
+  el('powerbi-status').dataset.state=status.state||'idle';el('powerbi-status').hidden=!!data&&status.state!=='loading'&&status.state!=='error'&&!status.message;
   const selected=data?M.select(data,filters):null;
   options('powerbi-delivery',selected?.deliveryChoices.filter(v=>!M.pickup(v))||[],'Tous les modes',[['@pickup','Ramassage · PICK UP'],['@other','Autres modes']]);
   options('powerbi-payment',selected?.paymentChoices||[],'Tous les paiements');

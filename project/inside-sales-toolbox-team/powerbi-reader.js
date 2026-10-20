@@ -1,6 +1,7 @@
 // DOM-only extraction of both virtualized axes. No report internals or private API.
 (()=>{
- const version='2.0.0',norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const version='2.1.0',norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ if(globalThis.ToolboxPowerBIReader?.version===version)return;
  const text=e=>String(e?.innerText||e?.textContent||e?.getAttribute?.('aria-label')||'').replace(/\s+/g,' ').trim();
  const noteText=e=>String(e?.innerText||e?.textContent||e?.getAttribute?.('aria-label')||'').replace(/\r\n?/g,'\n').replace(/[\t\u00a0\u202f]+/g,' ').trim();
  const visible=e=>!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&getComputedStyle(e).display!=='none';
@@ -21,19 +22,21 @@
   const leaf=found.filter(t=>!found.some(o=>o!==t&&t.root.contains(o.root)));
   return all?leaf:leaf.filter(t=>t.headers.some(orderHeader)&&t.headers.some(customerHeader));
  }
- function scrollAreas(root){
+ function visualNodes(root){
   const nodes=new Set([root,...root.querySelectorAll('*')]);
   // A visual can put its scrollbar beside, rather than inside, the ARIA grid.
   const containers=new Set([root.closest?.('.tableEx'),root.closest?.('.visual-container,.visualContainer')].filter(Boolean));
   for(const container of containers){nodes.add(container);for(const e of container.querySelectorAll('*'))nodes.add(e);}
   for(let p=root.parentElement,i=0;p&&i<4&&p!==document.body&&p!==document.documentElement;p=p.parentElement,i++){nodes.add(p);if(containers.has(p))break;}
-  return [...nodes].filter(e=>visible(e)&&(e.clientHeight>40&&e.scrollHeight>e.clientHeight+5||e.clientWidth>40&&e.scrollWidth>e.clientWidth+5));
+  return [...nodes].filter(visible);
  }
+ function scrollAreas(root){return visualNodes(root).filter(e=>e.clientHeight>40&&e.scrollHeight>e.clientHeight+5||e.clientWidth>40&&e.scrollWidth>e.clientWidth+5);}
  const vertical=e=>e.clientHeight>40&&e.scrollHeight>e.clientHeight+5;
  const horizontal=e=>e.clientWidth>40&&e.scrollWidth>e.clientWidth+5;
  const endY=e=>Number(e.scrollTop||0)+e.clientHeight>=e.scrollHeight-2;
  const endX=e=>Number(e.scrollLeft||0)+e.clientWidth>=e.scrollWidth-2;
- function diagnostic(){return {readerVersion:version,tables:tables(true).map(t=>({headers:t.headers,rowCount:t.root.querySelectorAll('[role="row"],tr,.row').length,scrollAreas:scrollAreas(t.root).map(e=>({horizontal:horizontal(e),vertical:vertical(e),left:e.scrollLeft||0,top:e.scrollTop||0,width:e.clientWidth,scrollWidth:e.scrollWidth,height:e.clientHeight,scrollHeight:e.scrollHeight}))})),gridCount:document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx').length,frame:location.origin,readyLabel:ready(),busy:busy(),...(lastScan?{scan:lastScan}:{})};}
+ function elementInfo(e){const css=getComputedStyle(e);return {tag:e.tagName||'',className:String(e.getAttribute?.('class')||e.className||'').slice(0,200),role:e.getAttribute?.('role')||'',overflowX:css.overflowX||'',overflowY:css.overflowY||'',horizontal:horizontal(e),vertical:vertical(e),left:e.scrollLeft||0,top:e.scrollTop||0,width:e.clientWidth,scrollWidth:e.scrollWidth,height:e.clientHeight,scrollHeight:e.scrollHeight};}
+ function diagnostic(){return {readerVersion:version,tables:tables(true).map(t=>({headers:t.headers,rowCount:t.root.querySelectorAll('[role="row"],tr,.row').length,scrollAreas:scrollAreas(t.root).map(elementInfo),scrollControls:visualNodes(t.root).filter(e=>e.getAttribute?.('role')==='scrollbar'||/scroll.?bar/i.test(String(e.getAttribute?.('class')||e.className||''))).slice(0,16).map(e=>({...elementInfo(e),orientation:e.getAttribute?.('aria-orientation')||'',valueNow:e.getAttribute?.('aria-valuenow'),valueMin:e.getAttribute?.('aria-valuemin'),valueMax:e.getAttribute?.('aria-valuemax')}))})),gridCount:document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx').length,frame:location.origin,readyLabel:ready(),busy:busy(),...(lastScan?{scan:lastScan}:{})};}
  async function ensureReady(){
   if(ready())return;
   const name=e=>[text(e),e.getAttribute('aria-label'),e.getAttribute('title')].filter(Boolean).some(s=>/^ready\s+to\s+pik$/i.test(String(s).trim()));
@@ -53,12 +56,33 @@
   if(!ready())return {error:'La page Ready to PIK n’est pas confirmée. Ouvre cette page du rapport.',diagnostic:diagnostic()};
   if(busy())return {error:'Power BI charge encore le rapport. Réessaie après le chargement.',diagnostic:diagnostic()};
   const scope=()=>JSON.stringify([...document.querySelectorAll('[role="combobox"]')].filter(visible).map(text)),initialScope=scope();
-  const areas=scrollAreas(root),xs=areas.filter(horizontal),ys=areas.filter(vertical),saved=areas.map(e=>[e,Number(e.scrollTop||0),Number(e.scrollLeft||0)]);
+  const areas=scrollAreas(root),ys=areas.filter(vertical),saved=areas.map(e=>[e,Number(e.scrollTop||0),Number(e.scrollLeft||0)]),savedNodes=new Set(areas),probed=new WeakMap();let xs=[];
   const columns=[],byPosition=new Map(),byName=new Map(),collected=new Map();
   const check=()=>{if(root.isConnected===false||!ready()||scope()!==initialScope)throw Error('Le rapport a changé pendant la lecture. Réessaie.');};
   const settled=async ms=>{await delay(ms);for(let i=0;i<12&&busy();i++)await delay(150);check();if(busy())throw Error('Power BI charge encore les cellules. Réessaie après le chargement.');};
   const dispatch=e=>e.dispatchEvent(new Event('scroll',{bubbles:true}));
   const left=()=>{for(const e of xs){e.scrollLeft=0;dispatch(e);}};
+  function refreshHorizontal(){
+   const candidates=scrollAreas(root).filter(horizontal),details=[];xs=[];
+   for(const e of candidates){
+    if(!savedNodes.has(e)){savedNodes.add(e);saved.push([e,Number(e.scrollTop||0),Number(e.scrollLeft||0)]);}
+    let result=probed.get(e);
+    if(!result){
+     const overflow=getComputedStyle(e).overflowX||'';
+     if(overflow==='visible'||overflow==='clip')result={movable:false,reason:'content-overflow'};
+     else{
+      const before=Number(e.scrollLeft||0),max=e.scrollWidth-e.clientWidth,target=before<max-1?Math.min(max,before+24):Math.max(0,before-24);
+      e.scrollLeft=target;const after=Number(e.scrollLeft||0);e.scrollLeft=before;
+      result={movable:Math.abs(after-before)>.5,reason:Math.abs(after-before)>.5?'native-scroll':'offset-unchanged'};
+      if(result.movable)dispatch(e);
+     }
+     probed.set(e,result);
+    }
+    details.push({...elementInfo(e),...result});if(result.movable&&e.isConnected!==false)xs.push(e);
+   }
+   lastScan.horizontalProbe={candidates:candidates.length,movable:xs.length,areas:details};
+   if(candidates.length&&!xs.length&&!headings(root).some(h=>notesHeader(h.label)))throw Error('Aucun conteneur horizontal n’a répondu au défilement. Utilise Diagnostic Power BI pour identifier la barre du tableau.');
+  }
   function position(column,index){
    if(!index)return;
    if(column.position&&column.position!==index||byPosition.has(index)&&byPosition.get(index)!==column)throw Error('Les colonnes ont changé pendant la lecture. Réessaie.');
@@ -106,7 +130,8 @@
    if(fragment.href)record.href=fragment.href;
   }
   async function sweep(){
-   lastScan.phase='Lecture des colonnes';left();await settled(250);
+   lastScan.phase='Lecture des colonnes';const previousTops=ys.map(e=>Number(e.scrollTop||0));refreshHorizontal();left();await settled(250);
+   if(ys.some((e,i)=>Math.abs(Number(e.scrollTop||0)-previousTops[i])>1))throw Error('Les lignes ont bougé pendant la préparation du défilement horizontal. Lecture annulée.');
    const tops=ys.map(e=>Number(e.scrollTop||0)),baseline=snapshot(),page=new Map(),anchors=new Map(),ignored=new Set();
    for(const row of baseline){
     if(row.order){merge(page,row.order,row);if(row.rowKey){if(anchors.has(row.rowKey)&&anchors.get(row.rowKey)!==row.order)throw Error('Index de ligne ambigu. Lecture annulée.');anchors.set(row.rowKey,row.order);}}
@@ -114,9 +139,9 @@
    }
    if(!page.size)throw Error('Aucune SO lisible à gauche du tableau. Essaie la vue accessible du tableau.');
    const baselineOrders=new Set(page.keys());
-   for(let step=0;xs.some(e=>!endX(e));step++){
+   for(let step=0;xs.some(e=>e.isConnected!==false&&!endX(e));step++){
     if(step>=32)throw Error('La dernière colonne n’a pas pu être atteinte. Aucune nouvelle donnée enregistrée.');
-    const before=xs.map(e=>Number(e.scrollLeft||0));
+    xs=xs.filter(e=>e.isConnected!==false);const before=xs.map(e=>Number(e.scrollLeft||0));
     for(const e of xs){e.scrollLeft=Math.min(e.scrollWidth-e.clientWidth,Number(e.scrollLeft||0)+Math.max(40,e.clientWidth*.75));dispatch(e);}
     await settled(200);lastScan.horizontalSteps++;
     if(ys.some((e,i)=>Math.abs(Number(e.scrollTop||0)-tops[i])>1))throw Error('Les lignes ont bougé pendant le défilement horizontal. Lecture annulée.');
@@ -148,8 +173,10 @@
    const ordered=columns.every(c=>c.position)?[...columns].sort((a,b)=>a.position-b.position):columns;
    const headers=ordered.map(c=>c.label),rows=[...collected.values()].map(record=>{const unreadColumns=ordered.map((c,i)=>record.values.has(c)?-1:i).filter(i=>i>=0);return {values:ordered.map(c=>record.values.get(c)??''),href:record.href,...(unreadColumns.length?{unreadColumns}:{})};});
    lastScan={...lastScan,headers,phase:'Lecture terminée'};
-   return {headers,rows,partial:true,limited:ys.some(e=>!endY(e)),steps:lastScan.verticalSteps,horizontalSteps:lastScan.horizontalSteps,diagnostic:diagnostic()};
-  }finally{for(const [e,top,left]of saved){e.scrollTop=top;e.scrollLeft=left;dispatch(e);}}
+   const warning=lastScan.horizontalSteps&&!headers.some(notesHeader)?'Le défilement a été effectué, mais Internal Notes n’est pas encore lisible dans le rapport. Consulte Diagnostic Power BI.':'';
+   return {headers,rows,partial:true,limited:ys.some(e=>!endY(e)),steps:lastScan.verticalSteps,horizontalSteps:lastScan.horizontalSteps,...(warning?{warning}:{}),diagnostic:diagnostic()};
+  }catch(e){lastScan={...lastScan,phase:'Lecture interrompue',error:e.message};throw e;}
+  finally{for(const [e,top,left]of [...saved].reverse()){if(e.isConnected===false)continue;e.scrollTop=top;e.scrollLeft=left;dispatch(e);}}
  }
  globalThis.ToolboxPowerBIReader={version,read,diagnostic,ensureReady};
 })();

@@ -52,7 +52,7 @@ async function readPowerBI(kind){
   stage='Lecture des Internal Notes';
   await chrome.storage.local.set({toolboxPowerBIStatus:{state:'loading',tabId:tab.id,message:'Lecture des Internal Notes dans les commandes D365 ouvertes…'}});
   try{result=(await collectPowerBIOrderNotes(result)).data;}catch{/* Missing notes must not discard a successful report read. */}
-  await chrome.storage.local.set({toolboxPowerBI:result,toolboxPowerBIStatus:{state:'done',tabId:tab.id}});return {count:result.rows.length};
+  await chrome.storage.local.set({toolboxPowerBI:result,toolboxPowerBIStatus:{state:'done',tabId:tab.id,...(result.warning?{message:result.warning}:{})}});return {count:result.rows.length};
  }catch(e){
   const raw=String(e.message||e),blocked=/blocked|cannot access|not allowed|denied/i.test(raw);
   const message=stage+' : '+raw+(blocked?' · Le navigateur refuse cette opération. Vérifie l’accès de l’extension à app.powerbi.com; si une politique de ton organisation le bloque, elle devra être autorisée par les TI.':'');

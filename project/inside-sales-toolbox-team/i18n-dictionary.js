@@ -537,6 +537,7 @@ Object.assign(globalThis.ToolboxDictionary,{
   "Lu dans D365":"Read from D365",
   "Source : Power BI":"Source: Power BI",
   "Lecture des Internal Notes dans les commandes D365 ouvertes…":"Reading Internal Notes from open D365 orders…",
+  "Le défilement a été effectué, mais Internal Notes n’est pas encore lisible dans le rapport. Consulte Diagnostic Power BI.":"The table was scrolled, but Internal Notes is still not readable in the report. Open Power BI diagnostics.",
   "Les Internal Notes apparaissent sous la SO. Si elles sont absentes du rapport, le Toolbox les lit dans les commandes déjà ouvertes dans D365.":"Internal Notes appear below the SO number. When they are missing from the report, the Toolbox reads them from orders already open in D365.",
   "Calcule ta marge et convertis tes montants.":"Calculate your margin and convert amounts.",
   "Prêt !":"Ready!"
