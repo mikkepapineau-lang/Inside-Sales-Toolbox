@@ -48,7 +48,10 @@ async function readPowerBI(kind){
   if(results.length!==1)throw Error(results.length?'Plusieurs tableaux lisibles détectés. Utilise Diagnostic Power BI.':frames.find(f=>f.result?.diagnostic?.tables?.length)?.result.error||frames.find(f=>f.frameId===0)?.result?.error||(frameWarning?'La page principale est accessible, mais une sous-fenêtre refuse la lecture. Utilise Diagnostic Power BI.':'Tableau non détecté. Ouvre Ready to PIK, puis utilise Diagnostic Power BI.'));
   await chrome.storage.session.set({powerBIResolvedURL:tab.url});
   await chrome.storage.local.set({toolboxPowerBIResolvedURL:tab.url});
-  const result={...results[0].result,tabId:tab.id,at:Date.now()};
+  let result={...results[0].result,tabId:tab.id,at:Date.now()};
+  stage='Lecture des Internal Notes';
+  await chrome.storage.local.set({toolboxPowerBIStatus:{state:'loading',tabId:tab.id,message:'Lecture des Internal Notes dans les commandes D365 ouvertes…'}});
+  try{result=(await collectPowerBIOrderNotes(result)).data;}catch{/* Missing notes must not discard a successful report read. */}
   await chrome.storage.local.set({toolboxPowerBI:result,toolboxPowerBIStatus:{state:'done',tabId:tab.id}});return {count:result.rows.length};
  }catch(e){
   const raw=String(e.message||e),blocked=/blocked|cannot access|not allowed|denied/i.test(raw);
@@ -59,4 +62,4 @@ async function readPowerBI(kind){
   throw Error(message);
  }finally{powerBIBusy=false;}
 }
-chrome.runtime.onMessage.addListener((m,s,reply)=>{if(s.id!==chrome.runtime.id||!['powerBIRead','powerBIOpen','powerBIDiagnostic','powerBIBind'].includes(m?.kind))return;readPowerBI(m.kind).then(value=>reply({value}),e=>reply({error:e.message}));return true;});
+chrome.runtime.onMessage.addListener((m,s,reply)=>{if(s.id!==chrome.runtime.id||!['powerBIRead','powerBIOpen','powerBIDiagnostic','powerBIBind','powerBIOrderNotes'].includes(m?.kind))return;(m.kind==='powerBIOrderNotes'?readPowerBIOrderNotes(m.order):readPowerBI(m.kind)).then(value=>reply({value}),e=>reply({error:e.message}));return true;});

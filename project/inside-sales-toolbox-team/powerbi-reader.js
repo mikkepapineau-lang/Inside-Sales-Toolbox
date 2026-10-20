@@ -2,6 +2,7 @@
 (()=>{
  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
  const text=e=>String(e?.innerText||e?.textContent||e?.getAttribute('aria-label')||'').replace(/\s+/g,' ').trim();
+ const noteText=e=>String(e?.innerText||e?.textContent||e?.getAttribute('aria-label')||'').replace(/\r\n?/g,'\n').replace(/[\t\u00a0\u202f]+/g,' ').trim();
  const visible=e=>!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&getComputedStyle(e).display!=='none';
  function tables(){
   const nodes=[...document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx')].filter(visible);
@@ -11,7 +12,8 @@
    const headers=headings.map(text),keys=headers.map(norm);
    const order=keys.findIndex(v=>/^(salesordernumber|sonumber|numerodecommande|numerocommande)$/.test(v));
    const customer=keys.findIndex(v=>/^(accountname|customername|nomducompte|nomduclient|customer|client)$/.test(v));
-   return {root,headers,order,customer};
+   const notes=keys.findIndex(v=>/^(internalnotes|internalnote|solinternalnotes|notesinternes|noteinterne)$/.test(v));
+   return {root,headers,order,customer,notes};
   }).filter(t=>t.order>=0&&t.customer>=0).filter((t,_,all)=>!all.some(o=>o!==t&&t.root.contains(o.root)));
  }
  function rows(t){
@@ -24,11 +26,12 @@
    const values=Array(t.headers.length).fill('');
    const indexed=cells.every(e=>Number(e.getAttribute('aria-colindex'))>0);
    if(!indexed&&cells.length!==t.headers.length)continue;
-   cells.forEach((cell,i)=>{const j=indexed?Number(cell.getAttribute('aria-colindex'))-1:i;if(j<values.length)values[j]=text(cell);});
+   const present=new Set();
+   cells.forEach((cell,i)=>{const j=indexed?Number(cell.getAttribute('aria-colindex'))-1:i;if(j>=0&&j<values.length){values[j]=j===t.notes?noteText(cell):text(cell);present.add(j);}});
    if(!/^SO-[A-Z0-9-]+$/i.test(values[t.order]))continue;
    const link=[...row.querySelectorAll('a[href]')].find(a=>text(a)===values[t.order]);
    let href='';try{const u=new URL(link?.getAttribute('href')||'',location.href);if(link&&u.protocol==='https:'&&u.hostname==='solotech.operations.dynamics.com')href=u.href;}catch{}
-   records.push({values,href});
+   records.push({values,href,...(t.notes>=0&&!present.has(t.notes)?{unreadColumns:[t.notes]}:{})});
   }
   return records;
  }

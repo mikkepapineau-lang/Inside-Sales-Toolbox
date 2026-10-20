@@ -530,6 +530,14 @@ Object.assign(globalThis.ToolboxDictionary,{
   "Trouve le stock neuf et usagé, au même endroit.":"Find new and used stock in one place.",
   "Quantités, prix et NBV du catalogue Power BI.":"Quantities, prices and NBV from the Power BI catalogue.",
   "Consulte et trie les commandes prêtes à préparer.":"Review and sort orders that are ready to pick.",
+  "Internal Notes vides.":"Internal Notes are empty.",
+  "Internal Notes non récupérées.":"Internal Notes have not been retrieved.",
+  "Lecture des Internal Notes…":"Reading Internal Notes…",
+  "Lire les Internal Notes dans D365":"Read Internal Notes from D365",
+  "Lu dans D365":"Read from D365",
+  "Source : Power BI":"Source: Power BI",
+  "Lecture des Internal Notes dans les commandes D365 ouvertes…":"Reading Internal Notes from open D365 orders…",
+  "Les Internal Notes apparaissent sous la SO. Si elles sont absentes du rapport, le Toolbox les lit dans les commandes déjà ouvertes dans D365.":"Internal Notes appear below the SO number. When they are missing from the report, the Toolbox reads them from orders already open in D365.",
   "Calcule ta marge et convertis tes montants.":"Calculate your margin and convert amounts.",
   "Prêt !":"Ready!"
 });
