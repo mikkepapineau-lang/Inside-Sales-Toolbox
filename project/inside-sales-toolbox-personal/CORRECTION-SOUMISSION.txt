@@ -1,0 +1,3 @@
+v1.8.5 : étape 3 corrigée
+Les dimensions du prospect restent gérées à l’étape 2. L’étape 3 ouvre New Sales Quotation et remplit Sales origin ECOMM, Payment PAYMENT IN ADVANCE et Warehouse sélectionné, puis clique OK. Elle ne vérifie plus les champs du prospect comme Personal title.
+Remplace les fichiers de ton extension et actualise-la dans edge://extensions.

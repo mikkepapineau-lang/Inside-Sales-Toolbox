@@ -1,5 +1,5 @@
 (()=>{
- const el=id=>document.getElementById(id),M=ToolboxOrderModel;let data=null,status={},filters=M.state(),touched=false,timer;
+ const el=id=>document.getElementById(id),M=ToolboxOrderModel;let data=null,status={},filters=M.state(),touched=false,timer;const noteStates=new Map();
  const {node,row:recordRow,fieldList,diagnostics,time}=ToolboxList;
  function options(id,values,placeholder,special=[]){
   const select=el(id),chosen=filters[id==='powerbi-delivery'?'delivery':'payment'];select.replaceChildren();
@@ -7,10 +7,33 @@
   if(chosen&&!special.some(([v])=>v===chosen)&&!values.includes(chosen)){const o=node('option','source-value',chosen);o.value=chosen;select.append(o);}select.value=chosen;
  }
  function controls(){el('powerbi-query').value=filters.query;el('powerbi-sort').value=filters.sort;}
+ async function readNotes(order){
+  if(noteStates.get(order)?.loading)return;
+  noteStates.set(order,{loading:true});render();
+  try{const response=await chrome.runtime.sendMessage({kind:'powerBIOrderNotes',order});if(response?.error)throw Error(response.error);noteStates.delete(order);}
+  catch(e){noteStates.set(order,{error:e.message});}render();
+ }
+ function addNotes(record,r,selected){
+  const info=selected.notes(r),order=selected.value(r,'order'),state=noteStates.get(order);
+  if(info.value.trim())record.querySelector('.record-heading').append(node('span','record-order-notes source-value',info.value));
+  const notesColumn=M.columns(data.headers).notes,headers=data.headers.filter((_,i)=>i!==notesColumn),values=r.values.filter((_,i)=>i!==notesColumn);
+  const fields=fieldList(headers,values),pair=node('div','order-notes-field');
+  pair.append(node('dt','','Internal Notes'),node('dd',info.available?'source-value':'order-notes-empty',info.available?(info.value||'Internal Notes vides.'):'Internal Notes non récupérées.'));
+  // Empty is a confirmed result, while unavailable must remain explicit.
+  if(info.available&&!info.value)pair.children[1].className='order-notes-empty';
+  fields.append(pair);record.append(fields);
+  const footer=node('div','order-notes-footer');
+  if(info.available){const source=node('span','order-notes-source',info.source==='D365'?'Lu dans D365':'Source : Power BI');if(info.at)source.append(node('time','source-value',' · '+time(info.at)));footer.append(source);}
+  if(info.source!=='Power BI'){
+   const button=node('button','text-button order-notes-button',state?.loading?'Lecture des Internal Notes…':'Lire les Internal Notes dans D365');button.type='button';button.disabled=!!state?.loading||status.state==='loading';button.setAttribute('aria-busy',String(!!state?.loading));button.onclick=()=>readNotes(order);footer.append(button);
+  }
+  if(state?.error){const message=node('p','order-notes-error',state.error);message.setAttribute('role','status');footer.append(message);}
+  if(footer.children.length)record.append(footer);
+ }
  function render(){
   const root=el('powerbi-results');root.replaceChildren();el('powerbi-refresh').disabled=status.state==='loading';
-  el('powerbi-status').textContent=status.state==='loading'?'Lecture du rapport Power BI…':status.state==='error'?status.message:data?'Lecture terminée.':'Clique sur Actualiser. Ready to PIK sera sélectionné automatiquement dans le rapport.';
-  el('powerbi-status').dataset.state=status.state||'idle';el('powerbi-status').hidden=!!data&&status.state!=='loading'&&status.state!=='error';
+  el('powerbi-status').textContent=status.state==='loading'?(status.message||'Lecture du rapport Power BI…'):status.message||(data?'Lecture terminée.':'Clique sur Actualiser. Ready to PIK sera sélectionné automatiquement dans le rapport.');
+  el('powerbi-status').dataset.state=status.state||'idle';el('powerbi-status').hidden=!!data&&status.state!=='loading'&&status.state!=='error'&&!status.message;
   const selected=data?M.select(data,filters):null;
   options('powerbi-delivery',selected?.deliveryChoices.filter(v=>!M.pickup(v))||[],'Tous les modes',[['@pickup','Ramassage · PICK UP'],['@other','Autres modes']]);
   options('powerbi-payment',selected?.paymentChoices||[],'Tous les paiements');
@@ -22,7 +45,7 @@
    if(group!==null&&group!==previousGroup){root.append(node('h3','order-group-heading source-value',globalThis.ToolboxI18n?.t(group)||group));previousGroup=group;}
    const meta=[];for(const [key,label]of [['delivery',''],['payment',''],['qty','Réservé']])if(val(key))meta.push({label,value:val(key)});
    const record=recordRow({key:'order:'+val('order'),code:val('customer')||val('order'),name:val('customer')?val('order'):'',amount:val('amount'),href:r.href,host:'solotech.operations.dynamics.com',meta});
-   record.append(fieldList(data.headers,r.values));root.append(record);
+   addNotes(record,r,selected);root.append(record);
   }
   if(!selected.rows.length)root.append(node('p','muted','Aucune commande ne correspond aux filtres locaux.'));
  }

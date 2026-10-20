@@ -1,0 +1,6 @@
+v1.8.9 · Résultats dans le panneau latéral
+Sélectionne un SKU sur une page puis clic droit → Inside Sales Toolbox → Rechercher dans D365 · Product Search. Le panneau latéral s’ouvre; le texte est recherché dans un onglet D365 dédié en arrière-plan.
+Le panneau reprend les colonnes et lignes chargées dans la grille Product Search. Défile horizontalement pour voir les colonnes de stock et d’entrepôt. Une cellule vide reste « Non renseigné », jamais zéro. Le total retourné et le nombre de lignes affichées peuvent différer si D365 ne charge qu’une partie des lignes.
+Tu peux lancer une nouvelle recherche depuis le panneau ou ouvrir la page avec Ouvrir dans D365.
+Si la grille n’est pas reconnue ou si la mise à jour des résultats n’est pas confirmée, aucun ancien résultat n’est présenté comme nouveau. Un message permet d’ouvrir D365 pour vérifier. Une connexion active est nécessaire.
+L’extraction repose sur la grille accessible D365 et doit être validée dans ton Edge. Remplace les fichiers puis actualise dans edge://extensions.

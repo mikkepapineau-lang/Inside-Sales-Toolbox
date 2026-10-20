@@ -37,7 +37,7 @@ importScripts('product-search.js','contact-model.js','context-menu.js');
 
 importScripts('google-address-worker.js');
 
-importScripts('powerbi-worker.js');
+importScripts('order-model.js','order-notes-worker.js','powerbi-worker.js');
 
 importScripts('used-catalogue.js','used-regions.js','used-powerbi-worker.js');
 importScripts('workspace-worker.js');

@@ -1,56 +1,45 @@
-# Inside Sales Toolbox Équipe
+# Inside Sales Toolbox
 
-Extension locale Microsoft Edge pour les ventes internes. Les utilisateurs conservent leurs propres sessions Salesforce, Dynamics 365 et Power BI.
+Extension Microsoft Edge pour les ventes internes, issue du projet Salesforce vers Dynamics commencé le 21 septembre 2026.
 
-## Versions disponibles
+**9 archives originales et 2 checkpoints récupérés.** Les premières versions dont les sources manquent sont recensées dans l’[historique détaillé](docs/HISTORIQUE.md). Cet inventaire distingue les fichiers disponibles et les simples mentions historiques.
 
-| Référence | Ce qui est réellement disponible |
+## Télécharger
+
+- [Équipe 3.5.11](downloads/Inside-Sales-Toolbox-Equipe-v3.5.11.zip) : dernière archive numérotée retrouvée.
+- [Équipe 3.5.10](downloads/Inside-Sales-Toolbox-Equipe-v3.5.10.zip), [3.5.9](downloads/Inside-Sales-Toolbox-Equipe-v3.5.9.zip), [3.5.8-test](downloads/Inside-Sales-Toolbox-Equipe-v3.5.8-test.zip) et [3.5.7](downloads/Inside-Sales-Toolbox-Equipe-v3.5.7.zip).
+- [Michaël 1.8.18](downloads/Inside-Sales-Toolbox-Michael-v1.8.18.zip).
+- Précurseurs : [Lead 1.7.2](downloads/Solotech-Lead-vers-D365-Edge-v1.7.2.zip), [Michaël 1.7.4](downloads/Solotech-Lead-D365-Michael-v1.7.4.zip), [Équipe 1.7.5](downloads/Solotech-Lead-D365-Equipe-v1.7.5.zip).
+
+Sur la page d’un ZIP dans GitHub, utiliser **Download raw file**. Pour mettre à jour une installation existante, remplacer les fichiers dans son dossier actuel, actualiser l’extension dans `edge://extensions`, puis actualiser les onglets concernés et rouvrir le panneau. Les éditions personnelle et équipe ont des dossiers distincts.
+
+## Sources et historique
+
+| Dossier / référence | Contenu |
 | --- | --- |
-| Premières versions à 3.5.6 | Archives sources absentes de cette session. Aucun historique reconstruit artificiellement. |
-| Guide 2.0.1 | Documentation historique seulement, dans `docs/`. |
-| Checkpoint basé sur 3.5.6 | Source et tests originaux dans `archives/Inside-Sales-Toolbox-Working-Source.json`. Ce checkpoint ne constitue pas le ZIP de publication 3.5.6. |
-| 3.5.7 | ZIP original et sources correspondantes, référence Git `v3.5.7`. |
-| 3.5.8 de test | Sources courantes et ZIP de test, référence Git `v3.5.8-test`. Le correctif Power BI reste à valider dans la session de l'utilisateur. |
+| `project/inside-sales-toolbox-team/` | Sources exactes de l’archive Équipe 3.5.11. |
+| `project/inside-sales-toolbox-personal/` | Sources exactes de l’archive Michaël 1.8.18. |
+| `project/solotech-lead-bridge/` | Précurseur 1.7.2. |
+| Branches `versions/*` | Un commit par archive récupérée. |
+| `checkpoints/equipe-base3.5.6-20261017` | État de travail complet basé sur 3.5.6, pas le ZIP original de cette version. |
+| `work/after-v3.5.11` | État de travail non exporté du 19 octobre. Manifest 3.5.11, lecteur Power BI 2.2.0. |
+| `docs/HISTORIQUE.md` | Chronologie, versions documentées seulement, limites et différences entre archives. |
+| `archives/` | Checkpoints originaux, dont celui du 19 octobre compressé sans perte. |
+| `checks/` | Tests conservés du checkpoint ancien et correction de test déjà présente dans le dépôt. |
+| `labs/price-list-finder-lab-v07/` | Prototype indépendant déjà présent, conservé. |
 
-## Téléchargements
+Les commits et tags préexistants restent intacts. L’historique reconstruit est fusionné dans `main`; ses dates de commit sont celles de l’importation. Les versions sans sources ne sont pas recréées à partir d’un code ultérieur.
 
-- [Équipe 3.5.7 originale](downloads/Inside-Sales-Toolbox-Equipe-v3.5.7.zip)
-- [Équipe 3.5.8 de test](downloads/Inside-Sales-Toolbox-Equipe-v3.5.8-test.zip)
-- [Price List Finder LAB 0.7 indépendant](downloads/price-list-finder-lab-v07.zip)
-
-Sur la page d'un ZIP dans GitHub, utiliser **Download raw file** pour le télécharger. Remplacer les fichiers du dossier d'installation existant, actualiser l'extension dans `edge://extensions`, actualiser les onglets concernés puis rouvrir le panneau. Ne pas désinstaller l'extension pour une simple mise à jour.
-
-## Organisation
-
-- `project/inside-sales-toolbox-team/` : extension Équipe, avec son `manifest.json`.
-- `checks/` : tests et fixtures issus du checkpoint original.
-- `labs/price-list-finder-lab-v07/` : prototype indépendant, sans intégration à l'extension principale.
-- `docs/` : prompt de passation et ancien guide.
-- `archives/` : checkpoint original, conservé sans modification.
-- `downloads/` : archives installables disponibles.
-
-## Validation et limites
-
-Les tests Node.js utilisent des simulations locales. Ils ne prouvent pas le fonctionnement dans une session authentifiée Edge, Salesforce, D365 ou Power BI.
-
-Le checkpoint contient 45 scripts `checks/*.test.cjs`. Son audit en mémoire a donné 43 réussites et deux blocages dus à des fichiers absents : `checks/ui-preview/mock.js` et `upload/data (11).xlsx`.
-
-Pour préparer les tests d'interface, exécuter depuis la racine :
+## Vérifier la récupération
 
 ```sh
-python3 -B checks/redesign-preview/build.py --document-only
+python3 scripts/verify-version-archives.py
 ```
 
-Le fichier de prévisualisation généré est local. Exécuter ensuite les tests concernés avec `node checks/<nom>.test.cjs`. Les tests Excel utilisent aussi le module Node `sax`. Aucun gestionnaire de dépendances ni lockfile n'était fourni.
+Ce contrôle vérifie les empreintes, les contenus des checkpoints et chaque source contre sa référence Git. Les métadonnées sont dans [version-inventory.json](docs/version-inventory.json). Les archives et PDF ont aussi leurs empreintes dans [SHA256SUMS.txt](docs/SHA256SUMS.txt).
 
-Le simulateur `checks/redesign-preview/demo.js` annonce encore la version 3.5.6. Avec le manifest 3.5.7, `work-area.test.cjs` échoue sur cette différence de version : 42 scripts réussissent, deux sont bloqués et un échoue sur ce point de simulation. Les fichiers originaux ont été préservés.
+Les sources sont archivées telles que retrouvées. Les tests locaux ne prouvent pas le fonctionnement dans une session authentifiée Edge, Salesforce, Dynamics ou Power BI. Les notices anciennes peuvent afficher un numéro obsolète.
 
-La comparaison complète montre 69 fichiers d'extension identiques entre le checkpoint et le ZIP 3.5.7. Les quatre différences concernent le numéro de version et la documentation. Le lecteur Power BI 1.2.0 est présent dans les deux sources malgré la mention « non exporté » du checkpoint.
+Le checkpoint de travail suivant 3.5.11 reste distinct du ZIP installable. Son lecteur personnalisé et l’équivalence `InternalReference` / `Internal Notes` ne sont pas validés dans Power BI connecté.
 
-## Correctif 3.5.8 de test
-
-Le lecteur Power BI 1.2.1 lit aussi les indicateurs explicites de sélection dans les sous-éléments des boutons SUBREGION. Une sélection inconnue, contradictoire ou indéterminée bloque toujours la lecture. Le diagnostic montre une structure limitée des boutons pour permettre une analyse sans exporter le texte métier.
-
-Les dix scripts ciblés suivants ont réussi sur cette version : `used-subregion-reader`, `used-embedded-frames`, `used-region-diagnostic`, `used-regional-worker`, `used-routing`, `used-prices-worker`, `used-regions`, `full-catalogue`, `full-catalogue-worker` et `used-catalogue-worker` (fichiers `checks/*.test.cjs`). La suite complète n'a pas été réexécutée sur cette version. Les deux entrées manquantes et l'écart de version du simulateur restent à traiter.
-
-Les autres modules et le LAB sont inchangés. Aucun test authentifié du correctif 1.2.1 n'a encore confirmé la résolution dans le rapport de l'utilisateur.
+Le [Price List Finder LAB 0.7](downloads/price-list-finder-lab-v07.zip) demeure un téléchargement indépendant.

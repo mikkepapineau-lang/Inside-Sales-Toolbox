@@ -1,0 +1,7 @@
+Inside Sales Toolbox v1.8.4
+
+Remplace les fichiers dans le même dossier que ton extension actuelle, puis clique sur Actualiser dans edge://extensions. Accepte la nouvelle autorisation si Edge la demande.
+
+Ouvre le Toolbox et clique sur Panneau latéral. Il reste ouvert pendant les changements d’onglet. Les coordonnées et le dernier module sont conservés comme avant. Pour remplir D365, sélectionne l’onglet de la soumission ou commande à remplir.
+
+Ferme le panneau avec la croix d’Edge. Le popup et le menu clic droit restent disponibles.

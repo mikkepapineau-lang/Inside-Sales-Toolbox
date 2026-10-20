@@ -1,0 +1,4 @@
+v1.8.14
+Les champs de quantité nuls ou vides sont masqués dans les blocs d’inventaire. Seules les quantités non nulles sont affichées, y compris les valeurs négatives. Les blocs d’emplacement et d’entrepôt sans quantité restent masqués.
+Toutes les lignes sources et leurs quantités, y compris zéro, restent consultables sous Toutes les informations.
+Remplace les fichiers puis actualise dans edge://extensions.
