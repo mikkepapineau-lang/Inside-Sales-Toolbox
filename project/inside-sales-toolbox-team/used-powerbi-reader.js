@@ -34,7 +34,7 @@
   return records;
  }
  const regionNames=['CANADA','UK','USA'];
- const readerVersion='1.2.3';
+ const readerVersion='1.2.4';
  const regionRoots='.visualContainer,visual-container,.visual-container-component,.slicerContainer,[data-visualtype="slicer"],[role="group"],[role="listbox"],[role="combobox"],[role="region"],filter-card,.filterCard,.filter-card,.chicletSlicer,.chiclet-slicer,.slicer';
  const regionOptions='[role="option"],[role="checkbox"],[role="menuitemcheckbox"],[role="button"],button,input[type="checkbox"],.slicerItemContainer,.chiclet,.chicletItem,.slicerText,.slicerItemText,.chicletItemText';
  const regionLabel=e=>[e.getAttribute?.('aria-label'),e.getAttribute?.('title'),text(e),...[...e.labels||[]].map(text)].filter(Boolean).map(value=>String(value).trim().toUpperCase()).filter(value=>new Set(value.match(/\b(?:CANADA|UK|USA)\b/g)||[]).size===1).map(value=>value.match(/^(CANADA|UK|USA)(?:$|[\s,;(:.])/)).find(Boolean)?.[1]||null;
@@ -232,7 +232,7 @@
   }while(Date.now()<deadline);
   throw Error('La mise à jour du tableau après sélection de la sous-région n’est pas confirmée.');
  }
- function diagnostic(){return {readerVersion,...(financialScan?{financialScan:financialScan.diagnostic()}:{ }),subregion:regionState(),subregionSelectors:regionDiagnostic(),embeddedFrames:[...document.querySelectorAll('iframe')].filter(visible).slice(0,8).map(frame=>{let origin='',documentAccessible=false;try{origin=new URL(frame.getAttribute('src')||'',location.href).origin;}catch{}try{documentAccessible=!!(frame.contentDocument?.body||frame.contentDocument?.documentElement);}catch{}return {title:frame.getAttribute('title')||'',origin,documentAccessible};}),tables:tables().map(t=>({headers:t.headers,rowCount:rows(t).length})),gridCount:document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx').length,frame:location.origin,readyLabel:tables().length===1,currency:(String(document.body?.innerText||'').match(/Display\s+Currency\s+(CAD|USD|EUR|GBP)\b/i)||[])[1]||'',busy:!!document.querySelector('[aria-busy="true"]')};}
+ function diagnostic(){return {readerVersion,...(financialScan?{financialScan:financialScan.diagnostic()}:globalThis.ToolboxUsedFinancialDiagnostic?{lastFinancialScan:globalThis.ToolboxUsedFinancialDiagnostic}:{}),subregion:regionState(),subregionSelectors:regionDiagnostic(),embeddedFrames:[...document.querySelectorAll('iframe')].filter(visible).slice(0,8).map(frame=>{let origin='',documentAccessible=false;try{origin=new URL(frame.getAttribute('src')||'',location.href).origin;}catch{}try{documentAccessible=!!(frame.contentDocument?.body||frame.contentDocument?.documentElement);}catch{}return {title:frame.getAttribute('title')||'',origin,documentAccessible};}),tables:tables().map(t=>({headers:t.headers,rowCount:rows(t).length})),gridCount:document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx').length,frame:location.origin,readyLabel:tables().length===1,currency:(String(document.body?.innerText||'').match(/Display\s+Currency\s+(CAD|USD|EUR|GBP)\b/i)||[])[1]||'',busy:!!document.querySelector('[aria-busy="true"]')};}
  async function ensureReady(){
   if(diagnostic().readyLabel)return;
   const name=e=>[text(e),e.getAttribute('aria-label'),e.getAttribute('title')].filter(Boolean).some(s=>/^LP\s+Catalog\s*[-–]\s*Used\s+Gear$/i.test(String(s).trim()));
@@ -270,15 +270,16 @@
    isOrder:value=>/^[A-Z0-9][A-Z0-9._-]*$/i.test(String(value||'').trim())&&!/^(total|totaux)$/i.test(value),
    ready:()=>true,scope:()=>({filters:scope(),currency:currentCurrency()}),requiredDetails:[priceHeader,nbvHeader]
   });
+  const retain=()=>{globalThis.ToolboxUsedFinancialDiagnostic={at:Date.now(),...engine.diagnostic()};};
   const finish=value=>{
    if(scope()!==initialScope||currentCurrency()!==currency)throw Error('Les filtres ou la devise ont changé pendant la lecture des prix.');
    if(value?.error)throw Error(value.error);
    if(value?.more)return {...value,regions,currency};
    if(!value?.rows?.length||!value.loadedToEnd)throw Error('Le parcours des prix et NBV n’est pas terminé. Aucun prix enregistré.');
-   financialScan=null;return {...value,regions,currency,filters:initialScope,complete:false,expected:null,more:false};
+   retain();financialScan=null;return {...value,regions,currency,filters:initialScope,complete:false,expected:null,more:false};
   };
-  financialScan={next:async()=>{try{return finish(await engine.next());}catch(error){financialScan=null;try{await engine.cancel();}catch{}throw error;}},cancel:()=>engine.cancel(),diagnostic:()=>engine.diagnostic()};
-  try{return finish(await engine.read());}catch(error){financialScan=null;try{await engine.cancel();}catch{}throw error;}
+  financialScan={next:async()=>{try{return finish(await engine.next());}catch(error){try{await engine.cancel();}catch{}retain();financialScan=null;throw error;}},cancel:()=>engine.cancel(),diagnostic:()=>engine.diagnostic()};
+  try{return finish(await engine.read());}catch(error){try{await engine.cancel();}catch{}retain();financialScan=null;throw error;}
  }
  async function read(options={}){
   await cancel();

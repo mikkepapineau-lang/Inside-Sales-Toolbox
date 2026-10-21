@@ -83,18 +83,33 @@
    async function moveRatio(value,restoring=false){
     const target=Math.max(0,Math.min(1,value));if(!restoring)check();
     if(Math.abs(layout().ratio-target)<.002)return;
-    for(const mode of ['mouse','pointer']){
+    // Recompute geometry after each measured movement: report zoom can scale
+    // the response. A stalled attempt changes event route, not the target ratio.
+    for(const mode of ['mouse','pointer'])for(const route of ['thumb','document']){
      const EventType=mode==='mouse'?globalThis.MouseEvent:globalThis.PointerEvent;if(typeof EventType!=='function')continue;
-     const before=layout(),from=before.thumbRect.left+before.thumbRect.width/2,to=before.trackRect.left+target*before.travel+before.thumbRect.width/2,y=before.thumbRect.top+before.thumbRect.height/2;
-     const options=(x,down)=>({bubbles:true,cancelable:true,composed:true,view:document.defaultView||globalThis.window,clientX:x,clientY:y,button:0,buttons:down?1:0,pointerId:83,pointerType:'mouse',isPrimary:true});
-     const emit=(type,x,down)=>{const node=before.thumb.isConnected===false?document:before.thumb;node.dispatchEvent(new EventType(type,options(x,down)));};
-     try{
-      emit(mode==='mouse'?'mousedown':'pointerdown',from,true);
-      for(let i=1;i<=3;i++){emit(mode==='mouse'?'mousemove':'pointermove',from+(to-from)*i/3,true);await delay(16);}
-     }finally{emit(mode==='mouse'?'mouseup':'pointerup',to,false);}
-     await delay(120);if(!restoring)check();const after=layout();
-     lastScan.customMoves=(lastScan.customMoves||[]).slice(-19);lastScan.customMoves.push({mode,from:before.ratio,target,actual:after.ratio,restoring});
-     if(Math.abs(after.ratio-target)<.012)return;
+     if(route==='document'&&typeof document.dispatchEvent!=='function')continue;
+     for(let correction=0;correction<6;correction++){
+      const before=layout(),from=before.thumbRect.left+before.thumbRect.width/2,to=before.trackRect.left+target*before.travel+before.thumbRect.width/2,y=before.thumbRect.top+before.thumbRect.height/2;
+      const options=(x,down,dx)=>({bubbles:true,cancelable:true,composed:true,view:document.defaultView||globalThis.window,clientX:x,clientY:y,screenX:x+(globalThis.window?.screenX||0),screenY:y+(globalThis.window?.screenY||0),movementX:dx,movementY:0,button:0,buttons:down?1:0,pointerId:83,pointerType:'mouse',isPrimary:true});
+      const emit=(type,x,down,dx=0)=>{
+       const node=before.thumb.isConnected===false||route==='document'&&!/down$/.test(type)?document:before.thumb;
+       const event=new EventType(type,options(x,down,dx));
+       // MouseEventInit does not consistently initialize movementX in Chromium.
+       if(/move$/.test(type)&&event.movementX!==dx)try{Object.defineProperties(event,{movementX:{value:dx},movementY:{value:0}});}catch{}
+       node.dispatchEvent(event);
+      };
+      try{
+       emit(mode==='mouse'?'mousedown':'pointerdown',from,true);
+       let previous=from;
+       for(let i=1;i<=3;i++){const x=from+(to-from)*i/3;emit(mode==='mouse'?'mousemove':'pointermove',x,true,x-previous);previous=x;await delay(16);}
+      }finally{emit(mode==='mouse'?'mouseup':'pointerup',to,false);}
+      await delay(120);if(!restoring)check();const after=layout();
+      lastScan.customMoves=(lastScan.customMoves||[]).slice(-29);lastScan.customMoves.push({mode,route,correction,from:before.ratio,target,actual:after.ratio,restoring});
+      const distance=Math.abs(after.ratio-target),tolerance=target===0?.002:target===1?.005:.012;
+      if(distance<tolerance)return;
+      // Only retry the same route when a real movement reduced the error.
+      if(distance>=Math.abs(before.ratio-target)-.0001)break;
+     }
     }
     throw Error('La barre personnalisée Power BI n’a pas confirmé le déplacement horizontal.');
    }
