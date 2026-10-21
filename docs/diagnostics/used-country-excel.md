@@ -18,6 +18,7 @@ La capture du fichier et du lien natif conserve les correctifs précédents du t
 
 ## Présentation et dates
 
+- Les produits usagés utilisent les mêmes fiches que **Neuf / Stock D365** : SKU, badge de disponibilité, fabricant, numéro D365, description et détails sources dépliables. Les pays prennent la place des blocs entrepôts, avec leur quantité disponible en grand, leurs quantités possédée/maximale et leurs propres prix et NBV mis en évidence. Une ligne source distincte reste affichée quand plusieurs lignes existent pour un même emplacement. Les valeurs ne sont pas additionnées.
 - Le gros bouton Excel est l’action principale.
 - **Lecture de secours dans Power BI**, repliée au premier affichage, contient les anciennes lectures Quantités et Prix + NBV et la sélection des pays. Elles défilent dans le tableau et restent plus lentes.
 - L’import d’un fichier choisi manuellement reste dans **Options du catalogue**.
@@ -35,22 +36,26 @@ Une lecture ou un import de secours remplace la vue concernée et invalide le re
 
 `node checks/used-export-panel-browser.test.cjs` après reconstruction du document d’aperçu : bouton réel, trois XLSX distincts lus par le parseur de production avec contrôle CRC, une fiche produit avec trois pays et valeurs différentes, footer quotidien, dates de sources, refus d’une empreinte erronée et conservation du relevé précédent. Les tests du panneau Quantités/Prix + NBV restent passants.
 
+La présentation commune a aussi été observée dans Chromium à 320 et 390 px. À 320 px, les quantités et montants à zéro, un pays absent et les informations sources dépliées restent accessibles, sans débordement horizontal de la fiche. Les vues Neuf et Usagé partagent leurs styles de carte et de disponibilité.
+
 Aucune nouvelle version installable, archive ou tag n’est créé. Édition équipe uniquement. Les essais Power BI et D365 connectés restent distincts.
 
 ## Mettre à jour le poste d’essai
 
-Pour le poste qui utilise déjà les correctifs précédents d’export Excel, remplacer **les dix fichiers suivants ensemble** dans le dossier permanent de l’édition équipe. Les liens sont figés au commit de code vérifié `3315b1528b6303d42a592635e4599039c0b81133`. Cette évolution remplace l’ancienne consigne de ne changer que deux fichiers.
+**Si les trois exports par pays du commit `3315b15` sont déjà installés**, seuls **used-powerbi-panel.js** et **theme.css** sont à remplacer pour obtenir les fiches communes avec Neuf. Utiliser leurs liens ci-dessous.
 
-- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-export-ui.js)
-- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-powerbi-worker.js)
-- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-powerbi-panel.js)
-- [used-regions.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-regions.js)
-- [used-filter-model.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-filter-model.js)
-- [used-refresh-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-refresh-ui.js)
-- [popup.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/popup.html)
-- [sidepanel.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/sidepanel.html)
-- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/theme.css)
-- [i18n-dictionary.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/i18n-dictionary.js)
+Pour passer des correctifs antérieurs d’export Excel à l’ensemble des trois exports par pays et à ces fiches communes, remplacer **les dix fichiers suivants ensemble** dans le dossier permanent de l’édition équipe. Les liens sont figés au commit de code vérifié `961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c`.
+
+- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-export-ui.js)
+- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-powerbi-worker.js)
+- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-powerbi-panel.js)
+- [used-regions.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-regions.js)
+- [used-filter-model.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-filter-model.js)
+- [used-refresh-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-refresh-ui.js)
+- [popup.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/popup.html)
+- [sidepanel.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/sidepanel.html)
+- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/theme.css)
+- [i18n-dictionary.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/i18n-dictionary.js)
 
 Enregistrer chaque fichier brut sous son nom exact, sans `.txt`. Les moteurs `powerbi-reader.js`, `used-powerbi-reader.js`, le parseur `used-excel.js` et les autres fichiers des corrections précédentes restent nécessaires. Recharger l’extension dans `edge://extensions` ou `chrome://extensions`, actualiser le rapport Power BI puis rouvrir le panneau.
 
