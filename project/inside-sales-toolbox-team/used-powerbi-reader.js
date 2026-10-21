@@ -103,8 +103,26 @@
   }
   return null;
  }
+ // Some custom slicers expose only visual styling. Record bounded evidence without
+ // treating colors or a requested country as proof of the applied selection.
+ function visualSelectionDiagnostic(node){
+  const computedStyle={},dataSelection={};
+  try{
+   const readStyle=node.ownerDocument?.defaultView?.getComputedStyle;
+   const style=readStyle?readStyle.call(node.ownerDocument.defaultView,node):getComputedStyle(node);
+   for(const key of ['backgroundColor','color','borderTopColor','borderTopWidth','opacity','display','visibility']){
+    const value=style?.[key];if(typeof value==='string'&&value)computedStyle[key]=value.slice(0,100);
+   }
+  }catch{/* A detached or inaccessible node must not break the diagnostic. */}
+  try{
+   const datum=node.__data__;
+   for(const key of ['selected','isSelected'])if(typeof datum?.[key]==='boolean')dataSelection[key]=datum[key];
+  }catch{/* Do not inspect or serialize the rest of a visual's data. */}
+  return {computedStyle,dataSelection};
+ }
  function regionControlDiagnostic(control,root){
   const describe=node=>({tag:node.tagName||'',role:node.getAttribute?.('role')||'',
+   ...visualSelectionDiagnostic(node),
    classes:String(node.getAttribute?.('class')||'').slice(0,160),
    attributes:Object.fromEntries(selectionAttributes.map(name=>[name,node.getAttribute?.(name)]).filter(([,value])=>value!==null&&value!==undefined)),
    ...(node.tagName==='INPUT'&&node.type==='checkbox'?{checked:!!node.checked,indeterminate:!!node.indeterminate}:{})});

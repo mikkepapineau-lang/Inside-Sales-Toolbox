@@ -33,6 +33,21 @@ vm.runInContext(fs.readFileSync('project/inside-sales-toolbox-team/used-powerbi-
  // Open the explicitly collapsed Filters pane, then its named SUBREGION dropdown.
  surface='pane';paneOpened=false;dropdown=true;opened=false;await R.ensureRegion('CANADA+USA');assert.equal(paneClicks,1);assert.equal(opened,true);assert.deepEqual([...R.regionState().selected],['CANADA','USA']);await R.ensureRegion('CANADA');assert.equal(paneClicks,1);
  paneOpened=false;opened=false;filtersAmbiguous=true;const paneBefore=clicks;await assert.rejects(R.ensureRegion('UK'),/introuvable/);assert.equal(paneClicks,1);assert.equal(clicks,paneBefore);filtersAmbiguous=false;surface='legacy';dropdown=false;
+ // Match the reported custom visual: countries found, no accessible state, color only.
+ unknown=true;
+ c.getComputedStyle=node=>({visibility:'visible',display:'block',backgroundColor:node===controls[0]?'rgb(246, 168, 205)':'rgb(255, 255, 255)',color:'rgb(53, 33, 88)'});
+ controls[0].__data__={selected:true,privateCustomerData:'must not appear'};
+ let visual=R.diagnostic().subregionSelectors.controls[0].states;
+ assert.equal(visual[0].computedStyle.backgroundColor,'rgb(246, 168, 205)');
+ assert.equal(visual[1].computedStyle.backgroundColor,'rgb(255, 255, 255)');
+ assert.equal(visual[0].dataSelection.selected,true);assert.equal(visual[0].state,null);
+ assert(!JSON.stringify(visual).includes('must not appear'));
+ const oldStyle=c.getComputedStyle;
+ controls[0].ownerDocument={defaultView:{getComputedStyle:()=>{throw Error('Detached');}}};
+ Object.defineProperty(controls[0],'__data__',{configurable:true,get(){throw Error('Inaccessible');}});
+ visual=R.diagnostic().subregionSelectors.controls[0].states;
+ assert.equal(Object.keys(visual[0].computedStyle).length,0);assert.equal(Object.keys(visual[0].dataSelection).length,0);
+ delete controls[0].ownerDocument;delete controls[0].__data__;c.getComputedStyle=oldStyle;
  unknown=true;const before=clicks;await assert.rejects(R.ensureRegion('CANADA'),/accessible/);assert.equal(clicks,before);unknown=false;ambiguous=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);
  console.log('PASS all seven SUBREGION combinations, separate caption, modern containers, delayed rendering, same-origin custom slicers, blocked/ambiguous frame guards, collapsed Filters pane/dropdown opening, native checkbox states and no clicks on unreadable or ambiguous selectors');
 })().catch(e=>{console.error(e);process.exitCode=1;});
