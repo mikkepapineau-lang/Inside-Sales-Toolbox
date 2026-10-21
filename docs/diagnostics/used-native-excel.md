@@ -52,15 +52,15 @@ L’export automatique et sa durée réelle restent à valider dans la session P
 
 ## Installer cette évolution sur le poste d’essai
 
-Dans le dossier permanent de l’édition équipe déjà corrigée, remplacer les fichiers suivants et ajouter `used-export-ui.js`. Les liens sont figés au commit de code testé (sauf `used-export-ui.js`, qui inclut le correctif de survol et de téléchargement `add4bbe`) `6e43c81b65efa2058ecb62b79a2138de24700d10` :
+Dans le dossier permanent de l’édition équipe déjà corrigée, remplacer les fichiers suivants et ajouter `used-export-ui.js`. Les liens sont figés au commit de code testé (sauf `used-export-ui.js` et `used-powerbi-worker.js`, actualisés ensemble au correctif de détection et de diagnostic `cceed56`) `6e43c81b65efa2058ecb62b79a2138de24700d10` :
 
 - [powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/powerbi-reader.js)
 - [used-regions.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/used-regions.js)
 - [used-powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/used-powerbi-reader.js)
-- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/used-powerbi-worker.js)
+- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/cceed56559728fc9b4c38f70aa60c1180430636c/project/inside-sales-toolbox-team/used-powerbi-worker.js)
 - [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/used-powerbi-panel.js)
 - [used-refresh-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/used-refresh-ui.js)
-- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/add4bbe32f68001e758489f817034897ff59b5a0/project/inside-sales-toolbox-team/used-export-ui.js)
+- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/cceed56559728fc9b4c38f70aa60c1180430636c/project/inside-sales-toolbox-team/used-export-ui.js)
 - [popup.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/popup.html)
 - [sidepanel.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/sidepanel.html)
 - [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/6e43c81b65efa2058ecb62b79a2138de24700d10/project/inside-sales-toolbox-team/theme.css)
