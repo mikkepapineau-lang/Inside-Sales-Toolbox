@@ -2,6 +2,12 @@
 
 État du 21 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
+## Publication des archives en attente d'accord
+
+Le dépôt est public. La revue automatique a refusé le transfert des archives originales vers ce dépôt : elles pourraient contenir du code ou des données internes, et l'autorisation de divulgation publique de ces archives doit être explicite. Ne pas publier ces ZIP, leurs contenus encodés ou un autre regroupement, ni déléguer leur publication, avant cet accord. Les archives sont conservées dans le dossier de transfert sauvegardé. Le code actuel et les consignes sont déjà sur GitHub; ses vérifications ont réussi.
+
+L'environnement Codex a cloné le commit `7df6d9bf639d4dfe0c6e0ff9192082292c5206b8` et confirmé les tests. Il n'expose pas les outils Library et son montage `/workspace/library-files` est vide : un identifiant Library seul ne rend donc pas le ZIP disponible dans cette session. La tâche de reprise existe, mais les 44 imports et la publication 3.5.12 restent à effectuer après résolution de l'accès au fichier et de l'accord de publication publique.
+
 ## Point de départ
 
 - Dépôt officiel : https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES, branche `main`.
