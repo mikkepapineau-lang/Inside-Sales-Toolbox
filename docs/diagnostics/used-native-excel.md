@@ -22,7 +22,17 @@ L’utilisateur a également signalé **Actualiser par Excel / Réessayer CANADA
 
 Les liens sont observés uniquement pendant l’export demandé, sans inventaire des téléchargements, accès aux fichiers locaux ou nouvelle permission. La taille est bornée à 25 Mo pendant la lecture, le contenu ZIP puis le parseur XLSX restent vérifiés et toutes les interceptions temporaires sont retirées à la fin, y compris en cas d’erreur ou d’arrêt. Aucun lien d’export ni donnée de la vidéo n’est enregistré dans le dépôt. Les tests reproduisent un téléchargement toujours en attente d’enregistrement; ils ne valident pas encore le mécanisme exact du rapport connecté.
 
-Pour un poste déjà à jour avec les treize fichiers ci-dessous, **seul `used-export-ui.js` doit être remplacé pour ce correctif**, puis recharger l’extension et actualiser le rapport. Le lien de ce fichier ci-dessous est actualisé au commit du correctif.
+Pour un poste déjà à jour avec les treize fichiers ci-dessous, **le correctif initial ne changeait que `used-export-ui.js`**, puis recharger l’extension et actualiser le rapport. Le lien de ce fichier ci-dessous est actualisé au commit du correctif.
+
+## Détection et diagnostic de l’en-tête
+
+Après le signalement connecté « Le bouton natif Plus d’options du tableau est absent, désactivé ou ambigu », le diagnostic transmis par l’utilisateur a confirmé le tableau dans la page principale, sans donner la structure de ses contrôles d’en-tête. La cause exacte du contrôle absent n’est donc pas encore établie.
+
+La détection accepte maintenant aussi les rôles `menuitem`, les libellés portés par un enfant, les noms référencés par `aria-labelledby`, les titres alternatifs et les conteneurs `visualContainerHost`. Ces variantes sont vérifiées sur fixtures, pas annoncées comme observées dans le rapport connecté. Les contrôles ambigus ou désactivés restent refusés.
+
+En cas d’échec, le worker conserve un bloc **nativeExport**, version **native-export-4**, dans le diagnostic affiché sous **Options du catalogue**. Il donne les noms et classes des contrôles et de leurs conteneurs, sans copier les cellules des produits ni les URL de téléchargement. Le nombre de candidats et de contrôles désactivés accompagne le message d’erreur. Ouvrir Options du catalogue et copier la zone de diagnostic déjà remplie après l’échec; ne pas recliquer Diagnostic Power BI avant la copie, car cette commande produit un autre diagnostic général.
+
+**Pour cette mise à jour, remplacer les deux fichiers `used-export-ui.js` et `used-powerbi-worker.js`, puis recharger l’extension et le rapport.** Le worker est nécessaire pour conserver le diagnostic natif jusque dans le panneau. Aucun nouveau ZIP n’est créé.
 
 ## Lecture de secours et affichage
 

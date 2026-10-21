@@ -107,7 +107,7 @@ async function exportUsedFile(tab,target,region,remoteRegion){
  try{
   await chrome.scripting.executeScript({target,world:'MAIN',files:['used-export-ui.js']});
   const [result]=await chrome.scripting.executeScript({target,world:'MAIN',func:async()=>globalThis.ToolboxUsedExportUI.run()});
-  if(result?.result?.error)throw Error(result.result.error);
+  if(result?.result?.error){const error=Error(result.result.error);error.nativeExport=result.result.diagnostic||{error:result.result.error};throw error;}
   const file=result?.result;
   if(usedPowerBIStop)throw Error('Export Excel arrêté.');
   if(!file||typeof file.base64!=='string'||file.base64.length>35000000||!Number.isInteger(file.size)||file.size<4||file.size>25*1024*1024||!/^[A-Za-z0-9+/]*={0,2}$/.test(file.base64))throw Error('Fichier Excel généré invalide ou trop volumineux.');
@@ -322,7 +322,7 @@ async function readUsedPowerBI(kind,payload={}){
   const raw=String(e.message||e),blocked=/blocked|cannot access|not allowed|denied/i.test(raw);
   const message=stage+' : '+raw+(blocked?' · Le navigateur refuse cette opération. Vérifie l’accès de l’extension à app.powerbi.com; si une politique de ton organisation le bloque, elle devra être autorisée par les TI.':'');
   if(remoteRegion&&scanTarget)try{await chrome.scripting.executeScript({target:scanTarget,func:()=>globalThis.ToolboxUsedPowerBIReader?.cancel()});}catch{}
-  const detail={stage,error:raw,diagnostics,frameWarning,tabId:tab?.id,...(frameBridge?{frameBridge}:{})};
+  const detail={stage,error:raw,diagnostics,frameWarning,tabId:tab?.id,...(frameBridge?{frameBridge}:{}),...(e.nativeExport?{nativeExport:e.nativeExport}:{})};
   if(kind!=='usedPowerBIOpen')await chrome.storage.local.set({toolboxUsedPowerBIStatus:{state:'error',region,operation,message,tabId:tab?.id},toolboxUsedPowerBIDiagnostic:detail});
   if(kind==='usedPowerBIDiagnostic')return detail;
   throw Error(message);

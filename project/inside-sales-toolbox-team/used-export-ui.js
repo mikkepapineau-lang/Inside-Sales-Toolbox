@@ -20,10 +20,20 @@
    return headers.filter(h=>['sku','description','d365itemid','d365itemnumber','qtyavailable','sellprice','nbv'].includes(h)).length>=2;
   });return single(found,'Tableau Used Gear absent ou ambigu');
  }
- const menuCandidates=root=>unique([...root.querySelectorAll('button,[role="button"]')].filter(e=>/^(moreoptions|plusdoptions|autresoptions|optionssupplementaires)$/.test(norm(label(e)))));
+ const controlSelector='button,[role="button"],[role="menuitem"],[aria-haspopup],.vcMenu,.visualHeaderItem';
+ const visualSelector='.visualContainer,visual-container,.visual-container,.visual-container-component,.visualContainerHost,.visualContainerParent,.tableEx';
+ const menuLabels=e=>[e.getAttribute('aria-label'),e.getAttribute('title'),e.getAttribute('data-tooltip'),...(e.getAttribute('aria-labelledby')||'').split(/\s+/).filter(Boolean).map(id=>document.getElementById(id)?.textContent),e.innerText].filter(Boolean);
+ const menuNamed=e=>menuLabels(e).some(value=>/^(moreoptions|plusdoptions|autresoptions|optionssupplementaires)(?:$|for|pour|du)/.test(norm(value)));
+ function menuCandidates(root){
+  const found=[...root.querySelectorAll(controlSelector)].filter(menuNamed);
+  for(const named of root.querySelectorAll('[aria-label],[title],[data-tooltip],[aria-labelledby]'))if(menuNamed(named)){
+   const control=named.closest(controlSelector+', [tabindex]');if(control&&root.contains(control))found.push(control);
+  }
+  return unique(found);
+ }
  function menuScope(table){
   const roots=[];
-  for(let node=table;node;node=node.parentElement)if(node.matches('.visualContainer,visual-container,.visual-container,.visual-container-component,.tableEx'))roots.push(node);
+  for(let node=table;node;node=node.parentElement)if(node.matches(visualSelector))roots.push(node);
   // Power BI can put the header beside the inner visual, in its outer host.
   return roots.find(root=>menuCandidates(root).length)||roots[0]||table;
  }
@@ -46,7 +56,7 @@
   return wait(()=>{
    if(!table.isConnected||!container.isConnected)throw Error('Le tableau a changé avant l’ouverture du menu.');
    const buttons=candidates(),shown=buttons.filter(visible).filter(enabled);
-   if(shown.length>1||buttons.length>1&&shown.length!==1)throw Error('Plusieurs menus du tableau sont visibles. Aucun export lancé.');
+   if(shown.length>1||buttons.length>1&&shown.length!==1)throw Error('Plusieurs boutons Plus d’options correspondent au tableau ('+buttons.length+'). Aucun export lancé.');
    job.menuState={candidates:buttons.length,visible:shown.length,disabled:buttons.filter(e=>!enabled(e)).length};
    if(shown.length===1)return shown[0];
    // A hover-only CSS header can still expose its unique native button in DOM.
@@ -55,9 +65,24 @@
    if(Date.now()-started>=600&&buttons.length===1&&enabled(buttons[0])){job.menuState.activation='native-button';return buttons[0];}
    if(buttons.length===1&&enabled(buttons[0])&&focused!==buttons[0]){focused=buttons[0];focused.focus({preventScroll:true});}
    return null;
-  },job,'Le bouton natif Plus d’options du tableau est absent, désactivé ou ambigu. Aucun export lancé.',4000);
+  },job,'EXPORT_MENU : aucun bouton Plus d’options utilisable. Le diagnostic des contrôles est disponible dans Options du catalogue.',4000).catch(error=>{
+   if(error.message.startsWith('EXPORT_MENU')){
+    const state=job.menuState||{},reason=state.candidates===0?'aucun contrôle reconnu':state.disabled===state.candidates?'contrôle désactivé':'contrôle non utilisable';
+    throw Error('EXPORT_MENU : '+reason+' ('+(state.candidates??0)+' candidat, '+(state.disabled??0)+' désactivé). Détails dans Options du catalogue → diagnostic.');
+   }
+   throw error;
+  });
  }
  function diagnostic(){return {dialogs:[...document.querySelectorAll('[role="dialog"]')].filter(visible).slice(0,3).map(e=>({buttons:[...e.querySelectorAll('button,[role="button"]')].filter(visible).map(label).slice(0,12),options:[...e.querySelectorAll('label,[role="radio"],[role="combobox"],select')].filter(visible).map(label).slice(0,12)}))};}
+ function exportDiagnostic(job){
+  const info=e=>({tag:e.tagName,role:e.getAttribute('role')||'',ariaLabel:(e.getAttribute('aria-label')||'').slice(0,120),title:(e.getAttribute('title')||'').slice(0,120),classes:String(e.className||'').slice(0,180),popup:e.getAttribute('aria-haspopup')||'',disabled:!enabled(e),visible:visible(e)});
+  let table;try{table=reportTable();}catch{}
+  const ancestors=[];for(let node=table;node&&ancestors.length<12;node=node.parentElement){
+   ancestors.push({...info(node),controls:[...node.querySelectorAll(controlSelector)].slice(0,24).map(info)});
+   if(node.matches?.('body'))break;
+  }
+  return {version:'native-export-4',menu:job?.menuState,tableAncestors:ancestors,headers:[...document.querySelectorAll('.visualHeader,.visual-header,.visualHeaderItemContainer,.visualHeaderItem,.vcMenu')].slice(0,32).map(info),...diagnostic()};
+ }
  async function run(){
   if(active)throw Error('Un export Excel est déjà en cours.');
   const job={cancelled:false,armed:false,candidates:[],problem:null,urls:new Set(),controllers:new Set()},original=URL.createObjectURL,originalClick=HTMLAnchorElement.prototype.click,originalDispatch=EventTarget.prototype.dispatchEvent,originalOpen=window.open;active=job;
@@ -130,7 +155,7 @@
    job.armed=true;confirm.click();
    const file=await wait(()=>{if(job.problem)throw Error(job.problem);if(job.candidates.length>1)throw Error('Plusieurs fichiers générés pendant l’export. Aucun import automatique.');return job.candidates[0]?.ready?job.candidates[0].value:null;},job,'Power BI n’a pas fourni de fichier XLSX capturable. Le téléchargement peut être repris avec Importer Excel.',60000);
    await delay(160);if(job.candidates.length!==1)throw Error('Plusieurs fichiers Excel détectés. Aucun import automatique.');return file;
-  }catch(error){return {error:String(error.message||error),diagnostic:{...diagnostic(),menu:job.menuState}};}
+  }catch(error){return {error:String(error.message||error),diagnostic:exportDiagnostic(job)};}
   finally{
    job.armed=false;for(const controller of job.controllers)controller.abort();document.removeEventListener('click',clicked,true);
    if(URL.createObjectURL===wrapped)URL.createObjectURL=original;

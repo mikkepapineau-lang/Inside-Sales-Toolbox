@@ -26,7 +26,18 @@ const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('nod
   },hidden);
   const result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.equal(result.error,undefined,JSON.stringify(result));assert.equal(result.base64,'UEsDBAoU');
  }
- await setup();await page.evaluate(()=>{const more=document.querySelector('#more');more.style.opacity='0';const duplicate=more.cloneNode(true);document.querySelector('.visualContainer').append(duplicate);});let ambiguous=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(ambiguous.error,/Plusieurs menus/);assert.equal(await page.evaluate(()=>window.selected),undefined);
+ await setup();await page.evaluate(()=>{const more=document.querySelector('#more');more.style.opacity='0';const duplicate=more.cloneNode(true);document.querySelector('.visualContainer').append(duplicate);});let ambiguous=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(ambiguous.error,/Plusieurs boutons/);assert.equal(await page.evaluate(()=>window.selected),undefined);
+ for(const shape of ['menuitem','child-label','alternate-title']){
+  await setup();await page.evaluate(shape=>{
+   const old=document.querySelector('#more'),host=document.createElement('div');host.className='visualContainerHost';const inner=document.querySelector('.visualContainer');inner.before(host);host.append(inner);
+   const replacement=document.createElement(shape==='alternate-title'?'button':'div');replacement.id='more';replacement.onclick=old.onclick;replacement.style.opacity='0';
+   if(shape==='menuitem'){replacement.setAttribute('role','menuitem');replacement.title='Plus d’options du visuel Used Gear';}
+   if(shape==='child-label'){replacement.tabIndex=0;replacement.className='vcMenu';const label=document.createElement('span');label.setAttribute('aria-label','More options for this visual');replacement.append(label);}
+   if(shape==='alternate-title'){replacement.setAttribute('aria-label','Visual menu');replacement.title='Plus d’options';}
+   old.remove();host.prepend(replacement);
+  },shape);const result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.equal(result.error,undefined,JSON.stringify(result));assert.equal(result.base64,'UEsDBAoU');
+ }
+ await setup();await page.evaluate(()=>{document.querySelector('#more').remove();});const absent=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(absent.error,/aucun contrôle reconnu/);assert.equal(absent.diagnostic.version,'native-export-4');assert(absent.diagnostic.tableAncestors.length>0);assert(!JSON.stringify(absent.diagnostic).includes('Fictional'),'diagnostic excludes product cell text');
  await setup({duplicate:true});let result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(result.error,/Plusieurs fichiers/);assert.equal(await page.evaluate(()=>URL.createObjectURL===window.originalURL),true);
  await setup();await page.evaluate(()=>document.querySelector('#current').parentElement.onclick=e=>e.preventDefault());result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(result.error,/pas confirmé/);assert.equal(await page.evaluate(()=>window.selected),undefined);
  await setup();await page.evaluate(()=>document.querySelector('#current').disabled=true);result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(result.error,/désactivé/);
