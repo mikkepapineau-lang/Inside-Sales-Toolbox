@@ -15,6 +15,12 @@ Extension Microsoft Edge pour les ventes internes, issue du projet Salesforce ve
 
 Sur la page d’un ZIP dans GitHub, utiliser **Download raw file**. Pour mettre à jour une installation existante, remplacer les fichiers dans son dossier actuel, actualiser l’extension dans `edge://extensions`, puis actualiser les onglets concernés et rouvrir le panneau. Les éditions personnelle et équipe ont des dossiers distincts.
 
+## Guides pour les collègues · Équipe 3.5.12
+
+- [Installer dans Edge ou Chrome · PDF, 8 pages](docs/guides/equipe-3.5.12/01-installation.pdf).
+- [Utiliser les six outils · PDF, 18 pages](docs/guides/equipe-3.5.12/02-utilisation.pdf).
+- [Versions Word modifiables et sources](docs/guides/equipe-3.5.12/README.md).
+
 ## Sources et historique
 
 | Dossier / référence | Contenu |
