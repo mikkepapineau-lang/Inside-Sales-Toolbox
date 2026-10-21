@@ -8,7 +8,7 @@ Michaël a donné son accord explicite de divulgation publique des 44 archives, 
 
 Le catalogue `docs/ARCHIVES.md`, les empreintes et l’inventaire distinguent les 44 archives importées des 11 snapshots reconstruits. Le vérificateur conserve les anciennes références (745 fichiers comparés) et compare les 75 fichiers actuels au ZIP original 3.5.12. Les 53 scripts et les 12 suites du noyau passent, ainsi que `release.py --edition equipe --check`. Les autres éditions, le laboratoire, les neuf archives antérieures et les deux checkpoints sont préservés.
 
-Le transport provisoire a été supprimé dans un commit séparé; son historique reste accessible. `.release/equipe.json` est copié du transport original et accompagne le ZIP 3.5.12 dans le même envoi. La création de PR via l’API GitHub est bloquée par une réponse `Forbidden`; l’intégration sur main est explicitement autorisée par Michaël. Le résultat effectif des workflows et de la publication sera confirmé après cet envoi.
+Le transport provisoire a été supprimé dans un commit séparé; son historique reste accessible. `.release/equipe.json` est copié du transport original et accompagne le ZIP 3.5.12 dans le même envoi. La création de PR via l’API GitHub est bloquée par une réponse `Forbidden`; l’intégration sur main est explicitement autorisée par Michaël. Les résultats distants sont confirmés ci-dessous.
 
 ## Point de départ
 
@@ -32,21 +32,19 @@ Les 53 scripts de production ont passé le contrôle de syntaxe et les 12 suites
 
 Les tests du lecteur utilisent des fixtures. La manipulation du véritable ascenseur personnalisé Power BI et les notes réellement affichées chez l'utilisateur restent à essayer dans une session connectée. Ne pas annoncer une validation live ou un accès à sa session Power BI sans observation.
 
-## Contenu du dossier de transfert
+## Transfert terminé et résultats distants
 
-Le dossier joint à la tâche contient `repository/` (sources et processus préparés), `archives/` (49 ZIP originaux retrouvés), `archives.json` (tailles et empreintes), `SHA256SUMS.txt` et `START_HERE.md`.
+- Intégration sur main : [`cf50f340562772b133468b856230f16ce6f1b59f`](https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/commit/cf50f340562772b133468b856230f16ce6f1b59f). Les 44 commits d’import sont conservés dans son historique, sans squash ni push forcé.
+- Catalogue et vérificateur : [`8ba2605`](https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/commit/8ba2605).
+- Suppression du transport dans un commit séparé : [`6488d7b`](https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/commit/6488d7b).
+- Vérifications GitHub : [run 39605240067](https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/actions/runs/39605240067), **Success**.
+- Publication GitHub : [run 39605240132](https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/actions/runs/39605240132), **Success**.
+- Export existant publié comme préversion : [équipe 3.5.12](https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/releases/tag/equipe-v3.5.12), tag `equipe-v3.5.12` vérifié sur le commit d’intégration ci-dessus.
+- Le [ZIP publié](https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/releases/download/equipe-v3.5.12/Inside-Sales-Toolbox-Equipe-v3.5.12.zip) a été téléchargé puis comparé octet pour octet au ZIP original : 1 174 696 octets, CRC valide et SHA256 `ee2d548238ada10b90c0569b1cd3d22bb91142a331fb3d3ad3cbd09186408cf6`. Le [fichier d’empreinte publié](https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/releases/download/equipe-v3.5.12/Inside-Sales-Toolbox-Equipe-v3.5.12.zip.sha256) a également été téléchargé et vérifié.
 
-Le dépôt distant contenait déjà neuf archives originales et deux checkpoints avant ce transfert. Cinq de ces archives se retrouvent parmi les 49 ZIP joints. Il reste donc 44 ZIP à ajouter, dont la 3.5.12. Les autres archives et toutes les branches existantes doivent être conservées. Une archive récupérée doit être présentée comme une importation, sans inventer une date de commit d'origine.
+La publication et le tag ont été créés par le workflow préparé, sans nouveau numéro ni génération de ZIP. L’API GitHub étant bloquée dans cette session, les résultats ont été constatés sur les pages publiques des runs, le tag via Git, et les fichiers par téléchargement HTTPS. Aucune vérification Power BI/D365 connectée n’est incluse.
 
-## Première tâche dans Codex
-
-1. Cloner le dépôt et lire son état actuel. Ne pas supposer que les fichiers joints constituent un clone complet : `repository/` est une copie partielle destinée à compléter le dépôt existant.
-2. Importer les ZIP absents depuis `archives/`, en vérifiant leurs empreintes. Ne jamais remplacer un ZIP différent portant le même nom. Garder un commit d'importation par version récupérée et classer les versions par édition.
-3. Ajouter le ZIP original 3.5.12 et son fichier `.release/equipe.json` préparé. Faire évoluer l'inventaire et le vérificateur historique : le script actuel compare encore `main` à la 3.5.11, ce qui devient obsolète après cette mise à jour. Conserver la vérification des anciennes références.
-4. Valider `python3 scripts/check.py`, `python3 scripts/verify-version-archives.py --archives-only` et `python3 scripts/release.py --edition equipe --check`. Vérifier les workflows et publier la version existante 3.5.12 avec son tag, sans fabriquer un nouvel export.
-5. Confirmer les commits, les archives et la publication réellement présents sur GitHub. Un fichier préparé ou une tâche lancée ne prouve pas que la publication a réussi.
-
-Le fichier `.release/equipe.json` se trouve aussi dans le dossier de transport, sous `release/equipe.json`. L'envoyer à `main` uniquement avec son ZIP original afin de déclencher une publication vérifiable.
+Le transport reste consultable dans l’historique du commit `c82dfd3`; le dossier complet de reprise reste aussi sauvegardé dans la Bibliothèque. La copie partielle `repository/` n’a pas remplacé le clone ni les autres éditions. Le contexte technique utile est transmis; les anciennes conversations et captures disparues ne sont pas intégralement importées.
 
 ## Préférences durables
 
