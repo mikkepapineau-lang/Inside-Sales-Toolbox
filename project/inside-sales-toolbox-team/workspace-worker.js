@@ -13,7 +13,7 @@
  function ready(url,known){
   if(!bi(url)||reportId(url)===usedId)return false;
   const u=new URL(url),id=reportId(url),knownId=reportId(known);
-  return u.pathname.includes('/links/lNdArEWzXE')||u.searchParams.get('bookmarkGuid')==='ff596301-8009-4b69-be11-40ae01525ce3'||!!known&&(url===known||!!knownId&&id===knownId);
+  return id==='37ddaf7f-5526-4fd7-b85e-bc6630d5ae33'||u.pathname.includes('/links/lNdArEWzXE')||u.searchParams.get('bookmarkGuid')==='ff596301-8009-4b69-be11-40ae01525ce3'||!!known&&(url===known||!!knownId&&id===knownId);
  }
  function updateRegistry(update){const job=registryQueue.then(async()=>{const saved=(await chrome.storage.local.get(registryKey))[registryKey]||{};const next=update(saved);if(next)await chrome.storage.local.set({[registryKey]:next});});registryQueue=job.catch(()=>{});return job;}
  async function normalWindow(id){try{const w=await chrome.windows.get(id);if(w.type==='normal')return w.id;}catch{}const windows=await chrome.windows.getAll({windowTypes:['normal']});const w=windows.find(w=>w.focused)||windows[0];if(!w)throw Error('Ouvre une fenêtre normale du navigateur pour préparer les onglets.');return w.id;}

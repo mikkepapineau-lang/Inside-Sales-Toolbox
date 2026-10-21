@@ -1,6 +1,6 @@
 // DOM-only extraction of both virtualized axes. No report internals or private API.
 (()=>{
- const version='2.1.0',norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const version='2.2.0',norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
  if(globalThis.ToolboxPowerBIReader?.version===version)return;
  const text=e=>String(e?.innerText||e?.textContent||e?.getAttribute?.('aria-label')||'').replace(/\s+/g,' ').trim();
  const noteText=e=>String(e?.innerText||e?.textContent||e?.getAttribute?.('aria-label')||'').replace(/\r\n?/g,'\n').replace(/[\t\u00a0\u202f]+/g,' ').trim();
@@ -34,7 +34,15 @@
  const vertical=e=>e.clientHeight>40&&e.scrollHeight>e.clientHeight+5;
  const horizontal=e=>e.clientWidth>40&&e.scrollWidth>e.clientWidth+5;
  const endY=e=>Number(e.scrollTop||0)+e.clientHeight>=e.scrollHeight-2;
- const endX=e=>Number(e.scrollLeft||0)+e.clientWidth>=e.scrollWidth-2;
+ const endX=e=>e.toolboxCustom?e.ratio()>=.995:Number(e.scrollLeft||0)+e.clientWidth>=e.scrollWidth-2;
+ const hasClass=(e,name)=>String(e.getAttribute?.('class')||e.className||'').split(/\s+/).includes(name);
+ function customHorizontalBars(root){
+  return visualNodes(root).filter(e=>hasClass(e,'scroll-bar-div')).map(track=>{
+   const rect=track.getBoundingClientRect?.();if(!rect||rect.width<60||rect.height<=0||rect.width<rect.height*4)return null;
+   const thumbs=[...track.querySelectorAll('.scroll-bar-part-bar')].filter(visible).filter(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.width<rect.width-2&&r.height<=rect.height+4;});
+   return thumbs.length===1?{track,thumb:thumbs[0]}:null;
+  }).filter(Boolean);
+ }
  function elementInfo(e){const css=getComputedStyle(e);return {tag:e.tagName||'',className:String(e.getAttribute?.('class')||e.className||'').slice(0,200),role:e.getAttribute?.('role')||'',overflowX:css.overflowX||'',overflowY:css.overflowY||'',horizontal:horizontal(e),vertical:vertical(e),left:e.scrollLeft||0,top:e.scrollTop||0,width:e.clientWidth,scrollWidth:e.scrollWidth,height:e.clientHeight,scrollHeight:e.scrollHeight};}
  function diagnostic(){return {readerVersion:version,tables:tables(true).map(t=>({headers:t.headers,rowCount:t.root.querySelectorAll('[role="row"],tr,.row').length,scrollAreas:scrollAreas(t.root).map(elementInfo),scrollControls:visualNodes(t.root).filter(e=>e.getAttribute?.('role')==='scrollbar'||/scroll.?bar/i.test(String(e.getAttribute?.('class')||e.className||''))).slice(0,16).map(e=>({...elementInfo(e),orientation:e.getAttribute?.('aria-orientation')||'',valueNow:e.getAttribute?.('aria-valuenow'),valueMin:e.getAttribute?.('aria-valuemin'),valueMax:e.getAttribute?.('aria-valuemax')}))})),gridCount:document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx').length,frame:location.origin,readyLabel:ready(),busy:busy(),...(lastScan?{scan:lastScan}:{})};}
  async function ensureReady(){
@@ -56,12 +64,43 @@
   if(!ready())return {error:'La page Ready to PIK n’est pas confirmée. Ouvre cette page du rapport.',diagnostic:diagnostic()};
   if(busy())return {error:'Power BI charge encore le rapport. Réessaie après le chargement.',diagnostic:diagnostic()};
   const scope=()=>JSON.stringify([...document.querySelectorAll('[role="combobox"]')].filter(visible).map(text)),initialScope=scope();
-  const areas=scrollAreas(root),ys=areas.filter(vertical),saved=areas.map(e=>[e,Number(e.scrollTop||0),Number(e.scrollLeft||0)]),savedNodes=new Set(areas),probed=new WeakMap();let xs=[];
-  const columns=[],byPosition=new Map(),byName=new Map(),collected=new Map();
+  const areas=scrollAreas(root),ys=areas.filter(vertical),saved=areas.map(e=>[e,Number(e.scrollTop||0),Number(e.scrollLeft||0)]),savedNodes=new Set(areas),probed=new WeakMap(),customDrivers=new WeakMap(),customSaved=[];let xs=[];
+  const columns=[],byPosition=new Map(),byName=new Map(),collected=new Map(),rowIds=new WeakMap();let rowSequence=0;
   const check=()=>{if(root.isConnected===false||!ready()||scope()!==initialScope)throw Error('Le rapport a changé pendant la lecture. Réessaie.');};
   const settled=async ms=>{await delay(ms);for(let i=0;i<12&&busy();i++)await delay(150);check();if(busy())throw Error('Power BI charge encore les cellules. Réessaie après le chargement.');};
   const dispatch=e=>e.dispatchEvent(new Event('scroll',{bubbles:true}));
-  const left=()=>{for(const e of xs){e.scrollLeft=0;dispatch(e);}};
+  const moveX=async(e,value)=>{if(e.toolboxCustom)await e.moveRatio(value/Math.max(1,e.scrollWidth-e.clientWidth));else{e.scrollLeft=value;dispatch(e);}};
+  const left=async()=>{for(const e of xs)await moveX(e,0);};
+  function customDriver(original){
+   function layout(){
+    if(root.isConnected===false)throw Error('Le tableau a été remplacé.');
+    const matches=customHorizontalBars(root),pair=matches.find(p=>p.track===original.track)||(matches.length===1?matches[0]:null);
+    if(!pair)throw Error('La barre horizontale Power BI a disparu ou est ambiguë.');
+    const track=pair.track.getBoundingClientRect(),thumb=pair.thumb.getBoundingClientRect(),travel=track.width-thumb.width;
+    if(travel<=1)throw Error('La barre horizontale n’a plus de course disponible.');
+    return {...pair,trackRect:track,thumbRect:thumb,travel,ratio:Math.max(0,Math.min(1,(thumb.left-track.left)/travel))};
+   }
+   async function moveRatio(value,restoring=false){
+    const target=Math.max(0,Math.min(1,value));if(!restoring)check();
+    if(Math.abs(layout().ratio-target)<.002)return;
+    for(const mode of ['mouse','pointer']){
+     const EventType=mode==='mouse'?globalThis.MouseEvent:globalThis.PointerEvent;if(typeof EventType!=='function')continue;
+     const before=layout(),from=before.thumbRect.left+before.thumbRect.width/2,to=before.trackRect.left+target*before.travel+before.thumbRect.width/2,y=before.thumbRect.top+before.thumbRect.height/2;
+     const options=(x,down)=>({bubbles:true,cancelable:true,composed:true,view:document.defaultView||globalThis.window,clientX:x,clientY:y,button:0,buttons:down?1:0,pointerId:83,pointerType:'mouse',isPrimary:true});
+     const emit=(type,x,down)=>{const node=before.thumb.isConnected===false?document:before.thumb;node.dispatchEvent(new EventType(type,options(x,down)));};
+     try{
+      emit(mode==='mouse'?'mousedown':'pointerdown',from,true);
+      for(let i=1;i<=3;i++){emit(mode==='mouse'?'mousemove':'pointermove',from+(to-from)*i/3,true);await delay(16);}
+     }finally{emit(mode==='mouse'?'mouseup':'pointerup',to,false);}
+     await delay(120);if(!restoring)check();const after=layout();
+     lastScan.customMoves=(lastScan.customMoves||[]).slice(-19);lastScan.customMoves.push({mode,from:before.ratio,target,actual:after.ratio,restoring});
+     if(Math.abs(after.ratio-target)<.012)return;
+    }
+    throw Error('La barre personnalisée Power BI n’a pas confirmé le déplacement horizontal.');
+   }
+   const driver={toolboxCustom:true,ratio:()=>layout().ratio,moveRatio,get isConnected(){return root.isConnected!==false&&customHorizontalBars(root).length===1;},get clientWidth(){return layout().trackRect.width;},get scrollWidth(){const l=layout();return l.trackRect.width*l.trackRect.width/l.thumbRect.width;},get scrollLeft(){return layout().ratio*(this.scrollWidth-this.clientWidth);}};
+   customSaved.push({driver,ratio:layout().ratio});return driver;
+  }
   function refreshHorizontal(){
    const candidates=scrollAreas(root).filter(horizontal),details=[];xs=[];
    for(const e of candidates){
@@ -79,6 +118,12 @@
      probed.set(e,result);
     }
     details.push({...elementInfo(e),...result});if(result.movable&&e.isConnected!==false)xs.push(e);
+   }
+   const bars=customHorizontalBars(root);
+   if(bars.length>1)throw Error('Plusieurs barres horizontales Power BI sont présentes. Aucun choix automatique.');
+   if(bars.length===1){
+    const bar=bars[0];let driver=customDrivers.get(bar.track);if(!driver){driver=customDriver(bar);customDrivers.set(bar.track,driver);}
+    xs=[driver];lastScan.horizontalControl={kind:'powerbi-custom-scrollbar',trackWidth:driver.clientWidth,ratio:driver.ratio()};
    }
    lastScan.horizontalProbe={candidates:candidates.length,movable:xs.length,areas:details};
    if(candidates.length&&!xs.length&&!headings(root).some(h=>notesHeader(h.label)))throw Error('Aucun conteneur horizontal n’a répondu au défilement. Utilise Diagnostic Power BI pour identifier la barre du tableau.');
@@ -117,7 +162,8 @@
     });
     const orders=[...values].filter(([column,value])=>orderHeader(column.label)&&isOrder(value)).map(([,v])=>v),unique=[...new Set(orders)];
     if(unique.length>1)throw Error('Plusieurs numéros de SO sont présents sur une même ligne. Lecture annulée.');
-    const order=unique[0]||'',rowKey=['aria-rowindex','data-row-key','data-row-index','row-index'].map(a=>{const v=row.getAttribute?.(a);return v!==null&&v!==undefined&&v!==''?a+':'+v:'';}).find(Boolean)||'';
+    const order=unique[0]||'';let rowKey=['aria-rowindex','data-row-key','data-row-index','row-index'].map(a=>{const v=row.getAttribute?.(a);return v!==null&&v!==undefined&&v!==''?a+':'+v:'';}).find(Boolean)||'';
+    if(!rowKey){if(!rowIds.has(row))rowIds.set(row,++rowSequence);rowKey='dom:'+rowIds.get(row);}
     let href='';const link=[...row.querySelectorAll('a[href]')].find(a=>text(a)===order);
     try{const u=new URL(link?.getAttribute('href')||'',location.href);if(link&&u.protocol==='https:'&&u.hostname==='solotech.operations.dynamics.com')href=u.href;}catch{}
     fragments.push({order,rowKey,values,href});
@@ -130,7 +176,7 @@
    if(fragment.href)record.href=fragment.href;
   }
   async function sweep(){
-   lastScan.phase='Lecture des colonnes';const previousTops=ys.map(e=>Number(e.scrollTop||0));refreshHorizontal();left();await settled(250);
+   lastScan.phase='Lecture des colonnes';const previousTops=ys.map(e=>Number(e.scrollTop||0));refreshHorizontal();await left();await settled(250);
    if(ys.some((e,i)=>Math.abs(Number(e.scrollTop||0)-previousTops[i])>1))throw Error('Les lignes ont bougé pendant la préparation du défilement horizontal. Lecture annulée.');
    const tops=ys.map(e=>Number(e.scrollTop||0)),baseline=snapshot(),page=new Map(),anchors=new Map(),ignored=new Set();
    for(const row of baseline){
@@ -142,7 +188,7 @@
    for(let step=0;xs.some(e=>e.isConnected!==false&&!endX(e));step++){
     if(step>=32)throw Error('La dernière colonne n’a pas pu être atteinte. Aucune nouvelle donnée enregistrée.');
     xs=xs.filter(e=>e.isConnected!==false);const before=xs.map(e=>Number(e.scrollLeft||0));
-    for(const e of xs){e.scrollLeft=Math.min(e.scrollWidth-e.clientWidth,Number(e.scrollLeft||0)+Math.max(40,e.clientWidth*.75));dispatch(e);}
+    for(const e of xs)await moveX(e,Math.min(e.scrollWidth-e.clientWidth,Number(e.scrollLeft||0)+Math.max(40,e.clientWidth*.75)));
     await settled(200);lastScan.horizontalSteps++;
     if(ys.some((e,i)=>Math.abs(Number(e.scrollTop||0)-tops[i])>1))throw Error('Les lignes ont bougé pendant le défilement horizontal. Lecture annulée.');
     if(xs.every((e,i)=>Number(e.scrollLeft||0)===before[i]))throw Error('Le défilement horizontal est bloqué. Ouvre la vue accessible du tableau.');
@@ -155,14 +201,14 @@
     }
    }
    // Recheck the original SO anchors before committing any right-hand cells.
-   left();await settled(200);const checked=snapshot(),checkedOrders=new Set(checked.filter(r=>r.order).map(r=>r.order));
+   await left();await settled(200);const checked=snapshot(),checkedOrders=new Set(checked.filter(r=>r.order).map(r=>r.order));
    if(checkedOrders.size!==baselineOrders.size||[...baselineOrders].some(order=>!checkedOrders.has(order)))throw Error('Les lignes ont changé pendant la lecture des colonnes. Lecture annulée.');
    for(const row of checked)if(row.order){if(row.rowKey&&anchors.has(row.rowKey)&&anchors.get(row.rowKey)!==row.order)throw Error('Les identifiants de ligne ont changé pendant la lecture.');merge(page,row.order,row);}
    for(const [order,record]of page)merge(collected,order,record);
    lastScan.rows=collected.size;
   }
   try{
-   for(const e of ys){e.scrollTop=0;dispatch(e);}left();await settled(350);
+   for(const e of ys){e.scrollTop=0;dispatch(e);}await left();await settled(350);
    await sweep();
    for(let i=0;i<45&&ys.some(e=>!endY(e));i++){
     for(const e of ys){e.scrollTop=Math.min(e.scrollHeight-e.clientHeight,Number(e.scrollTop||0)+Math.max(40,e.clientHeight*.8));dispatch(e);}
@@ -176,7 +222,13 @@
    const warning=lastScan.horizontalSteps&&!headers.some(notesHeader)?'Le défilement a été effectué, mais Internal Notes n’est pas encore lisible dans le rapport. Consulte Diagnostic Power BI.':'';
    return {headers,rows,partial:true,limited:ys.some(e=>!endY(e)),steps:lastScan.verticalSteps,horizontalSteps:lastScan.horizontalSteps,...(warning?{warning}:{}),diagnostic:diagnostic()};
   }catch(e){lastScan={...lastScan,phase:'Lecture interrompue',error:e.message};throw e;}
-  finally{for(const [e,top,left]of [...saved].reverse()){if(e.isConnected===false)continue;e.scrollTop=top;e.scrollLeft=left;dispatch(e);}}
+  finally{
+   for(const [e,top,left]of [...saved].reverse()){if(e.isConnected===false)continue;e.scrollTop=top;e.scrollLeft=left;dispatch(e);}
+   for(const item of [...customSaved].reverse()){
+    if(root.isConnected===false||!ready()||scope()!==initialScope){lastScan.restoreSkipped='report-changed';break;}
+    try{await item.driver.moveRatio(item.ratio,true);}catch(e){lastScan.restoreWarning=e.message;}
+   }
+  }
  }
  globalThis.ToolboxPowerBIReader={version,read,diagnostic,ensureReady};
 })();

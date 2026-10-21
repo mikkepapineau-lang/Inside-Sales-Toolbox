@@ -1,5 +1,5 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const readyURL='https://app.powerbi.com/groups/demo/reports/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/ReportSection',usedURL='https://app.powerbi.com/groups/demo/reports/458f40a9-2b3f-4518-a3cb-d699fef65baa/ReportSection';
+const readyURL='https://app.powerbi.com/groups/demo/reports/37ddaf7f-5526-4fd7-b85e-bc6630d5ae33/ReportSection',usedURL='https://app.powerbi.com/groups/demo/reports/458f40a9-2b3f-4518-a3cb-d699fef65baa/ReportSection';
 const tabs=new Map([[1,{id:1,url:'https://example.test/',windowId:7,active:true,groupId:-1}],[2,{id:2,url:'https://solotech.operations.dynamics.com/?cmp=CAOP&mi=SOLMCRProductQuickQuote',windowId:8,active:false,groupId:-1}],[3,{id:3,url:'https://solotech.operations.dynamics.com/?cmp=CAOP&mi=smmBusinessRelationsListPage',windowId:7,active:false,groupId:-1}],[4,{id:4,url:usedURL,windowId:7,active:false,groupId:-1}],[5,{id:5,url:readyURL,windowId:7,active:false,groupId:-1}]]);
 const groups=new Map(),windows=new Map([[7,{id:7,type:'normal',focused:true}],[8,{id:8,type:'normal'}]]);let nextTab=10,nextGroup=100,session={},local={toolboxPowerBIResolvedURL:readyURL},created=[],moved=[],message,updated,permission=true,failCreate=false,failGroup=false;
 const filter=(store,keys)=>Object.fromEntries((typeof keys==='string'?[keys]:keys).map(k=>[k,store[k]]));
@@ -18,7 +18,7 @@ for(const file of ['used-catalogue.js','tab-routing.js','tab-group.js','workspac
  const first=c.ToolboxWorkspace.prepare(7),same=c.ToolboxWorkspace.prepare(7);assert.equal(first,same);let r=await first;assert.equal(r.total,4);assert.equal(r.opened,0);assert.equal(created.length,0);assert.deepEqual(moved,[2]);assert.equal(tabs.get(1).active,true);assert.equal(groups.get(r.groupId).collapsed,true);assert.equal(new Set([2,3,4,5].map(id=>tabs.get(id).groupId)).size,1);assert.equal(local.toolboxWorkspaceDay.status,'prepared');
  // Embedded reports are the same targets, including during navigation and after restart.
  const usedEmbed='https://app.powerbi.com/reportEmbed?reportId=458f40a9-2b3f-4518-a3cb-d699fef65baa&autoAuth=true&ctid=c2f120b6-e8fc-402c-9972-fa891cb53927&actionBarEnabled=true';
- const readyEmbed='https://app.powerbi.com/reportEmbed?reportId=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee&autoAuth=true';
+ const readyEmbed='https://app.powerbi.com/reportEmbed?reportId=37ddaf7f-5526-4fd7-b85e-bc6630d5ae33&autoAuth=true';
  tabs.get(4).url=usedEmbed;tabs.get(5).url=readyEmbed;session={};r=await c.ToolboxWorkspace.prepare(7);assert.equal(r.opened,0);assert.equal(created.length,0);assert.equal(session.usedPowerBITab,4);assert.equal(session.powerBITab,5);assert.equal(local.toolboxWorkspaceTabs.used.url,usedEmbed);
  tabs.get(4).url='https://app.powerbi.com/';tabs.get(4).pendingUrl=usedEmbed;r=await c.ToolboxWorkspace.prepare(7);assert.equal(r.opened,0);assert.equal(session.usedPowerBITab,4);delete tabs.get(4).pendingUrl;tabs.get(4).url=usedURL;tabs.get(5).url=readyURL;
  await c.ToolboxWorkspace.prepare(7);updated(5,{url:usedEmbed});await new Promise(r=>setImmediate(r));assert.equal(local.toolboxWorkspaceTabs.ready.url,readyURL);

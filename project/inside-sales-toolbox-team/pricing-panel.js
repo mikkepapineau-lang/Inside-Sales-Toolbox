@@ -4,7 +4,7 @@
  const currency=v=>v==='USD'?'USD':'CAD';
  const locale=()=>ToolboxI18n.language==='en'?'en-CA':'fr-CA';
  const number=v=>new Intl.NumberFormat(locale(),{minimumFractionDigits:2,maximumFractionDigits:2}).format(v);
- const money=(v,c)=>number(v)+' '+c;
+ const money=(v,c)=>new Intl.NumberFormat(locale(),{style:'currency',currency:c,currencyDisplay:'narrowSymbol'}).format(v)+' '+c;
  const t=s=>ToolboxI18n.t(s);
  function save(){if(restoring)return;chrome.storage.local.set({[key]:state}).catch(()=>message('pricing-status','Impossible de conserver les valeurs.','error'));}
  function message(id,text,kind=''){const p=el(id);p.textContent=text;p.dataset.state=kind;}

@@ -1,0 +1,17 @@
+name: Vérifications Toolbox
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 scripts/check.py
+      - run: python3 scripts/verify-version-archives.py --archives-only

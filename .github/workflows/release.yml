@@ -1,0 +1,38 @@
+name: Publier Toolbox
+on:
+  push:
+    branches: [main]
+    paths: ['.release/*.json']
+  workflow_dispatch:
+    inputs:
+      edition:
+        description: Édition à publier
+        type: choice
+        options: [equipe, michael]
+        default: equipe
+permissions:
+  contents: read
+concurrency:
+  group: toolbox-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 scripts/check.py
+      - run: python3 scripts/verify-version-archives.py --archives-only
+      - name: Vérifier et publier les éditions demandées
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REQUESTED_EDITION: ${{ inputs.edition }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          python3 scripts/publish-requested.py
