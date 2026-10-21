@@ -2,11 +2,13 @@
 
 Extension Microsoft Edge pour les ventes internes, issue du projet Salesforce vers Dynamics commencé le 21 septembre 2026.
 
-**9 archives originales et 2 checkpoints récupérés.** Les premières versions dont les sources manquent sont recensées dans l’[historique détaillé](docs/HISTORIQUE.md). Cet inventaire distingue les fichiers disponibles et les simples mentions historiques.
+**53 archives originales d’extension et 2 checkpoints récupérés.** Les premières versions dont les sources manquent sont recensées dans l’[historique détaillé](docs/HISTORIQUE.md). Cet inventaire distingue les fichiers disponibles et les simples mentions historiques.
 
 ## Télécharger
 
-- [Équipe 3.5.11](downloads/Inside-Sales-Toolbox-Equipe-v3.5.11.zip) : dernière archive numérotée retrouvée.
+- [Équipe 3.5.12](downloads/Inside-Sales-Toolbox-Equipe-v3.5.12.zip) : export existant, ZIP original récupéré.
+- [Catalogue complet des archives](docs/ARCHIVES.md), dont les 44 imports du 21 octobre 2026.
+- [Équipe 3.5.11](downloads/Inside-Sales-Toolbox-Equipe-v3.5.11.zip) : archive historique conservée.
 - [Équipe 3.5.10](downloads/Inside-Sales-Toolbox-Equipe-v3.5.10.zip), [3.5.9](downloads/Inside-Sales-Toolbox-Equipe-v3.5.9.zip), [3.5.8-test](downloads/Inside-Sales-Toolbox-Equipe-v3.5.8-test.zip) et [3.5.7](downloads/Inside-Sales-Toolbox-Equipe-v3.5.7.zip).
 - [Michaël 1.8.18](downloads/Inside-Sales-Toolbox-Michael-v1.8.18.zip).
 - Précurseurs : [Lead 1.7.2](downloads/Solotech-Lead-vers-D365-Edge-v1.7.2.zip), [Michaël 1.7.4](downloads/Solotech-Lead-D365-Michael-v1.7.4.zip), [Équipe 1.7.5](downloads/Solotech-Lead-D365-Equipe-v1.7.5.zip).
@@ -17,7 +19,7 @@ Sur la page d’un ZIP dans GitHub, utiliser **Download raw file**. Pour mettre 
 
 | Dossier / référence | Contenu |
 | --- | --- |
-| `project/inside-sales-toolbox-team/` | Sources exactes de l’archive Équipe 3.5.11. |
+| `project/inside-sales-toolbox-team/` | Sources exactes de l’archive Équipe 3.5.12. |
 | `project/inside-sales-toolbox-personal/` | Sources exactes de l’archive Michaël 1.8.18. |
 | `project/solotech-lead-bridge/` | Précurseur 1.7.2. |
 | Branches `versions/*` | Un commit par archive récupérée. |

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "edition": "equipe",
+  "version": "3.5.12",
+  "archive": "downloads/Inside-Sales-Toolbox-Equipe-v3.5.12.zip",
+  "sha256": "ee2d548238ada10b90c0569b1cd3d22bb91142a331fb3d3ad3cbd09186408cf6",
+  "notes": "docs/releases/equipe-3.5.12.md",
+  "prerelease": true
+}

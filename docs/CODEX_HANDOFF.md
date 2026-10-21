@@ -2,13 +2,13 @@
 
 État du 21 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
-## Autorisation et accès aux archives
+## Transfert des archives originales
 
-Michaël a confirmé directement dans la conversation d'origine, le 21 octobre 2026, son accord de publication des 44 archives originales manquantes, dont le ZIP 3.5.12, dans le dépôt GitHub public, après avoir été informé du risque de données internes. Le refus automatique précédent est résolu par cet accord direct. Les cinq autres ZIP du lot sont déjà identiques dans le dépôt public.
+Michaël a donné son accord explicite de divulgation publique des 44 archives, dont le ZIP 3.5.12. Le transport du commit `c82dfd3a41c38821c192fabeed87a91f8548570d` a été vérifié : tar.xz de 3 543 924 octets, SHA256 `c2f9b7ab4f1e6cab3dfa1dc1ce41cf229402be5d435bd4c517a43ac1ee535c1d`. Les 49 ZIP passent les contrôles SHA256, taille, CRC, chemins et versions des manifests; cinq étaient déjà identiques, 44 sont importés dans des commits individuels sans antidatation. Aucun ZIP n’a été régénéré.
 
-L'environnement Codex est publié. Son clone a confirmé le code, les 53 scripts et les 12 suites du noyau. Il n'expose pas les outils Library et son montage `/workspace/library-files` est vide : pour lui transmettre les archives, un dossier provisoire `.migration/2026-10-21-original-archives/` contient les 49 ZIP originaux regroupés sans modification, comprimés et encodés en parties ordonnées. Lire son README, vérifier la taille, le SHA256 et le manifeste avant toute importation. L'accès ne dépend plus de Library.
+Le catalogue `docs/ARCHIVES.md`, les empreintes et l’inventaire distinguent les 44 archives importées des 11 snapshots reconstruits. Le vérificateur conserve les anciennes références (745 fichiers comparés) et compare les 75 fichiers actuels au ZIP original 3.5.12. Les 53 scripts et les 12 suites du noyau passent, ainsi que `release.py --edition equipe --check`. Les autres éditions, le laboratoire, les neuf archives antérieures et les deux checkpoints sont préservés.
 
-Après l'importation et la vérification des originaux sous `downloads/`, retirer le dossier provisoire dans un commit séparé et actualiser ce document avec les liens de publication. L'historique doit rester conservé. Les imports et la publication ne sont annoncés terminés qu'après vérification effective de GitHub.
+Le transport provisoire a été supprimé dans un commit séparé; son historique reste accessible. `.release/equipe.json` est copié du transport original et accompagne le ZIP 3.5.12 dans le même envoi. La création de PR via l’API GitHub est bloquée par une réponse `Forbidden`; l’intégration sur main est explicitement autorisée par Michaël. Le résultat effectif des workflows et de la publication sera confirmé après cet envoi.
 
 ## Point de départ
 
