@@ -3,6 +3,8 @@
  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
  const text=e=>String(e?.innerText||e?.textContent||e?.getAttribute('aria-label')||'').replace(/\s+/g,' ').trim();
  const visible=e=>!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&getComputedStyle(e).display!=='none';
+ const reportCurrency=()=>String(document.body?.innerText||'').match(/Display\s+Currency\s+(CAD|USD|EUR|GBP)\b/i)?.[1]||'';
+ const reportBusy=()=>!!document.querySelector('[aria-busy="true"]');
  function tables(){
   const nodes=[...document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx')].filter(visible);
   return nodes.map(root=>{
@@ -34,7 +36,7 @@
   return records;
  }
  const regionNames=['CANADA','UK','USA'];
- const readerVersion='1.2.4';
+ const readerVersion='1.2.5';
  const regionRoots='.visualContainer,visual-container,.visual-container-component,.slicerContainer,[data-visualtype="slicer"],[role="group"],[role="listbox"],[role="combobox"],[role="region"],filter-card,.filterCard,.filter-card,.chicletSlicer,.chiclet-slicer,.slicer';
  const regionOptions='[role="option"],[role="checkbox"],[role="menuitemcheckbox"],[role="button"],button,input[type="checkbox"],.slicerItemContainer,.chiclet,.chicletItem,.slicerText,.slicerItemText,.chicletItemText';
  const regionLabel=e=>[e.getAttribute?.('aria-label'),e.getAttribute?.('title'),text(e),...[...e.labels||[]].map(text)].filter(Boolean).map(value=>String(value).trim().toUpperCase()).filter(value=>new Set(value.match(/\b(?:CANADA|UK|USA)\b/g)||[]).size===1).map(value=>value.match(/^(CANADA|UK|USA)(?:$|[\s,;(:.])/)).find(Boolean)?.[1]||null;
@@ -227,7 +229,7 @@
   do{
    await new Promise(r=>setTimeout(r,300));if(expected&&!same(regionState()))throw Error('La sous-région a changé pendant son chargement.');
    const table=tables()[0],signature=table?JSON.stringify([table.headers,rows(table).slice(0,4).map(r=>r.values)]):'';
-   if(!diagnostic().busy&&signature&&signature===previous)stable++;else stable=0;previous=signature;
+   if(!reportBusy()&&signature&&signature===previous)stable++;else stable=0;previous=signature;
    if(stable>=3&&Date.now()-start>=2000)return;
   }while(Date.now()<deadline);
   throw Error('La mise à jour du tableau après sélection de la sous-région n’est pas confirmée.');
@@ -247,7 +249,7 @@
   if(unique.length!==1)throw Error('La page LP Catalog - Used Gear ne peut pas être sélectionnée automatiquement ('+unique.length+' cible). Ouvre le panneau des pages du rapport ou utilise Diagnostic Power BI.');
   unique[0].click();
   const deadline=Date.now()+12000;
-  while(Date.now()<deadline){if(diagnostic().readyLabel&&!diagnostic().busy){await new Promise(r=>setTimeout(r,500));return;}await new Promise(r=>setTimeout(r,250));}
+  while(Date.now()<deadline){if(diagnostic().readyLabel&&!reportBusy()){await new Promise(r=>setTimeout(r,500));return;}await new Promise(r=>setTimeout(r,250));}
   throw Error('LP Catalog - Used Gear a été sélectionné, mais son chargement n’est pas confirmé. Réessaie après le chargement.');
  }
  let scan=null,financialScan=null;
@@ -257,22 +259,25 @@
  async function readFinancial(options){
   if(!globalThis.ToolboxPowerBITableReader?.create)throw Error('Le moteur de lecture horizontale est absent. Recharge l’extension et le rapport.');
   const external=options.externalRegions,state=regionState();
-  if(external!==undefined&&(!Array.isArray(external)||external.length!==3||new Set(external).size!==3||external.some(name=>!regionNames.includes(name))))throw Error('Sous-région externe invalide pour les prix.');
-  if(!external&&(!state.verified||state.selected.length!==3))throw Error('Les prix et NBV exigent CANADA + UK + USA confirmés.');
-  if(external&&state.verified&&state.selected.length!==3)throw Error('Les sélecteurs SUBREGION ne concordent pas.');
+  if(external!==undefined&&(!Array.isArray(external)||!external.length||external.length>3||new Set(external).size!==external.length||external.some(name=>!regionNames.includes(name))))throw Error('Sous-région externe invalide pour les prix.');
+  if(!external&&!state.verified)throw Error('La sous-région des prix et NBV doit être confirmée.');
+  if(external&&state.verified&&JSON.stringify([...external].sort())!==JSON.stringify([...state.selected].sort()))throw Error('Les sélecteurs SUBREGION ne concordent pas.');
   const currentCurrency=()=>String(document.body?.innerText||'').match(/Display\s+Currency\s+(CAD|USD|EUR|GBP)\b/i)?.[1]||'';
-  const regions=[...regionNames],currency=currentCurrency(),initialScope=scope();
+  // An opaque remote slicer is probed by the worker between chunks and before
+  // saving. Do not repeatedly rediscover an absent slicer in the table document.
+  const financialScope=()=>JSON.stringify({regions:external&&!state.verified?external:regionState(),filters:[...document.querySelectorAll('[role="combobox"]')].filter(visible).map(text)});
+  const regions=regionNames.filter(name=>(external||state.selected).includes(name)),currency=currentCurrency(),initialScope=financialScope();
   const priceHeader=value=>norm(value)==='sellprice',nbvHeader=value=>norm(value)==='nbv';
   const engine=globalThis.ToolboxPowerBITableReader.create({
    version:'used-financial-1',chunked:true,maxVerticalSteps:100000,
    orderHeader:value=>/^(d365itemid|d365itemnumber|itemnumber)$/.test(norm(value)),
    customerHeader:value=>norm(value)==='sku',notesHeader:value=>priceHeader(value)||nbvHeader(value),
    isOrder:value=>/^[A-Z0-9][A-Z0-9._-]*$/i.test(String(value||'').trim())&&!/^(total|totaux)$/i.test(value),
-   ready:()=>true,scope:()=>({filters:scope(),currency:currentCurrency()}),requiredDetails:[priceHeader,nbvHeader]
+   ready:()=>true,scope:()=>({filters:financialScope(),currency:currentCurrency()}),requiredDetails:[priceHeader,nbvHeader]
   });
   const retain=()=>{globalThis.ToolboxUsedFinancialDiagnostic={at:Date.now(),...engine.diagnostic()};};
   const finish=value=>{
-   if(scope()!==initialScope||currentCurrency()!==currency)throw Error('Les filtres ou la devise ont changé pendant la lecture des prix.');
+   if(financialScope()!==initialScope||currentCurrency()!==currency)throw Error('Les filtres ou la devise ont changé pendant la lecture des prix.');
    if(value?.error)throw Error(value.error);
    if(value?.more)return {...value,regions,currency};
    if(!value?.rows?.length||!value.loadedToEnd)throw Error('Le parcours des prix et NBV n’est pas terminé. Aucun prix enregistré.');
@@ -289,12 +294,12 @@
   const state=regionState();
   if(external&&state.verified&&JSON.stringify([...external].sort())!==JSON.stringify([...state.selected].sort()))throw Error('Les sélecteurs SUBREGION ne concordent pas.');
   const candidates=tables();if(candidates.length!==1)return {error:candidates.length?'Plusieurs tableaux d’inventaire usagé détectés. Affiche uniquement LP Catalog - Used Gear.':'Tableau d’inventaire usagé non accessible. Ouvre LP Catalog - Used Gear; au besoin, sélectionne le tableau et utilise Alt + Maj + F11.',diagnostic:diagnostic()};
-  if(diagnostic().busy)return {error:'Power BI charge encore le rapport. Réessaie après le chargement.',diagnostic:diagnostic()};
+  if(reportBusy())return {error:'Power BI charge encore le rapport. Réessaie après le chargement.',diagnostic:diagnostic()};
   const t=candidates[0],scrollers=[t.root,...t.root.querySelectorAll('*')].filter(e=>e.clientHeight>40&&e.scrollHeight>e.clientHeight+5);
   const declared=Number(t.root.getAttribute('aria-rowcount'));
   const headerRows=[...t.root.querySelectorAll('[role="row"],tr')].filter(e=>e.querySelector('[role="columnheader"],th')).length;
   const expected=Number.isInteger(declared)&&declared>0?Math.max(0,declared-headerRows):null;
-  scan={regions:external?[...external]:state.verified?state.selected:null,t,scrollers,saved:scrollers.map(e=>[e,e.scrollTop,e.scrollLeft]),collected:new Map(),scope:scope(),currency:diagnostic().currency,steps:0,endStable:0,lastEnd:'',stalled:0,expected};
+  scan={regions:external?[...external]:state.verified?state.selected:null,t,scrollers,saved:scrollers.map(e=>[e,e.scrollTop,e.scrollLeft]),collected:new Map(),scope:scope(),currency:reportCurrency(),steps:0,endStable:0,lastEnd:'',stalled:0,expected};
   scrollers.forEach(e=>{e.scrollTop=0;e.dispatchEvent(new Event('scroll',{bubbles:true}));});
   await new Promise(r=>setTimeout(r,500));return next();
  }
@@ -304,8 +309,8 @@
   const deadline=Date.now()+6500;
   try{
    do{
-    if(scope()!==scan.scope||diagnostic().currency!==scan.currency||tables()[0]?.root!==scan.t.root)throw Error('Les filtres ou le tableau ont changé pendant la lecture. Relance Actualiser.');
-    if(diagnostic().busy){await new Promise(r=>setTimeout(r,400));continue;}
+    if(scope()!==scan.scope||reportCurrency()!==scan.currency||tables()[0]?.root!==scan.t.root)throw Error('Les filtres ou le tableau ont changé pendant la lecture. Relance Actualiser.');
+    if(reportBusy()){await new Promise(r=>setTimeout(r,400));continue;}
     for(const r of rows(scan.t))scan.collected.set(JSON.stringify(r.values),r);
     const before=scan.scrollers.map(e=>e.scrollTop);
     const atEnd=scan.scrollers.every(e=>e.scrollTop+e.clientHeight>=e.scrollHeight-2);

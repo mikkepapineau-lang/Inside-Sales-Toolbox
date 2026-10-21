@@ -608,3 +608,18 @@ Object.assign(globalThis.ToolboxDictionary,{
 Object.assign(globalThis.ToolboxDictionary,{"Importation du lead…":"Importing lead…","Champ":"Field","Champs traités":"Fields processed","En cours":"In progress","Saisi":"Filled","Conservé":"Kept"});
 
 Object.assign(globalThis.ToolboxDictionary,{"Réessayer les coordonnées":"Retry contact details","Remplissage des coordonnées…":"Filling contact details…","Coordonnées remplies":"Contact details filled","Coordonnées remplies. Vérifie puis enregistre la soumission dans D365.":"Contact details filled. Review and save the quotation in D365."});
+
+Object.assign(globalThis.ToolboxDictionary,{
+ "Lecture des prix et NBV de la sélection…":"Reading prices and NBV for the selection…",
+ "Prix et NBV à actualiser pour cette sélection.":"Refresh prices and NBV for this selection.",
+ "Quantités à actualiser pour cette sélection.":"Refresh quantities for this selection.",
+ "Actualiser les prix de vente et le NBV de la sélection depuis Power BI.":"Refresh selling prices and NBV for the selection from Power BI.",
+ "Prix et NBV de la sélection actualisés. Les quantités sont conservées.":"Selection prices and NBV updated. Quantities preserved.",
+ "Le bouton Prix + NBV relit les prix et le NBV depuis Power BI pour les pays sélectionnés.":"Prices + NBV rereads prices and NBV from Power BI for the selected countries.",
+ "Les boutons Quantités et Prix + NBV relisent le rapport pour les pays sélectionnés.":"Quantities and Prices + NBV reread the report for the selected countries."
+});
+
+Object.assign(globalThis.ToolboxDictionary,{
+ "Afficher Power BI pendant la lecture":"Show Power BI while reading",
+ "La lecture ralentit si l’onglet passe en arrière-plan ou si la fenêtre est réduite.":"Reading slows down when the tab is in the background or the window is minimized."
+});

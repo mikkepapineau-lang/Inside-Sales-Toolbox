@@ -12,13 +12,13 @@
   const copy=node('span','used-refresh-copy'),title=node('strong','',t(label));
   const phases={starting:'Préparation…',catalogue:'Catalogue enregistré',opening:'Ouverture de Power BI',page:'Chargement du rapport',region:'Filtre de sous-région',reading:'Lecture des lignes',merging:financial?'Enregistrement des prix et NBV':'Enregistrement des quantités'};
   const format=n=>new Intl.NumberFormat(document.documentElement.lang||'fr-CA').format(n);
-  let detail=busy?t(phases[status.phase]||'Lecture en cours…'):error?t('Réessayer'):done?t(status.state==='cached'?'Déjà à jour':'À jour'):t(financial?'Catalogue global':'Sélection actuelle');
+  let detail=busy?t(phases[status.phase]||'Lecture en cours…'):error?t('Réessayer'):done?t(status.state==='cached'?'Déjà à jour':'À jour'):t('Sélection actuelle');
   if(busy&&count!==null)detail=format(count)+(expected!==null?' / '+format(expected):'')+' '+t('lignes')+(percent!==null?' · '+percent+' %':'');
   else if(done&&count!==null)detail+=' · '+(financial&&Number.isFinite(status.updated)?format(status.updated)+' '+t('articles actualisés'):format(count)+' '+t('lignes'));
   if(status.region&&status.region!=='ALL'&&(!busy||count===null))detail=[detail,ToolboxUsedRegions.label(status.region)].filter(Boolean).join(' · ');
   copy.append(title);if(detail)copy.append(node('small','',detail));const rail=node('span','used-refresh-rail');rail.setAttribute('aria-hidden','true');const fill=node('span','used-refresh-fill');rail.append(fill);
   if(percent===null)rail.className+=' is-indeterminate';else fill.style.width=percent+'%';
-  b.replaceChildren(mark,copy,rail);b.setAttribute('aria-label',[t(financial?'Actualiser les prix de vente et le NBV du catalogue depuis Power BI.':'Actualiser les quantités de la sélection.'),detail].filter(Boolean).join(' · '));
+  b.replaceChildren(mark,copy,rail);b.setAttribute('aria-label',[t(financial?'Actualiser les prix de vente et le NBV de la sélection depuis Power BI.':'Actualiser les quantités de la sélection.'),detail].filter(Boolean).join(' · '));
   if(previous.get(buttonId)!==state&&(done||error))globalThis.ToolboxMotion?.success(mark);previous.set(buttonId,state);
  }
  globalThis.ToolboxUsedRefresh={render};

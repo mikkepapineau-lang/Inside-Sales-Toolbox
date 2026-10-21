@@ -96,7 +96,7 @@ async function readUsedPowerBI(kind,payload={}){
  }
  if(payload.region!==undefined&&ToolboxUsedRegions.parse(payload.region)===null)throw Error('Sous-région invalide.');
  const prices=kind==='usedPowerBIReadPrices'||kind==='usedCatalogueImport'&&payload.mode==='prices',operation=prices?'prices':'quantities';
- const region=prices?'ALL':ToolboxUsedRegions.normalize(payload.region),reading=['usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices'].includes(kind);
+ const region=ToolboxUsedRegions.normalize(payload.region),reading=['usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices'].includes(kind);
  const progress=(phase,message,extra={})=>chrome.storage.local.set({toolboxUsedPowerBIStatus:{state:'loading',phase,message,region,operation,...extra}});
  if(usedPowerBIBusy)throw Error('Une lecture Power BI est déjà en cours.');usedPowerBIBusy=true;usedPowerBIStop=false;
  let tab,stage='Vérification des autorisations',diagnostics=[],frameWarning='',frameBridge=null,remoteRegion=null,scanTarget=null,frameRegistration;
@@ -105,7 +105,7 @@ async function readUsedPowerBI(kind,payload={}){
    stage='Chargement du catalogue enregistré';if(reading)await progress('catalogue','Chargement du catalogue enregistré…');
    const base=await ensureUsedCatalogue();
    if(kind==='usedCatalogueReset'){
-    const data=await initialUsedCatalogue();await chrome.storage.local.set({toolboxUsedPowerBI:data,toolboxUsedRegionQuantities:{},toolboxUsedPowerBIStatus:{state:'done',message:'Catalogue Excel initial rétabli.'}});return {count:data.rows.length};
+    const data=await initialUsedCatalogue();await chrome.storage.local.set({toolboxUsedPowerBI:data,toolboxUsedRegionQuantities:{},toolboxUsedRegionPrices:{},toolboxUsedPowerBIStatus:{state:'done',message:'Catalogue Excel initial rétabli.'}});return {count:data.rows.length};
    }
    if(kind==='usedCatalogueImport'){
     stage='Import Excel';await progress('merging','Mise à jour du catalogue depuis Excel…');
@@ -113,6 +113,11 @@ async function readUsedPowerBI(kind,payload={}){
     if(region!=='ALL'&&payload.mode==='catalogue')throw Error('Choisis CANADA + UK + USA pour mettre à jour les prix et NBV du catalogue.');
     const importLine=String(payload.data?.filters||'').split(/\r?\n/).find(l=>/SUBREGION/i.test(l))||'',importRegions=ToolboxUsedRegions.names.filter(r=>new RegExp('\\b'+r+'\\b','i').test(importLine));
     if(region==='ALL'&&importRegions.length&&!ToolboxUsedRegions.matches(importRegions,'ALL'))throw Error(prices?'Pour actualiser les prix du catalogue, exporte CANADA + UK + USA.':'Cet Excel ne couvre pas toutes les sous-régions. Choisis la même sélection avant l’import.');
+    if(prices&&region!=='ALL'){
+     if(!ToolboxUsedRegions.matches(importRegions,region))throw Error('Cet Excel ne confirme pas la sous-région choisie pour les prix.');
+     const value={...payload.data,regions:importRegions},snapshot=ToolboxUsedRegions.financialSnapshot(base,value,region,Date.now(),'Excel'),saved=await chrome.storage.local.get('toolboxUsedRegionPrices');
+     await chrome.storage.local.set({toolboxUsedRegionPrices:{...(saved.toolboxUsedRegionPrices||{}),[region]:snapshot},toolboxUsedPowerBIStatus:{state:'done',at:snapshot.at,region,operation,count:snapshot.sourceCount,updated:snapshot.stats.updated,message:'Prix et NBV de la sélection actualisés. Les quantités sont conservées.'}});return {count:snapshot.records.length,stats:snapshot.stats};
+    }
     if(prices){
      const result=ToolboxUsedCatalogue.updatePrices(base,payload.data,{source:'Excel'}),stats=result.lastFinancialUpdate.stats;
      await chrome.storage.local.set({toolboxUsedPowerBI:result,toolboxUsedPowerBIStatus:{state:'done',at:Date.now(),region,operation,count:payload.data.rows.length,updated:stats.updated,message:'Prix et NBV actualisés. Les quantités sont conservées.'}});return {count:result.rows.length,stats};
@@ -152,6 +157,14 @@ async function readUsedPowerBI(kind,payload={}){
   while(Date.now()<deadline){tab=await chrome.tabs.get(tab.id);if(tab.status==='complete'){loaded=true;break;}await new Promise(r=>setTimeout(r,400));}
   if(!loaded)throw Error('Le rapport charge encore. Ouvre Power BI puis réessaie.');
   if(!isUsedPowerBI(tab)||/singleSignOn|signin|login/i.test(tab.url))throw Error('Connecte-toi à Power BI dans l’onglet du rapport, puis clique sur Actualiser.');
+  if(reading&&payload.foreground===true){
+   stage='Affichage du rapport';
+   const visibleTab=await chrome.tabs.update(tab.id,{active:true});
+   if(Number.isInteger(visibleTab.windowId)){
+    const windowInfo=chrome.windows.get?await chrome.windows.get(visibleTab.windowId):null;
+    await chrome.windows.update(visibleTab.windowId,{focused:true,...(windowInfo?.state==='minimized'?{state:'normal'}:{})});
+   }
+  }
   async function inspect(target,label){
    stage='Accès au contenu · '+label;
    await chrome.scripting.executeScript({target,files:['powerbi-reader.js','used-powerbi-reader.js']});
@@ -232,6 +245,10 @@ async function readUsedPowerBI(kind,payload={}){
   if(!ToolboxUsedRegions.matches(value.regions,region))throw Error('La sous-région du relevé n’est pas confirmée. Aucun changement enregistré.');
   await progress('merging',prices?'Enregistrement des prix et NBV…':'Enregistrement des quantités…',{tabId:tab.id,count:value.rows.length,expected:value.expected??null});
   const base=await ensureUsedCatalogue();
+  if(prices&&region!=='ALL'){
+   const snapshot=ToolboxUsedRegions.financialSnapshot(base,value,region),saved=await chrome.storage.local.get('toolboxUsedRegionPrices');
+   await chrome.storage.local.set({toolboxUsedRegionPrices:{...(saved.toolboxUsedRegionPrices||{}),[region]:snapshot},toolboxUsedPowerBIStatus:{state:'done',at:snapshot.at,region,operation,count:value.rows.length,expected:value.expected??null,updated:snapshot.stats.updated,tabId:tab.id,message:'Prix et NBV de la sélection actualisés. Les quantités sont conservées.'}});return {count:snapshot.records.length,stats:snapshot.stats};
+  }
   if(prices){
    const result=ToolboxUsedCatalogue.updatePrices(base,value,{source:'Power BI'}),stats=result.lastFinancialUpdate.stats;
    await chrome.storage.local.set({toolboxUsedPowerBI:result,toolboxUsedPowerBIStatus:{state:'done',at:Date.now(),region,operation,count:value.rows.length,expected:value.expected??null,updated:stats.updated,tabId:tab.id,message:'Prix et NBV actualisés. Les quantités sont conservées.'}});return {count:result.rows.length,stats};

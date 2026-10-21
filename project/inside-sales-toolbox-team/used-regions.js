@@ -1,4 +1,4 @@
-// Regional quantity snapshots reference catalogue rows, keeping prices/NBV in one place.
+// Quantity and financial snapshots share catalogue identities, with isolated region scopes.
 (()=>{
  const names=['CANADA','UK','USA'];
  function parse(value){
@@ -35,11 +35,39 @@
   const headers=[...base.headers],keys=headers.map(ToolboxUsedCatalogue.column),extraKeys=snapshot.headers.map(ToolboxUsedCatalogue.column);
   snapshot.headers.forEach((h,i)=>{if(!keys.includes(extraKeys[i])){headers.push(h);keys.push(extraKeys[i]);}});
   const q=ToolboxUsedCatalogue.quantityKeys.map(k=>keys.indexOf(k)),batch=String(snapshot.at),rows=[];
-  for(const record of snapshot.records){const original=base.rows[record[0]];if(!original)continue;const values=headers.map((_,i)=>original.values[i]||'');q.forEach((j,i)=>{if(j>=0)values[j]=record[i+1]||'';});rows.push({...original,values,qtyBatch:batch,qtyAt:snapshot.at,qtySource:'Power BI · '+label(region),qtyPartial:record.slice(1).some(v=>v==='')});}
+  for(const record of snapshot.records){const original=base.rows[record[0]];if(!original)continue;const values=headers.map((_,i)=>original.values[i]||'');q.forEach((j,i)=>{if(j>=0)values[j]=record[i+1]||'';});rows.push({...original,catalogueIndex:record[0],values,qtyBatch:batch,qtyAt:snapshot.at,qtySource:'Power BI · '+label(region),qtyPartial:record.slice(1).some(v=>v==='')});}
   for(const r of snapshot.extra)rows.push({...r,values:keys.map(k=>{const i=extraKeys.indexOf(k);return i<0?'':r.values[i]||'';})});
   const stats={updated:snapshot.records.length,added:snapshot.extra.length,retained:0,ambiguous:snapshot.ambiguous};
   return {...base,headers,rows,regionScope:region,regionVerified:true,at:snapshot.at,lastQuantityAt:snapshot.at,quantityBatch:batch,dailyDate:snapshot.dailyDate,lastImportStats:stats,lastImport:{source:'Power BI',at:snapshot.at,stats,filters:snapshot.filters,complete:snapshot.complete,loadedToEnd:snapshot.loadedToEnd,regions:selection(region)},complete:snapshot.complete,loadedToEnd:snapshot.loadedToEnd};
  }
+ function financialSnapshot(base,incoming,region,at=Date.now(),source='Power BI'){
+  region=normalize(region);
+  if(region==='ALL'||!matches(incoming.regions,region))throw Error('La sous-région des prix ne correspond pas à la sélection. Aucun changement enregistré.');
+  const clean={...base,rows:base.rows.map(row=>({...row,financialAt:'before-regional-price-read'}))};
+  const updated=ToolboxUsedCatalogue.updatePrices(clean,incoming,{at,source});
+  const keys=updated.headers.map(ToolboxUsedCatalogue.column),price=keys.indexOf('sellprice'),nbv=keys.indexOf('nbv'),records=[];
+  updated.rows.forEach((row,index)=>{if(row.financialAt===at)records.push([index,row.values[price],row.values[nbv]]);});
+  return {kind:'financial-v1',region,at,baseCount:base.rows.length,baseHash:signature(base),records,currency:updated.currency,source,filters:incoming.filters||'',stats:updated.lastFinancialUpdate.stats,sourceCount:incoming.rows.length};
+ }
+ function financialView(base,quantityView,snapshot,region){
+  region=normalize(region);if(region==='ALL')return base;
+  const known=valid(base,snapshot,region)&&snapshot.kind==='financial-v1'&&snapshot.currency===base.currency;
+  if(quantityView&&quantityView.regionScope!==region)throw Error('La vue de quantités ne correspond pas à la sélection.');
+  if(!quantityView&&!known)return null;
+  const source=quantityView||{...base,rows:snapshot.records.map(record=>({...base.rows[record[0]],catalogueIndex:record[0]}))};
+  const headers=[...source.headers],keys=headers.map(ToolboxUsedCatalogue.column);
+  for(const [key,label]of [['sellprice','Sell Price'],['nbv','NBV']])if(!keys.includes(key)){keys.push(key);headers.push(label);}
+  const prices=new Map(known?snapshot.records.map(record=>[record[0],record]):[]);
+  const rows=source.rows.map(row=>{
+   const values=headers.map((_,i)=>row.values[i]??''),record=prices.get(row.catalogueIndex);
+   values[keys.indexOf('sellprice')]=record?.[1]??'';values[keys.indexOf('nbv')]=record?.[2]??'';
+   if(!quantityView)for(const key of ToolboxUsedCatalogue.quantityKeys){const i=keys.indexOf(key);if(i>=0)values[i]='';}
+   return {...row,values,financialAt:record?snapshot.at:undefined,financialSource:record?snapshot.source+' · '+label(region):undefined,...(!quantityView?{qtyAt:undefined,qtySource:undefined,qtyPartial:true}:{})};
+  });
+  return {...source,headers,rows,regionScope:region,regionVerified:true,quantitiesPending:!quantityView,financialScope:region,financialVerified:known,catalogueAt:known?snapshot.at:undefined,sourceDate:undefined,
+   ...(!quantityView?{at:snapshot.at,lastQuantityAt:undefined,lastImportStats:undefined,lastImport:undefined}:{}),
+   lastFinancialUpdate:known?{at:snapshot.at,source:snapshot.source,stats:snapshot.stats,filters:snapshot.filters}:undefined};
+ }
  function allKnown(data){if(data.regionScope==='ALL'&&data.regionVerified)return true;if(data.lastImport?.source==='Power BI')return matches(data.lastImport.regions,'ALL');const filters=data.lastImport?.filters||data.filters||'';return /SUBREGION/i.test(filters)&&names.every(n=>new RegExp('\\b'+n+'\\b','i').test(filters));}
- globalThis.ToolboxUsedRegions={names,parse,normalize,selection,label,matches,signature,valid,snapshot,view,allKnown};
+ globalThis.ToolboxUsedRegions={names,parse,normalize,selection,label,matches,signature,valid,snapshot,view,financialSnapshot,financialView,allKnown};
 })();

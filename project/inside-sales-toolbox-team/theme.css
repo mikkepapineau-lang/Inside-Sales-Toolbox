@@ -378,3 +378,5 @@ html[data-toolbox-view=panel] .module-tabs button:hover{transform:translateY(-1p
 #used-results .record-valuation .record-amount{font-size:21px;line-height:1.25;font-weight:750;color:#2e1b5a;text-align:left;letter-spacing:-.4px;max-width:100%;overflow-wrap:anywhere}
 #used-results .record-valuation .record-amount:not(.source-value){font-size:12px;font-weight:550;letter-spacing:0}
 #used-results .record-currency{font-size:10px;font-weight:600;color:#725889;line-height:1.3}
+
+.used-foreground-option{display:flex;align-items:center;gap:7px;margin:10px 0 4px;font-size:11px;line-height:1.45;color:#64457d}.used-foreground-option input{width:14px;height:14px;margin:0;flex:none;accent-color:var(--purple)}.used-foreground-help{margin:0 0 12px}
