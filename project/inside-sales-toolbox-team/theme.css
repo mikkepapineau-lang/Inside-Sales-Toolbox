@@ -370,10 +370,10 @@ html[data-toolbox-view=panel] .module-tabs button:hover{transform:translateY(-1p
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 /* Used products share the D365 cards; price and NBV keep their emphasis. */
-#used-results .product-financial-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:7px}
-#used-results .product-financial-metrics>div{padding:6px 8px;background:#f0eaf7;border:1px solid #e0d5ec;border-radius:6px}
+#used-results .product-financial-metrics{grid-template-columns:minmax(0,1fr);gap:7px;margin-top:7px}
+#used-results .product-financial-metrics>div{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:3px 8px;padding:6px 8px;background:#f0eaf7;border:1px solid #e0d5ec;border-radius:6px}
 #used-results .product-financial-metrics dt{font-size:10px;font-weight:650;line-height:1.4;color:#64457d}
-#used-results .product-financial-metrics dd{font-size:21px;font-weight:750;line-height:1.25;color:#2e1b5a}
+#used-results .product-financial-metrics dd{font-size:21px;font-weight:750;line-height:1.25;color:#2e1b5a;margin:0}
 #used-results .product-financial-metrics dd.product-missing{font-size:11px;font-weight:550;letter-spacing:0}
 .product-currency{margin-left:4px;font-size:9px;font-weight:500;color:#725889}
 
@@ -389,3 +389,4 @@ html[data-toolbox-view=panel] .module-tabs button:hover{transform:translateY(-1p
 .used-export-help{margin:6px 0 0}.used-fallback{margin:8px 0 14px}.used-fallback>summary{font-size:11px;color:#796388}.used-fallback .used-refresh-actions{margin-top:10px}
 
 .used-excel-daily{margin:7px 0 0}.used-excel-time{margin:5px 0 0;font-weight:600;color:#725889}.used-export-times:empty{display:none}
+.used-updates.module-tools{margin:15px 0 12px;padding-top:12px}.used-updates>summary>span{min-width:0}.used-updates>summary #used-updates-title{font-size:11px;font-weight:650;color:#64457d}.used-updates>summary .used-excel-time{display:block;font-size:10px;font-weight:400;line-height:1.45}.used-updates .used-fallback{margin:12px 0 0}

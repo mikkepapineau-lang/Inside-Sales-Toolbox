@@ -1,5 +1,8 @@
 globalThis.ToolboxDictionary={
   "Non renseigné dans cet export":"Not provided in this export",
+  "Relevés Excel par pays · Quantités et NBV séparés, prix de vente commun.":"Excel snapshots by country · Separate quantities and NBV, shared selling price.",
+  "Prix de vente commun au produit · NBV et quantités par pays.":"Shared product selling price · NBV and quantities by country.",
+  "Actualiser par Excel importe trois relevés distincts et regroupe les produits avec un prix de vente commun, leurs quantités et leur NBV par pays.":"Refresh via Excel imports three separate snapshots and groups products with a shared selling price, quantities and NBV by country.",
   "Derniers exports Excel :":"Latest Excel exports:",
   "Prix, NBV et quantités conservés séparément pour chaque pays.":"Prices, NBV and quantities are kept separately for each country.",
 

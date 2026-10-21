@@ -50,7 +50,7 @@
   ToolboxUsedRefresh.render(prices||excel?{state:'idle'}:scopedStatus,!prices&&!excel&&(requesting||importing));ToolboxUsedRefresh.render(prices?scopedStatus:{state:'idle',region:region()},prices&&(requesting||importing),{buttonId:'used-refresh-prices',financial:true});ToolboxUsedRefresh.render(excel?scopedStatus:{state:'idle',region:region()},excel&&requesting,{buttonId:'used-export-excel',excel:true});filterUI.setBusy(loading);
   el('used-excel-time').textContent=countryMeta?tr('Derniers exports Excel :')+' '+exactDate(countryMeta.at):catalogue?.lastImport?.source==='Excel'?'Dernier import Excel manuel : '+exactDate(catalogue.lastImport.at):'Exports par pays : pas encore importés.';
   const exportTimes=el('used-country-export-times');exportTimes.replaceChildren();if(countryMeta)for(const country of ToolboxUsedRegions.names)exportTimes.append(node('p','fine-print',country+' · Export Excel : '+exactDate(countryMeta.exports[country].at)));
-  const regionLabel=ToolboxUsedRegions.label(region());el('used-region-note').textContent=data?.countryMode?'Relevés Excel par pays · Quantités, prix et NBV séparés.':region()==='ALL'?(catalogue&&!ToolboxUsedRegions.allKnown(catalogue)?'Sous-région du dernier relevé non confirmée. Actualise les quantités pour vérifier CANADA + UK + USA.':'Quantités CANADA + UK + USA.'):(data?.quantitiesPending?'Prix et NBV '+regionLabel+' · Lecture de secours : actualise les quantités de cette sélection.':data?'Quantités '+regionLabel+' selon les filtres Power BI · Prix et NBV selon la sélection.':regionLabel+' · Lecture de secours : clique sur Quantités pour cette sélection.');
+  const regionLabel=ToolboxUsedRegions.label(region());el('used-region-note').textContent=data?.countryMode?'Relevés Excel par pays · Quantités et NBV séparés, prix de vente commun.':region()==='ALL'?(catalogue&&!ToolboxUsedRegions.allKnown(catalogue)?'Sous-région du dernier relevé non confirmée. Actualise les quantités pour vérifier CANADA + UK + USA.':'Quantités CANADA + UK + USA.'):(data?.quantitiesPending?'Prix et NBV '+regionLabel+' · Lecture de secours : actualise les quantités de cette sélection.':data?'Quantités '+regionLabel+' selon les filtres Power BI · Prix et NBV selon la sélection.':regionLabel+' · Lecture de secours : clique sur Quantités pour cette sélection.');
   for(const id of ['used-refresh','used-refresh-prices','used-export-excel','used-import','used-force','used-clear','used-import-mode','used-foreground'])el(id).disabled=loading;
   el('used-status').textContent=importing?'Lecture du fichier Excel…':status.message||(loading?'Lecture de l’inventaire usagé…':data?'':'Chargement du catalogue Excel…');
   el('used-stop').hidden=!loading||importing;el('used-more').hidden=true;
@@ -59,7 +59,7 @@
   const financialData=data?.countryMode?data:region()==='ALL'?catalogue:data;
   el('used-financial-time').textContent=financialData?(financialData.catalogueAt?'Prix et NBV · '+time(financialData.catalogueAt):region()==='ALL'&&financialData.sourceDate?'Prix et NBV · Excel du '+dateOnly(financialData.sourceDate):'Prix et NBV à actualiser pour cette sélection.'):'';
   const financial=financialData?.lastFinancialUpdate;
-  el('used-price-note').textContent=data?.countryMode?'Prix, NBV et quantités conservés séparément pour chaque pays.':financial?(region()==='ALL'?financial.stats.updated+' articles actualisés · '+financial.stats.retained+' prix et NBV conservés.':financial.stats.updated+' articles actualisés · '+regionLabel+'.'):region()==='ALL'?'Catalogue global · Quantités conservées':'Prix et NBV à actualiser pour cette sélection.';
+  el('used-price-note').textContent=data?.countryMode?'Prix de vente commun au produit · NBV et quantités par pays.':financial?(region()==='ALL'?financial.stats.updated+' articles actualisés · '+financial.stats.retained+' prix et NBV conservés.':financial.stats.updated+' articles actualisés · '+regionLabel+'.'):region()==='ALL'?'Catalogue global · Quantités conservées':'Prix et NBV à actualiser pour cette sélection.';
   if(!data){if(region()!=='ALL')root.append(node('p','muted','Les quantités des autres sous-régions ne sont pas utilisées pour ce filtre.'));el('used-count').textContent='';el('used-currency').textContent='';el('used-coverage').textContent='';el('used-location-note').hidden=true;return;}
   const headers=data.headers.map(ToolboxUsedCatalogue.column),index=key=>headers.indexOf(key);
   const warehouseKey=['warehouse','warehouseid','inventlocationid','entrepot','location','emplacement','site','siteid'].find(key=>headers.includes(key));
@@ -82,6 +82,11 @@
   // countryView already validates each country's own batch; it has no shared quantityBatch.
   const stockState=source=>{const quantity=numeric(get(source,'available')),stale=!data.countryMode&&source.qtyBatch&&source.qtyBatch!==data.quantityBatch,partial=!data.countryMode&&source.qtyPartial;return {quantity,state:stale||partial||quantity===null?'unverified':quantity>0?'available':'empty',caption:stale?'À revérifier':partial?'Quantités partielles':quantity===null?'À vérifier':'Dispo.'};};
   function stockQuantity(source){const stock=stockState(source),box=node('div','stock-quantity is-'+stock.state);box.append(node('strong','source-value',stock.quantity===null?'?':get(source,'available')),node('span','stock-quantity-label',stock.caption));return box;}
+  function financialMetric(sourceRows,key,label,extraClass){
+   const distinct=new Map();for(const row of sourceRows){const value=get(row,key).trim();if(value!=='')distinct.set(numeric(value)??value,value);}
+   const values=[...distinct.values()],known=values.length===1,amounts=node('dl','product-metrics product-financial-metrics '+extraClass),pair=node('div',''),caption=node('dt','');caption.append(node('span','',label));
+   if(known&&data.currency)caption.append(node('span','product-currency source-value',data.currency));pair.append(caption,node('dd',known?'source-value':'product-missing',known?money(values[0])+' $':values.length?'Plusieurs valeurs':'Non renseigné'));amounts.append(pair);return amounts;
+  }
   for(const [groupKey,rows] of [...groups.entries()].slice(0,visibleLimit)){
    const source=rows[0],card=node('article','product-card'),states=rows.map(stockState),positive=states.some(s=>s.state==='available');
    const uncertain=states.some(s=>s.state==='unverified')||data.countryMode&&data.countrySelection.some(country=>!rows.some(row=>row.country===country));
@@ -89,6 +94,7 @@
    const heading=node('div','product-card-heading');heading.append(node('h3','product-sku source-value',get(source,'sku')||get(source,'item')||'Article D365'),node('span','product-stock-badge'+(positive?' product-stock-positive':''),positive?'En stock':uncertain?'À vérifier':'Indisponible'));card.append(heading);
    card.append(node('p','product-meta source-value',[get(source,'brand'),get(source,'item')?'D365 '+get(source,'item'):'Numéro D365 non renseigné'].filter(Boolean).join(' · ')));
    if(get(source,'description'))card.append(node('p','product-description source-value',get(source,'description')));
+   card.append(financialMetric(rows,'price','Prix de vente','product-selling-price'));
    // Reuse the New/D365 card structure. A country occupies the warehouse position;
    // multiple source lines stay separate, and an absent country never becomes zero.
    const stocks=node('div','product-warehouses'),places=new Map();
@@ -104,8 +110,7 @@
      if(placeRows.length>1){const lineHeading=node('div','product-location-heading');lineHeading.append(node('p','product-location','Ligne source '+(i+1)),stockQuantity(row));line.append(lineHeading);}
      const metrics=node('dl','product-metrics product-warehouse-metrics');
      for(const [key,label]of [['owned','Possédé'],['sellable','Max.']])if(get(row,key)!==''){const pair=node('div','');pair.append(node('dt','',label),node('dd','source-value',get(row,key)));metrics.append(pair);}if(metrics.children.length)line.append(metrics);
-     const amounts=node('dl','product-metrics product-financial-metrics');
-     for(const [key,label]of [['price','Prix de vente'],['nbv','NBV']]){const value=get(row,key),pair=node('div',''),caption=node('dt','');caption.append(node('span','',label));if(value!==''&&data.currency)caption.append(node('span','product-currency source-value',data.currency));pair.append(caption,node('dd',value===''?'product-missing':'source-value',value===''?'Non renseigné':money(value)+' $'));amounts.append(pair);}line.append(amounts);block.append(line);
+     line.append(financialMetric([row],'nbv','NBV','product-nbv-metrics'));block.append(line);
     });stocks.append(block);
    }card.append(stocks);
    const details=node('details','product-details');details.open=opened.has(groupKey);details.addEventListener('toggle',()=>{if(details.isConnected){if(details.open)opened.add(groupKey);else opened.delete(groupKey);}});details.append(node('summary','','Toutes les informations · '+rows.length+' ligne(s)'));
