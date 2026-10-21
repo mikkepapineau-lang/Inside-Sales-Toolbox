@@ -50,7 +50,11 @@
    }
    const layout=single(candidates,'L’option Données avec disposition actuelle est absente ou ambiguë');
    if(layout.querySelector?.('input[type="radio"]')?.disabled)throw Error('L’export avec disposition actuelle est désactivé.');
-   layout.click();await delay(100);
+   layout.click();
+   await wait(()=>{
+    const radios=[layout,...layout.querySelectorAll('input[type="radio"],[role="radio"]')];
+    return radios.some(e=>e.matches('input[type="radio"]')?e.checked:e.getAttribute('aria-checked')==='true');
+   },job,'Power BI n’a pas confirmé Données avec disposition actuelle. Aucun export lancé.',2000);
    const selects=[...dialog.querySelectorAll('select')].filter(visible);
    if(selects.length){const selected=selects.filter(e=>[...e.options].some(o=>/\.xlsx/i.test(o.textContent||'')));if(selected.length!==1)throw Error('Le format Excel .xlsx n’est pas disponible.');const option=[...selected[0].options].find(o=>/\.xlsx/i.test(o.textContent||''));if(selected[0].value!==option.value){if(selected[0].disabled)throw Error('Le format XLSX ne peut pas être sélectionné.');selected[0].value=option.value;selected[0].dispatchEvent(new Event('change',{bubbles:true}));}}
    else if(!/\.xlsx\b/i.test(dialog.innerText||dialog.textContent||'')){
