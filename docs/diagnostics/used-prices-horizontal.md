@@ -6,7 +6,7 @@ Le retour utilisateur confirme la reconnaissance du sélecteur SUBREGION et sign
 
 Le moteur de lecture des commandes expose maintenant une fabrique de lecteurs de tableau. Le comportement du lecteur Commandes est conservé; l’action Usagé Prix + NBV utilise un profil distinct, associé au numéro d’article D365 et au SKU, avec Sell Price et NBV comme colonnes requises.
 
-Le lecteur interne Usagé est désormais 1.2.3 et conserve la reconnaissance SUBREGION déjà essayée par l’utilisateur. Le worker charge le moteur partagé avant le lecteur Usagé et transmet explicitement le mode prix, y compris lorsque le sélecteur est dans un visuel intégré. La lecture des quantités reste sur son parcours existant.
+Le lecteur interne Usagé est désormais 1.2.4 et conserve la reconnaissance SUBREGION déjà essayée par l’utilisateur. Le worker charge le moteur partagé avant le lecteur Usagé et transmet explicitement le mode prix, y compris lorsque le sélecteur est dans un visuel intégré. La lecture des quantités reste sur son parcours existant.
 
 Pour chaque fenêtre de lignes, le lecteur revient à gauche, relève les identifiants, parcourt les colonnes à droite puis revient vérifier les mêmes identifiants avant d’accepter les montants. Les index de colonnes globaux sont pris en compte. Les identifiants de ligne sont limités à la fenêtre courante pour ne pas confondre les lignes recyclées lors du défilement vertical.
 
@@ -24,14 +24,14 @@ Chaque fiche Usagé présente Prix de vente et NBV dans deux encadrés, avec mon
 
 Aucun nouveau ZIP, tag ni numéro installable n’est créé. La publication originale 3.5.12 est inchangée. Pour essayer ces sources de développement, télécharger ces six fichiers de la branche et remplacer leurs homonymes dans le dossier permanent de l’édition équipe :
 
-- [powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/powerbi-reader.js)
-- [used-powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/used-powerbi-reader.js)
-- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/used-powerbi-worker.js)
-- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/used-powerbi-panel.js)
-- [list-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/list-ui.js)
-- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/theme.css)
+- [powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/5f6d2ace68ead50a4cf6a7b6668736ba35b2985f/project/inside-sales-toolbox-team/powerbi-reader.js)
+- [used-powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/5f6d2ace68ead50a4cf6a7b6668736ba35b2985f/project/inside-sales-toolbox-team/used-powerbi-reader.js)
+- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/5f6d2ace68ead50a4cf6a7b6668736ba35b2985f/project/inside-sales-toolbox-team/used-powerbi-worker.js)
+- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/5f6d2ace68ead50a4cf6a7b6668736ba35b2985f/project/inside-sales-toolbox-team/used-powerbi-panel.js)
+- [list-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/5f6d2ace68ead50a4cf6a7b6668736ba35b2985f/project/inside-sales-toolbox-team/list-ui.js)
+- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/5f6d2ace68ead50a4cf6a7b6668736ba35b2985f/project/inside-sales-toolbox-team/theme.css)
 
-Enregistrer les fichiers bruts sous leurs noms exacts, sans ajouter .txt. Ensuite : recharger l’extension dans edge://extensions ou chrome://extensions, actualiser le rapport Power BI, puis fermer et rouvrir le panneau. Le diagnostic du lecteur doit indiquer 1.2.3.
+Enregistrer les fichiers bruts sous leurs noms exacts, sans ajouter .txt. Ensuite : recharger l’extension dans edge://extensions ou chrome://extensions, actualiser le rapport Power BI, puis fermer et rouvrir le panneau. Le diagnostic du lecteur doit indiquer 1.2.4.
 
 Cliquer Prix + NBV, laisser le rapport disponible pendant la lecture, puis vérifier le bilan des articles actualisés et un article connu dans Power BI. Les quantités et la combinaison de pays affichée dans le Toolbox ne doivent pas être remplacées par cette actualisation financière. Un changement des pays du rapport vers le périmètre global est attendu pour cette action.
 
@@ -46,3 +46,13 @@ Cliquer Prix + NBV, laisser le rapport disponible pendant la lecture, puis véri
 - `--archives-only` réussi. Le contrôle d’égalité des sources avec le ZIP 3.5.12 n’est pas une validation attendue pour ces sources de développement non exportées.
 
 Le fonctionnement réel de Prix + NBV dans la session Power BI de l’utilisateur reste à confirmer. Les captures d’essai visuel utilisent exclusivement les données fictives de la prévisualisation du dépôt.
+
+## Si le glissement n’est pas confirmé
+
+Un essai utilisateur a renvoyé « La barre personnalisée Power BI n’a pas confirmé le déplacement horizontal ». Ce message ne précise pas si les événements ont été ignorés ou si la réponse géométrique a été différente de la consigne.
+
+Le lecteur 1.2.4 fournit les déplacements relatifs des événements, essaie également le suivi du mouvement sur le document et recalcule la géométrie après chaque progression réelle. Les corrections sur une même route sont bornées et ne sont poursuivies que si la mesure se rapproche de la cible. Les limites gauche/droite restent contrôlées strictement; une barre qui ne répond pas produit toujours un échec, sans enregistrer de prix.
+
+Les tests ajoutent les cas de suivi au niveau du document, d’événements utilisant movementX, de réponse au déplacement réduite à 75 %, et leurs combinaisons. Le diagnostic financier conserve les tentatives (`customMoves` : mode, route, correction, position de départ, cible et position atteinte), même après l’erreur et la réinjection du lecteur pour un diagnostic. Il figure dans `lastFinancialScan`, avec sa date de capture. Ce relevé décrit la dernière tentative; ce n’est pas une preuve du bon fonctionnement présent.
+
+Pour un poste déjà mis à jour avec les six fichiers de la correction précédente, seuls **powerbi-reader.js** et **used-powerbi-reader.js** doivent être remplacés à nouveau depuis les liens ci-dessus. Recharger l’extension et le rapport Power BI, fermer puis rouvrir le panneau. Réessayer Prix + NBV. Si le message revient, lancer Diagnostic inventaire usagé juste après et transmettre ce relevé, sans multiplier les tentatives inchangées. Le fonctionnement réel reste à confirmer par cet essai; aucun nouveau ZIP n’est produit.
