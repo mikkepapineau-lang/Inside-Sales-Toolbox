@@ -24,12 +24,12 @@ Chaque fiche Usagé présente Prix de vente et NBV dans deux encadrés, avec mon
 
 Aucun nouveau ZIP, tag ni numéro installable n’est créé. La publication originale 3.5.12 est inchangée. Pour essayer ces sources de développement, télécharger ces six fichiers de la branche et remplacer leurs homonymes dans le dossier permanent de l’édition équipe :
 
-- [powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/fix/subregion-visual-diagnostic/project/inside-sales-toolbox-team/powerbi-reader.js)
-- [used-powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/fix/subregion-visual-diagnostic/project/inside-sales-toolbox-team/used-powerbi-reader.js)
-- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/fix/subregion-visual-diagnostic/project/inside-sales-toolbox-team/used-powerbi-worker.js)
-- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/fix/subregion-visual-diagnostic/project/inside-sales-toolbox-team/used-powerbi-panel.js)
-- [list-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/fix/subregion-visual-diagnostic/project/inside-sales-toolbox-team/list-ui.js)
-- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES/fix/subregion-visual-diagnostic/project/inside-sales-toolbox-team/theme.css)
+- [powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/powerbi-reader.js)
+- [used-powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/used-powerbi-reader.js)
+- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/used-powerbi-worker.js)
+- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/used-powerbi-panel.js)
+- [list-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/list-ui.js)
+- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/7c35a840db8966982d91145ea780529771e2df0a/project/inside-sales-toolbox-team/theme.css)
 
 Enregistrer les fichiers bruts sous leurs noms exacts, sans ajouter .txt. Ensuite : recharger l’extension dans edge://extensions ou chrome://extensions, actualiser le rapport Power BI, puis fermer et rouvrir le panneau. Le diagnostic du lecteur doit indiquer 1.2.3.
 
