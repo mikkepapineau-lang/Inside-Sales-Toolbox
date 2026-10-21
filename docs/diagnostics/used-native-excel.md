@@ -14,6 +14,16 @@ Le fichier est lu localement au moment de sa génération. Aucun accès au dossi
 
 Les empreintes SHA256 du transport et les CRC du XLSX sont contrôlés. Une sélection, des filtres ou une devise modifiés pendant l’export font refuser l’import. Un reçu local temporaire à usage unique lie le fichier et les pays confirmés. Les mises à jour régionales des quantités et des prix sont préparées puis enregistrées ensemble. Une erreur de lecture ou de validation conserve les données précédentes.
 
+## Correctif du survol et du téléchargement Edge
+
+La vidéo fournie montre que les trois points ne sont proposés que lorsque le pointeur entre dans le visuel. La première implémentation envoyait seulement `mouseover` puis recherchait immédiatement le bouton. Le correctif envoie les événements de pointeur et de souris dans la zone du tableau et attend jusqu’à quatre secondes son apparition effective. Il tient compte de l’opacité des ancêtres et tente aussi le focus clavier du bouton. Les menus multiples restent refusés. Les événements JavaScript ne déplacent pas le curseur physique et ne créent pas un véritable état CSS `:hover`; si Power BI exige exclusivement ce dernier, le lecteur le signale au lieu d’annoncer un export réussi.
+
+L’utilisateur a également signalé **Actualiser par Excel / Réessayer CANADA** alors qu’Edge attendait **Ouvrir / Enregistrer sous / Enregistrer**. La capture ne surveille plus seulement `URL.createObjectURL` : elle peut aussi lire le lien natif effectivement activé, y compris une URL Blob créée auparavant ou dans un worker de même origine, un lien HTTPS de téléchargement de même origine ou une ouverture de fenêtre utilisée pour cet export. Le navigateur conserve son téléchargement normal; la lecture locale vise à terminer indépendamment du choix d’enregistrement.
+
+Les liens sont observés uniquement pendant l’export demandé, sans inventaire des téléchargements, accès aux fichiers locaux ou nouvelle permission. La taille est bornée à 25 Mo pendant la lecture, le contenu ZIP puis le parseur XLSX restent vérifiés et toutes les interceptions temporaires sont retirées à la fin, y compris en cas d’erreur ou d’arrêt. Aucun lien d’export ni donnée de la vidéo n’est enregistré dans le dépôt. Les tests reproduisent un téléchargement toujours en attente d’enregistrement; ils ne valident pas encore le mécanisme exact du rapport connecté.
+
+Pour un poste déjà à jour avec les treize fichiers ci-dessous, **seul `used-export-ui.js` doit être remplacé pour ce correctif**, puis recharger l’extension et actualiser le rapport. Le lien de ce fichier ci-dessous est actualisé au commit du correctif.
+
 ## Lecture de secours et affichage
 
 **Quantités** et **Prix + NBV** restent disponibles pour la lecture du tableau. Le lecteur attend la stabilisation des cellules au lieu d’utiliser systématiquement les mêmes pauses. Il avance d’une fenêtre presque complète en conservant un chevauchement, et évite certains déplacements inutiles. Les contrôles de lignes, de sous-région, de devise et de filtres restent actifs. L’arrière-plan ou une fenêtre réduite peuvent encore ralentir Power BI; l’option de premier plan reste facultative.

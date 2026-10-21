@@ -4,7 +4,11 @@
  let active=null;
  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
  const label=e=>e.getAttribute?.('aria-label')||e.getAttribute?.('title')||e.innerText||e.textContent||'';
- const visible=e=>!!e.getClientRects().length&&getComputedStyle(e).display!=='none'&&getComputedStyle(e).visibility!=='hidden';
+ const visible=e=>{
+  if(!e.getClientRects().length)return false;
+  for(let node=e;node instanceof Element;node=node.parentElement){const style=getComputedStyle(node);if(style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return false;}
+  return true;
+ };
  const enabled=e=>!e.disabled&&e.getAttribute?.('aria-disabled')!=='true';
  const unique=nodes=>nodes.filter((e,i)=>nodes.indexOf(e)===i&&!nodes.some(other=>other!==e&&e.contains(other)));
  const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -16,12 +20,38 @@
    return headers.filter(h=>['sku','description','d365itemid','d365itemnumber','qtyavailable','sellprice','nbv'].includes(h)).length>=2;
   });return single(found,'Tableau Used Gear absent ou ambigu');
  }
+ async function revealMenu(table,container,job){
+  const candidates=()=>unique([...container.querySelectorAll('button,[role="button"]')].filter(e=>/^(moreoptions|plusdoptions|autresoptions|optionssupplementaires)$/.test(norm(label(e)))));
+  const target=table.querySelector('[role="gridcell"],[role="cell"],td')||table;
+  const rect=target.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
+  const init={bubbles:true,clientX:x,clientY:y,view:window,relatedTarget:null};
+  // DOM events can reveal event-driven headers; they do not move the physical
+  // pointer or establish CSS :hover. Keyboard focus also supports :focus-within.
+  if(typeof PointerEvent==='function')target.dispatchEvent(new PointerEvent('pointerover',{...init,pointerType:'mouse',pointerId:1}));
+  target.dispatchEvent(new MouseEvent('mouseover',init));
+  for(let node=target;node&&container.contains(node);node=node.parentElement){
+   if(typeof PointerEvent==='function')node.dispatchEvent(new PointerEvent('pointerenter',{...init,bubbles:false,pointerType:'mouse',pointerId:1}));
+   node.dispatchEvent(new MouseEvent('mouseenter',{...init,bubbles:false}));
+  }
+  if(typeof PointerEvent==='function')target.dispatchEvent(new PointerEvent('pointermove',{...init,pointerType:'mouse',pointerId:1}));
+  target.dispatchEvent(new MouseEvent('mousemove',init));
+  let focused=null;
+  return wait(()=>{
+   if(!table.isConnected||!container.isConnected)throw Error('Le tableau a changé avant l’ouverture du menu.');
+   const buttons=candidates(),shown=buttons.filter(visible).filter(enabled);
+   if(shown.length>1)throw Error('Plusieurs menus du tableau sont visibles. Aucun export lancé.');
+   if(shown.length===1)return shown[0];
+   if(buttons.length===1&&enabled(buttons[0])&&focused!==buttons[0]){focused=buttons[0];focused.focus({preventScroll:true});}
+   return null;
+  },job,'Les trois points du tableau restent invisibles après le survol simulé. Ce rapport peut exiger un survol réel; place le curseur dans le tableau puis réessaie.',4000);
+ }
  function diagnostic(){return {dialogs:[...document.querySelectorAll('[role="dialog"]')].filter(visible).slice(0,3).map(e=>({buttons:[...e.querySelectorAll('button,[role="button"]')].filter(visible).map(label).slice(0,12),options:[...e.querySelectorAll('label,[role="radio"],[role="combobox"],select')].filter(visible).map(label).slice(0,12)}))};}
  async function run(){
   if(active)throw Error('Un export Excel est déjà en cours.');
-  const job={cancelled:false,armed:false,candidates:[],problem:null},original=URL.createObjectURL;active=job;
-  const capture=blob=>{
+  const job={cancelled:false,armed:false,candidates:[],problem:null,urls:new Set(),controllers:new Set()},original=URL.createObjectURL,originalClick=HTMLAnchorElement.prototype.click,originalDispatch=EventTarget.prototype.dispatchEvent,originalOpen=window.open;active=job;
+  const capture=(blob,key)=>{
    if(!job.armed||!(blob instanceof Blob)||blob.size<4||blob.size>25*1024*1024||!/^(?:application\/(?:vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet|octet-stream|zip))?$/.test(blob.type||''))return;
+   if(key&&job.urls.has(key))return;if(key)job.urls.add(key);
    const candidate={ready:false};job.candidates.push(candidate);
    blob.arrayBuffer().then(buffer=>{
     const bytes=new Uint8Array(buffer);if(bytes[0]!==80||bytes[1]!==75){job.candidates=job.candidates.filter(c=>c!==candidate);return;}
@@ -29,12 +59,35 @@
     candidate.value={base64:encoded,size:bytes.length,name:'Used-Gear.xlsx'};candidate.ready=true;
    }).catch(()=>{job.problem='Le fichier Excel généré ne peut pas être lu.';});
   };
-  const wrapped=function(blob){const url=Reflect.apply(original,this,arguments);capture(blob);return url;};
+  const captureURL=(value,download=false)=>{
+   if(!job.armed||!value)return;
+   let url;try{url=new URL(String(value),location.href);}catch{return;}
+   // Only the exact native link used by this action; never enumerate downloads
+   // or replay guessed report endpoints. Blob URLs may originate in a worker.
+   if(url.origin!==location.origin||!['blob:','https:'].includes(url.protocol)||url.protocol!=='blob:'&&!download&&!/\.xlsx(?:$|[?#])/i.test(url.href)||job.urls.has(url.href))return;
+   job.urls.add(url.href);const candidate={ready:false};job.candidates.push(candidate);
+   const controller=new AbortController();job.controllers.add(controller);
+   fetch(url.href,{signal:controller.signal,credentials:'same-origin'}).then(async response=>{
+    if(!response.ok)throw Error('download');const size=Number(response.headers.get('content-length'));if(size>25*1024*1024)throw Error('size');
+    const reader=response.body.getReader(),chunks=[];let length=0;
+    try{while(true){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>25*1024*1024)throw Error('size');chunks.push(value);}}finally{await reader.cancel().catch(()=>{});}
+    const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
+    if(bytes.length<4||bytes[0]!==80||bytes[1]!==75)throw Error('xlsx');
+    let base64='';for(let i=0;i<bytes.length;i+=24576)base64+=btoa(String.fromCharCode(...bytes.subarray(i,i+24576)));
+    candidate.value={base64,size:bytes.length,name:'Used-Gear.xlsx'};candidate.ready=true;
+   }).catch(()=>{if(!job.cancelled)job.problem='Le lien d’export a été détecté, mais son fichier Excel ne peut pas être lu automatiquement. Les données précédentes sont conservées.';}).finally(()=>job.controllers.delete(controller));
+  };
+  const anchor=e=>{if(e instanceof HTMLAnchorElement)captureURL(e.href,e.hasAttribute('download'));};
+  const clicked=event=>{const path=event.composedPath?.()||[];anchor(path.find(node=>node instanceof HTMLAnchorElement)||event.target?.closest?.('a[href]'));};
+  const wrappedClick=function(){anchor(this);return Reflect.apply(originalClick,this,arguments);};
+  const wrappedDispatch=function(event){if(event?.type==='click')anchor(this);return Reflect.apply(originalDispatch,this,arguments);};
+  const wrappedOpen=function(url){captureURL(url,true);return Reflect.apply(originalOpen,this,arguments);};
+  const wrapped=function(blob){const url=Reflect.apply(original,this,arguments);capture(blob,url);return url;};
   try{
+   HTMLAnchorElement.prototype.click=wrappedClick;EventTarget.prototype.dispatchEvent=wrappedDispatch;window.open=wrappedOpen;document.addEventListener('click',clicked,true);
    URL.createObjectURL=wrapped;if(URL.createObjectURL!==wrapped)throw Error('Capture du fichier Excel indisponible dans ce navigateur.');
    const table=reportTable(),container=table.closest('.visualContainer,visual-container,.visual-container,.visual-container-component')||table.closest('.tableEx')||table;
-   container.dispatchEvent(new MouseEvent('mouseover',{bubbles:true}));
-   const more=single([...container.querySelectorAll('button,[role="button"]')].filter(e=>/^(moreoptions|plusdoptions|autresoptions|optionssupplementaires)$/.test(norm(label(e)))),'Menu du tableau non accessible. Affiche les trois points du tableau Power BI puis réessaie');more.click();
+   const more=await revealMenu(table,container,job);more.click();
    const menu=await wait(()=>{
     const items=[...document.querySelectorAll('[role="menuitem"],button,[role="button"]')].filter(visible).filter(enabled).filter(e=>/^(exportdata|exporterlesdonnees|exporterdesdonnees|exporterdonnees)$/.test(norm(label(e))));
     const values=unique(items);if(values.length>1)throw Error('Plusieurs commandes Exporter les données.');return values[0];
@@ -66,7 +119,13 @@
    const file=await wait(()=>{if(job.problem)throw Error(job.problem);if(job.candidates.length>1)throw Error('Plusieurs fichiers générés pendant l’export. Aucun import automatique.');return job.candidates[0]?.ready?job.candidates[0].value:null;},job,'Power BI n’a pas fourni de fichier XLSX capturable. Le téléchargement peut être repris avec Importer Excel.',60000);
    await delay(160);if(job.candidates.length!==1)throw Error('Plusieurs fichiers Excel détectés. Aucun import automatique.');return file;
   }catch(error){return {error:String(error.message||error),diagnostic:diagnostic()};}
-  finally{job.armed=false;if(URL.createObjectURL===wrapped)URL.createObjectURL=original;active=null;}
+  finally{
+   job.armed=false;for(const controller of job.controllers)controller.abort();document.removeEventListener('click',clicked,true);
+   if(URL.createObjectURL===wrapped)URL.createObjectURL=original;
+   if(HTMLAnchorElement.prototype.click===wrappedClick)HTMLAnchorElement.prototype.click=originalClick;
+   if(EventTarget.prototype.dispatchEvent===wrappedDispatch)EventTarget.prototype.dispatchEvent=originalDispatch;
+   if(window.open===wrappedOpen)window.open=originalOpen;active=null;
+  }
  }
  function cancel(){if(active)active.cancelled=true;return {cancelled:true};}
  globalThis.ToolboxUsedExportUI={run,cancel,diagnostic};
