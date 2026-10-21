@@ -13,17 +13,27 @@
  }
  async function refresh(kind='usedPowerBIReadForce'){
   if(requesting||status.state==='loading'||importing)return;
-  const prices=kind==='usedPowerBIReadPrices',targetRegion=region(),operation=prices?'prices':'quantities';
+  const prices=kind==='usedPowerBIReadPrices',excel=kind==='usedPowerBIExportFile',targetRegion=region(),operation=excel?'export':prices?'prices':'quantities';
   requesting=true;status={state:'loading',phase:'starting',region:targetRegion,operation,message:prices?'Lecture des prix et NBV de la sélection…':'Préparation de la lecture des quantités…'};render();
-  try{const result=await chrome.runtime.sendMessage({kind,region:targetRegion,foreground:el('used-foreground').checked});if(result?.error)throw Error(result.error);if(!result?.value)throw Error('La mise à jour n’a pas été confirmée.');
+  try{let result=await chrome.runtime.sendMessage({kind,region:targetRegion,foreground:el('used-foreground').checked});if(result?.error)throw Error(result.error);if(!result?.value)throw Error('La mise à jour n’a pas été confirmée.');
+   if(excel){
+    const file=result.value;if(typeof file.base64!=='string'||file.base64.length>35000000)throw Error('Fichier Excel reçu invalide.');
+    const bytes=Uint8Array.from(atob(file.base64),c=>c.charCodeAt(0));
+    const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+    if(bytes.length!==file.size||hash!==file.sha256)throw Error('L’empreinte du fichier Excel reçu ne correspond pas.');
+    status={state:'loading',phase:'importing',operation,region:targetRegion,message:'Lecture du fichier Excel…'};render();
+    const parsed=await ToolboxUsedExcel.read(new File([bytes],file.name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    result=await chrome.runtime.sendMessage({kind:'usedPowerBIImportExport',region:targetRegion,exportId:file.exportId,sha256:hash,data:parsed});
+    if(result?.error)throw Error(result.error);if(!result?.value)throw Error('L’importation Excel n’a pas été confirmée.');
+   }
    const saved=await chrome.storage.local.get(['toolboxUsedPowerBI','toolboxUsedRegionQuantities','toolboxUsedRegionPrices','toolboxUsedPowerBIStatus']);catalogue=saved.toolboxUsedPowerBI||catalogue;regionSnapshots=saved.toolboxUsedRegionQuantities||regionSnapshots;regionPrices=saved.toolboxUsedRegionPrices||regionPrices;status=saved.toolboxUsedPowerBIStatus||{state:'done',region:region(),count:result.value.count};
   }catch(e){status={state:'error',region:targetRegion,operation,message:e.message};}finally{requesting=false;render();}
  }
  function render(){
-  selectData();const root=el('used-results');root.replaceChildren();const loading=status.state==='loading'||importing||requesting,prices=status.operation==='prices';const scopedStatus=status.region&&status.region!==region()&&status.state!=='loading'?{state:'idle'}:status;
-  ToolboxUsedRefresh.render(prices?{state:'idle'}:scopedStatus,!prices&&(requesting||importing));ToolboxUsedRefresh.render(prices?scopedStatus:{state:'idle',region:region()},prices&&(requesting||importing),{buttonId:'used-refresh-prices',financial:true});filterUI.setBusy(loading);
+  selectData();const root=el('used-results');root.replaceChildren();const loading=status.state==='loading'||importing||requesting,prices=status.operation==='prices',excel=status.operation==='export';const scopedStatus=status.region&&status.region!==region()&&status.state!=='loading'?{state:'idle'}:status;
+  ToolboxUsedRefresh.render(prices||excel?{state:'idle'}:scopedStatus,!prices&&!excel&&(requesting||importing));ToolboxUsedRefresh.render(prices?scopedStatus:{state:'idle',region:region()},prices&&(requesting||importing),{buttonId:'used-refresh-prices',financial:true});ToolboxUsedRefresh.render(excel?scopedStatus:{state:'idle',region:region()},excel&&requesting,{buttonId:'used-export-excel',excel:true});filterUI.setBusy(loading);
   const regionLabel=ToolboxUsedRegions.label(region());el('used-region-note').textContent=region()==='ALL'?(catalogue&&!ToolboxUsedRegions.allKnown(catalogue)?'Sous-région du dernier relevé non confirmée. Actualise les quantités pour vérifier CANADA + UK + USA.':'Quantités CANADA + UK + USA.'):(data?.quantitiesPending?'Prix et NBV '+regionLabel+' · Actualise les quantités pour cette sélection.':data?'Quantités '+regionLabel+' selon les filtres Power BI · Prix et NBV selon la sélection.':regionLabel+' · Clique sur Quantités pour charger cette sélection.');
-  for(const id of ['used-refresh','used-refresh-prices','used-import','used-force','used-clear','used-import-mode','used-foreground'])el(id).disabled=loading;
+  for(const id of ['used-refresh','used-refresh-prices','used-export-excel','used-import','used-force','used-clear','used-import-mode','used-foreground'])el(id).disabled=loading;
   el('used-status').textContent=importing?'Lecture du fichier Excel…':status.message||(loading?'Lecture de l’inventaire usagé…':data?'':'Chargement du catalogue Excel…');
   el('used-stop').hidden=!loading||importing;el('used-more').hidden=true;
   el('used-time').textContent=data?(data.quantitiesPending?'Quantités à actualiser pour cette sélection.':data.lastQuantityAt?'Quantités récupérées · '+time(data.lastQuantityAt):data.sourceDate?'Quantités · Excel du '+dateOnly(data.sourceDate):time(data.at)):'';
@@ -82,7 +92,7 @@
   catch(e){status={state:'error',operation:payload.mode==='prices'?'prices':undefined,message:e.message};render();}
  }
  el('used-foreground').onchange=()=>chrome.storage.local.set({toolboxUsedForeground:el('used-foreground').checked}).catch(()=>{});
- el('used-refresh').onclick=()=>refresh();el('used-refresh-prices').onclick=()=>refresh('usedPowerBIReadPrices');el('used-force').onclick=()=>refresh('usedPowerBIReadForce');el('used-open').onclick=()=>action('usedPowerBIOpen');el('used-bind').onclick=()=>action('usedPowerBIBind');el('used-diagnostic').onclick=()=>action('usedPowerBIDiagnostic');
+ el('used-export-excel').onclick=()=>refresh('usedPowerBIExportFile');el('used-refresh').onclick=()=>refresh();el('used-refresh-prices').onclick=()=>refresh('usedPowerBIReadPrices');el('used-force').onclick=()=>refresh('usedPowerBIReadForce');el('used-open').onclick=()=>action('usedPowerBIOpen');el('used-bind').onclick=()=>action('usedPowerBIBind');el('used-diagnostic').onclick=()=>action('usedPowerBIDiagnostic');
  el('used-query').oninput=()=>changeFilters(true,true);el('used-available').onchange=()=>changeFilters();el('used-more').onclick=()=>{visibleLimit+=80;render();};el('used-stop').onclick=()=>action('usedPowerBIStop');el('used-clear').onclick=async()=>{const result=await action('usedCatalogueReset');if(result){filterUI.state.subregion='ALL';shownRegion='ALL';changeFilters();}};
  el('used-import').onclick=()=>el('used-file').click();
  el('used-file').onchange=async()=>{

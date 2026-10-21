@@ -27,7 +27,7 @@ vm.runInContext(fs.readFileSync('project/inside-sales-toolbox-team/used-powerbi-
  // Modern visual containers and delayed control rendering must not be treated as absent immediately.
  surface='modern';delayUntil=clock+1000;await R.ensureRegion('USA');assert.deepEqual([...R.regionState().selected],['USA']);assert(clock>=delayUntil);delayUntil=0;
  // The table is in the top document; a custom slicer lives in an accessible about:blank frame.
- surface='iframe';await R.ensureRegion('UK+USA');assert.deepEqual([...R.regionState().selected],['UK','USA']);r=await R.read();assert.equal(r.rows[0].values[2],'27');assert.deepEqual([...r.regions],['UK','USA']);let diagnostic=R.diagnostic();assert.equal(diagnostic.readerVersion,'1.2.5');assert.equal(diagnostic.subregionSelectors.documents,2);assert.equal(diagnostic.embeddedFrames[0].documentAccessible,true);
+ surface='iframe';await R.ensureRegion('UK+USA');assert.deepEqual([...R.regionState().selected],['UK','USA']);r=await R.read();assert.equal(r.rows[0].values[2],'27');assert.deepEqual([...r.regions],['UK','USA']);let diagnostic=R.diagnostic();assert.equal(diagnostic.readerVersion,'1.2.6');assert.equal(diagnostic.subregionSelectors.documents,2);assert.equal(diagnostic.embeddedFrames[0].documentAccessible,true);
  const frameClicks=clicks;blocked=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);assert.equal(clicks,frameClicks);assert.equal(R.diagnostic().embeddedFrames[0].documentAccessible,false);blocked=false;
  duplicateFrame=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);assert.equal(clicks,frameClicks);duplicateFrame=false;
  // Open the explicitly collapsed Filters pane, then its named SUBREGION dropdown.

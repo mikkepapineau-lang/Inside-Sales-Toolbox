@@ -67,10 +67,26 @@
   const areas=scrollAreas(root),ys=areas.filter(vertical),saved=areas.map(e=>[e,Number(e.scrollTop||0),Number(e.scrollLeft||0)]),savedNodes=new Set(areas),probed=new WeakMap(),customDrivers=new WeakMap(),customSaved=[];let xs=[];
   const columns=[],byPosition=new Map(),byName=new Map(),collected=new Map(),rowIds=new WeakMap();let rowSequence=0;
   const check=()=>{if(root.isConnected===false||!ready()||scope()!==initialScope)throw Error('Le rapport a changé pendant la lecture. Réessaie.');};
-  const settled=async ms=>{await delay(ms);for(let i=0;i<12&&busy();i++)await delay(150);check();if(busy())throw Error('Power BI charge encore les cellules. Réessaie après le chargement.');};
+  let painted='';
+  const paintSignature=()=>JSON.stringify({headers:headings(root),rows:[...root.querySelectorAll('[role="row"],tr,.row')].filter(visible).map(row=>({index:attribute(row,'aria-rowindex',root),text:row.textContent??row.innerText??[...row.querySelectorAll('[role="gridcell"],[role="cell"],td,.cell')].map(text).join('|')}))});
+  painted=paintSignature();
+  const settled=async(ms,noMove=false)=>{
+   if(!profile.adaptive){await delay(ms);for(let i=0;i<12&&busy();i++)await delay(150);check();if(busy())throw Error('Power BI charge encore les cellules. Réessaie après le chargement.');return;}
+   check();if(noMove&&!busy())return;
+   const start=Date.now();let previous='',stable=0;
+   do{
+    await delay(25);check();const current=paintSignature();
+    if(!busy()&&current===previous)stable++;else stable=0;previous=current;
+    const elapsed=Date.now()-start;
+    if(!busy()&&stable>=2&&(current!==painted||elapsed>=ms)){
+     painted=current;lastScan.waitMs=(lastScan.waitMs||0)+elapsed;if(elapsed<ms)lastScan.fastWaits=(lastScan.fastWaits||0)+1;return;
+    }
+   }while(Date.now()-start<12000);
+   throw Error('Les cellules du tableau ne se stabilisent pas. Aucune nouvelle donnée enregistrée.');
+  };
   const dispatch=e=>e.dispatchEvent(new Event('scroll',{bubbles:true}));
   const moveX=async(e,value)=>{if(e.toolboxCustom)await e.moveRatio(value/Math.max(1,e.scrollWidth-e.clientWidth));else{e.scrollLeft=value;dispatch(e);}};
-  const left=async()=>{for(const e of xs)await moveX(e,0);};
+  const left=async()=>{let moved=false;for(const e of xs){const before=Number(e.scrollLeft||0);await moveX(e,0);moved=moved||Math.abs(Number(e.scrollLeft||0)-before)>.5;}return moved;};
   function customDriver(original){
    function layout(){
     if(root.isConnected===false)throw Error('Le tableau a été remplacé.');
@@ -103,7 +119,8 @@
        let previous=from;
        for(let i=1;i<=3;i++){const x=from+(to-from)*i/3;emit(mode==='mouse'?'mousemove':'pointermove',x,true,x-previous);previous=x;await delay(16);}
       }finally{emit(mode==='mouse'?'mouseup':'pointerup',to,false);}
-      await delay(120);if(!restoring)check();const after=layout();
+      if(profile.adaptive){const until=Date.now()+250;while(Math.abs(layout().ratio-before.ratio)<.0001&&Date.now()<until)await delay(20);}else await delay(120);
+      if(!restoring)check();const after=layout();
       lastScan.customMoves=(lastScan.customMoves||[]).slice(-29);lastScan.customMoves.push({mode,route,correction,from:before.ratio,target,actual:after.ratio,restoring});
       const distance=Math.abs(after.ratio-target),tolerance=target===0?.002:target===1?.005:.012;
       if(distance<tolerance)return;
@@ -191,7 +208,7 @@
    if(fragment.href)record.href=fragment.href;
   }
   async function sweep(){
-   lastScan.phase='Lecture des colonnes';const previousTops=ys.map(e=>Number(e.scrollTop||0));refreshHorizontal();await left();await settled(250);
+   lastScan.phase='Lecture des colonnes';const previousTops=ys.map(e=>Number(e.scrollTop||0));refreshHorizontal();const moved=await left();await settled(250,profile.adaptive&&!moved);
    if(ys.some((e,i)=>Math.abs(Number(e.scrollTop||0)-previousTops[i])>1))throw Error('Les lignes ont bougé pendant la préparation du défilement horizontal. Lecture annulée.');
    const tops=ys.map(e=>Number(e.scrollTop||0)),baseline=snapshot(),page=new Map(),anchors=new Map(),ignored=new Set();
    for(const row of baseline){
@@ -228,7 +245,7 @@
    await sweep();
    for(let i=0;i<(profile.maxVerticalSteps||45)&&ys.some(e=>!endY(e));i++){
     if(profile.chunked&&Date.now()-chunkStart>=3000){yield {more:true,count:collected.size,expected:null,diagnostic:diagnostic()};chunkStart=Date.now();}
-    for(const e of ys){e.scrollTop=Math.min(e.scrollHeight-e.clientHeight,Number(e.scrollTop||0)+Math.max(40,e.clientHeight*.8));dispatch(e);}
+    for(const e of ys){e.scrollTop=Math.min(e.scrollHeight-e.clientHeight,Number(e.scrollTop||0)+Math.max(40,profile.adaptive?e.clientHeight-Math.max(e.clientHeight*.1,...[...root.querySelectorAll('[role="row"],tr,.row')].slice(0,12).map(row=>row.getBoundingClientRect?.().height||0).filter(height=>height>0&&height<e.clientHeight)):e.clientHeight*.8));dispatch(e);}
     await settled(250);lastScan.verticalSteps++;await sweep();
    }
    check();if(busy())throw Error('Le rapport charge encore. Réessaie.');

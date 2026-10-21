@@ -1,5 +1,5 @@
 const USED_POWERBI_REPORT_URL='https://app.powerbi.com/groups/ff3be965-02e9-4c0f-b9eb-b73e3bb4e51f/reports/458f40a9-2b3f-4518-a3cb-d699fef65baa/ReportSection7cb28c98171347d49c0a?ctid=c2f120b6-e8fc-402c-9972-fa891cb53927&experience=power-bi';
-let usedPowerBIBusy=false,usedPowerBIStop=false;
+let usedPowerBIBusy=false,usedPowerBIStop=false,usedNativeExportTarget=null;
 let usedCatalogueInit=null;
 async function initialUsedCatalogue(){
  const response=await fetch(chrome.runtime.getURL('used-catalogue-base.json'));
@@ -88,20 +88,56 @@ async function usedRegionFrameCommand(tabId,frame,kind,region){
 }
 if(chrome.scripting.registerContentScripts)ensureUsedRegionFrames().catch(()=>{});
 chrome.permissions.onAdded?.addListener(()=>ensureUsedRegionFrames().catch(()=>{}));
+async function consumeUsedExport(payload){
+ const id=payload.exportId;
+ if(typeof id!=='string'||!/^[-a-zA-Z0-9]{1,100}$/.test(id))throw Error('Reçu d’export invalide.');
+ const key='usedExportReceipt:'+id,receipt=(await chrome.storage.session.get(key))[key];
+ if(!receipt||receipt.id!==id||receipt.sha256!==payload.sha256||receipt.region!==ToolboxUsedRegions.normalize(payload.region)||Date.now()-receipt.at>120000||Date.now()<receipt.at)throw Error('L’export n’est plus confirmé. Relance Actualiser par Excel.');
+ const data=payload.data;if(!data?.rows?.length)throw Error('Le fichier exporté ne contient aucun article.');
+ if(receipt.currency&&data.currency&&receipt.currency!==data.currency)throw Error('La devise du fichier diffère de celle du rapport. Aucun import.');
+ const line=String(data.filters||'').split(/\r?\n/).find(line=>/SUBREGION/i.test(line))||'',regions=ToolboxUsedRegions.names.filter(name=>new RegExp('\\b'+name+'\\b','i').test(line));
+ if(regions.length&&!ToolboxUsedRegions.matches(regions,receipt.region))throw Error('Les pays du fichier diffèrent de la sélection exportée. Aucun import.');
+ await chrome.storage.session.remove(key);
+ return {...payload,mode:'selection',data:{...data,currency:data.currency||receipt.currency,regions:receipt.regions}};
+}
+async function exportUsedFile(tab,target,region,remoteRegion){
+ const [before]=await chrome.scripting.executeScript({target,func:()=>globalThis.ToolboxUsedPowerBIReader.exportContext()});
+ if(!before?.result)throw Error('Le contexte du rapport ne peut pas être confirmé.');
+ usedNativeExportTarget=target;
+ try{
+  await chrome.scripting.executeScript({target,world:'MAIN',files:['used-export-ui.js']});
+  const [result]=await chrome.scripting.executeScript({target,world:'MAIN',func:async()=>globalThis.ToolboxUsedExportUI.run()});
+  if(result?.result?.error)throw Error(result.result.error);
+  const file=result?.result;
+  if(usedPowerBIStop)throw Error('Export Excel arrêté.');
+  if(!file||typeof file.base64!=='string'||file.base64.length>35000000||!Number.isInteger(file.size)||file.size<4||file.size>25*1024*1024||!/^[A-Za-z0-9+/]*={0,2}$/.test(file.base64))throw Error('Fichier Excel généré invalide ou trop volumineux.');
+  const bytes=Uint8Array.from(atob(file.base64),c=>c.charCodeAt(0));if(bytes.length!==file.size||bytes[0]!==80||bytes[1]!==75)throw Error('Le fichier reçu n’est pas une archive XLSX.');
+  if(!isUsedPowerBI(await chrome.tabs.get(tab.id)))throw Error('Le rapport a changé pendant l’export.');
+  const [after]=await chrome.scripting.executeScript({target,func:()=>({context:globalThis.ToolboxUsedPowerBIReader.exportContext(),state:globalThis.ToolboxUsedPowerBIReader.regionState()})});
+  if(!after?.result||JSON.stringify(before.result)!==JSON.stringify(after.result.context))throw Error('Les filtres ou la devise ont changé pendant l’export. Aucun import.');
+  if(remoteRegion)await usedRegionFrameCommand(tab.id,remoteRegion,'usedRegionProbe',region);
+  else if(!after.result.state?.verified||!ToolboxUsedRegions.matches(after.result.state.selected,region))throw Error('La sélection des pays a changé pendant l’export.');
+  const sha256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join(''),id=crypto.randomUUID();
+  await chrome.storage.session.set({['usedExportReceipt:'+id]:{id,sha256,at:Date.now(),region,regions:ToolboxUsedRegions.selection(region),currency:before.result.currency||''}});
+  return {base64:file.base64,size:file.size,name:'Used-Gear.xlsx',exportId:id,sha256};
+ }finally{usedNativeExportTarget=null;}
+}
 async function readUsedPowerBI(kind,payload={}){
+ const nativeImport=kind==='usedPowerBIImportExport';
+ if(nativeImport){payload=await consumeUsedExport(payload);kind='usedCatalogueImport';}
  if(kind==='usedPowerBIInit'){
   const data=await ensureUsedCatalogue(),saved=await chrome.storage.local.get('toolboxUsedPowerBIStatus');
   if(!usedPowerBIBusy&&saved.toolboxUsedPowerBIStatus?.state==='loading')await chrome.storage.local.set({toolboxUsedPowerBIStatus:{state:'error',message:'Lecture interrompue. Les données précédentes sont conservées; tu peux relancer les quantités.'}});
   return {count:data.rows.length};
  }
  if(payload.region!==undefined&&ToolboxUsedRegions.parse(payload.region)===null)throw Error('Sous-région invalide.');
- const prices=kind==='usedPowerBIReadPrices'||kind==='usedCatalogueImport'&&payload.mode==='prices',operation=prices?'prices':'quantities';
- const region=ToolboxUsedRegions.normalize(payload.region),reading=['usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices'].includes(kind);
+ const prices=kind==='usedPowerBIReadPrices'||kind==='usedCatalogueImport'&&payload.mode==='prices',operation=nativeImport||kind==='usedPowerBIExportFile'?'export':prices?'prices':'quantities';
+ const region=ToolboxUsedRegions.normalize(payload.region),reading=['usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices','usedPowerBIExportFile'].includes(kind);
  const progress=(phase,message,extra={})=>chrome.storage.local.set({toolboxUsedPowerBIStatus:{state:'loading',phase,message,region,operation,...extra}});
  if(usedPowerBIBusy)throw Error('Une lecture Power BI est déjà en cours.');usedPowerBIBusy=true;usedPowerBIStop=false;
  let tab,stage='Vérification des autorisations',diagnostics=[],frameWarning='',frameBridge=null,remoteRegion=null,scanTarget=null,frameRegistration;
  try{
-  if(['usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices','usedCatalogueImport','usedCatalogueReset'].includes(kind)){
+  if(['usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices','usedPowerBIExportFile','usedCatalogueImport','usedCatalogueReset'].includes(kind)){
    stage='Chargement du catalogue enregistré';if(reading)await progress('catalogue','Chargement du catalogue enregistré…');
    const base=await ensureUsedCatalogue();
    if(kind==='usedCatalogueReset'){
@@ -109,10 +145,24 @@ async function readUsedPowerBI(kind,payload={}){
    }
    if(kind==='usedCatalogueImport'){
     stage='Import Excel';await progress('merging','Mise à jour du catalogue depuis Excel…');
-    if(!['quantities','prices','catalogue'].includes(payload.mode))throw Error('Mode d’import invalide.');
+    if(!['quantities','prices','catalogue',...(nativeImport?['selection']:[])].includes(payload.mode))throw Error('Mode d’import invalide.');
     if(region!=='ALL'&&payload.mode==='catalogue')throw Error('Choisis CANADA + UK + USA pour mettre à jour les prix et NBV du catalogue.');
     const importLine=String(payload.data?.filters||'').split(/\r?\n/).find(l=>/SUBREGION/i.test(l))||'',importRegions=ToolboxUsedRegions.names.filter(r=>new RegExp('\\b'+r+'\\b','i').test(importLine));
     if(region==='ALL'&&importRegions.length&&!ToolboxUsedRegions.matches(importRegions,'ALL'))throw Error(prices?'Pour actualiser les prix du catalogue, exporte CANADA + UK + USA.':'Cet Excel ne couvre pas toutes les sous-régions. Choisis la même sélection avant l’import.');
+    if(nativeImport){
+     if(!ToolboxUsedRegions.matches(payload.data.regions,region))throw Error('Le périmètre de l’export ne correspond pas à la sélection.');
+     let count,updated;
+     if(region!=='ALL'){
+      const quantities=ToolboxUsedRegions.snapshot(base,payload.data,region),financial=ToolboxUsedRegions.financialSnapshot(base,payload.data,region,quantities.at,'Excel Power BI');
+      const saved=await chrome.storage.local.get(['toolboxUsedRegionQuantities','toolboxUsedRegionPrices']);count=quantities.sourceCount;updated=financial.stats.updated;
+      await chrome.storage.local.set({toolboxUsedRegionQuantities:{...(saved.toolboxUsedRegionQuantities||{}),[region]:quantities},toolboxUsedRegionPrices:{...(saved.toolboxUsedRegionPrices||{}),[region]:financial},toolboxUsedPowerBIStatus:{state:'done',at:quantities.at,region,operation:'export',count,updated,message:'Export Excel importé : quantités, prix et NBV actualisés.'}});
+     }else{
+      const merged=ToolboxUsedCatalogue.merge(base,payload.data,{source:'Excel Power BI',mode:'catalogue'}),data={...ToolboxUsedCatalogue.updatePrices(merged,payload.data,{source:'Excel Power BI'}),regionScope:'ALL',regionVerified:true};
+      data.lastImport.regions=payload.data.regions;count=payload.data.rows.length;updated=data.lastFinancialUpdate.stats.updated;
+      await chrome.storage.local.set({toolboxUsedPowerBI:data,toolboxUsedPowerBIStatus:{state:'done',at:Date.now(),region,operation:'export',count,updated,message:'Export Excel importé : quantités, prix et NBV actualisés.'}});
+     }
+     return {count,updated};
+    }
     if(prices&&region!=='ALL'){
      if(!ToolboxUsedRegions.matches(importRegions,region))throw Error('Cet Excel ne confirme pas la sous-région choisie pour les prix.');
      const value={...payload.data,regions:importRegions},snapshot=ToolboxUsedRegions.financialSnapshot(base,value,region,Date.now(),'Excel'),saved=await chrome.storage.local.get('toolboxUsedRegionPrices');
@@ -174,6 +224,7 @@ async function readUsedPowerBI(kind,payload={}){
    await progress('region','Sélection de la sous-région dans Power BI…',{tabId:tab.id});
    const prepared=await chrome.scripting.executeScript({target,func:async region=>{try{await globalThis.ToolboxUsedPowerBIReader.ensureReady();const regions=await globalThis.ToolboxUsedPowerBIReader.ensureRegion(region);return {regionReady:true,regions};}catch(e){return {error:e.message,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()};}},args:[region]});
    if(!prepared.some(f=>f.result?.regionReady&&ToolboxUsedRegions.matches(f.result.regions,region)))return prepared;
+   if(kind==='usedPowerBIExportFile')return chrome.scripting.executeScript({target,func:regions=>({exportReady:true,regions,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()}),args:[ToolboxUsedRegions.selection(region)]});
    stage='Lecture du tableau · '+label;
    await progress('reading','Lecture des lignes Power BI…',{tabId:tab.id,count:0});
    return chrome.scripting.executeScript({target,func:async priceMode=>{try{return await globalThis.ToolboxUsedPowerBIReader.read({prices:priceMode});}catch(e){return {error:e.message,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()};}},args:[prices]});
@@ -203,7 +254,8 @@ async function readUsedPowerBI(kind,payload={}){
     const source=bridgeFailure();scanTarget={tabId:tab.id,...(source.documentId?{documentIds:[source.documentId]}:{frameIds:[source.frameId]})};
     stage='Lecture du tableau lié au visuel SUBREGION';await progress('reading','Sous-région confirmée · chargement du tableau…',{tabId:tab.id,count:0});
     const regions=ToolboxUsedRegions.names.filter(name=>region==='ALL'||region.split('+').includes(name));
-    frames=await chrome.scripting.executeScript({target:scanTarget,func:async(regions,priceMode)=>{try{await globalThis.ToolboxUsedPowerBIReader.waitForTable();return await globalThis.ToolboxUsedPowerBIReader.read({externalRegions:regions,prices:priceMode});}catch(error){return {error:error.message,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()};}},args:[regions,prices]});
+    if(kind==='usedPowerBIExportFile')frames=await chrome.scripting.executeScript({target:scanTarget,func:regions=>({exportReady:true,regions,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()}),args:[regions]});
+    else frames=await chrome.scripting.executeScript({target:scanTarget,func:async(regions,priceMode)=>{try{await globalThis.ToolboxUsedPowerBIReader.waitForTable();return await globalThis.ToolboxUsedPowerBIReader.read({externalRegions:regions,prices:priceMode});}catch(error){return {error:error.message,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()};}},args:[regions,prices]});
     await usedRegionFrameCommand(tab.id,remoteRegion,'usedRegionProbe',region);
    }
   }
@@ -217,6 +269,13 @@ async function readUsedPowerBI(kind,payload={}){
   if(kind==='usedPowerBIDiagnostic'){
    if(frameRegistration.registered&&frames.some(frame=>frame.result?.diagnostic?.embeddedFrames?.length))frameBridge={registration:frameRegistration,frames:await discoverUsedRegionFrames(tab.id)};
    return {diagnostics,frameWarning,tabId:tab.id,...(frameBridge?{frameBridge}:{})};
+  }
+  if(kind==='usedPowerBIExportFile'){
+   const ready=frames.filter(frame=>frame.result?.exportReady&&ToolboxUsedRegions.matches(frame.result.regions,region));
+   if(ready.length!==1)throw Error('Le tableau et sa sous-région ne sont pas confirmés pour l’export Excel.');
+   const source=ready[0],target={tabId:tab.id,...(source.documentId?{documentIds:[source.documentId]}:{frameIds:[source.frameId]})};
+   stage='Export Excel natif';await progress('export','Export Excel du rapport Power BI…',{tabId:tab.id});
+   return await exportUsedFile(tab,target,region,remoteRegion);
   }
   const results=frames.filter(f=>f.result?.more||f.result?.rows?.length);
   stage='Identification des résultats';
@@ -269,4 +328,4 @@ async function readUsedPowerBI(kind,payload={}){
   throw Error(message);
  }finally{usedPowerBIBusy=false;}
 }
-chrome.runtime.onMessage.addListener((m,s,reply)=>{if(s.id!==chrome.runtime.id)return;if(m?.kind==='usedPowerBIStop'){usedPowerBIStop=true;reply({value:{stopping:true}});return;}if(!['usedPowerBIInit','usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices','usedPowerBIOpen','usedPowerBIDiagnostic','usedPowerBIBind','usedCatalogueImport','usedCatalogueReset'].includes(m?.kind))return;readUsedPowerBI(m.kind,m).then(value=>reply({value}),e=>reply({error:e.message}));return true;});
+chrome.runtime.onMessage.addListener((m,s,reply)=>{if(s.id!==chrome.runtime.id)return;if(m?.kind==='usedPowerBIStop'){usedPowerBIStop=true;if(usedNativeExportTarget)chrome.scripting.executeScript({target:usedNativeExportTarget,world:'MAIN',func:()=>globalThis.ToolboxUsedExportUI?.cancel()}).catch(()=>{});reply({value:{stopping:true}});return;}if(!['usedPowerBIInit','usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices','usedPowerBIExportFile','usedPowerBIImportExport','usedPowerBIOpen','usedPowerBIDiagnostic','usedPowerBIBind','usedCatalogueImport','usedCatalogueReset'].includes(m?.kind))return;readUsedPowerBI(m.kind,m).then(value=>reply({value}),e=>reply({error:e.message}));return true;});

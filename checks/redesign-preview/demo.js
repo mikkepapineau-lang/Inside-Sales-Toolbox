@@ -24,6 +24,7 @@
  globalThis.__demoCopy=async()=>toast(saved.toolboxLanguage==='en'?'Copied in this demo.':'Copie illustrée dans l’aperçu.');
  const chrome={storage:{local:area(saved,'local'),session:area(session,'session'),onChanged:{addListener:f=>listeners.push(f)}},permissions:{contains:async()=>true,request:async()=>true,onAdded:empty,onRemoved:empty},runtime:{id:'preview',getManifest:()=>({version:'3.5.6'}),onMessage:empty,sendMessage:async m=>{
   if(m.kind==='pricingRate'){await delay(500);return {value:{rate:'1.40',date:'2026-10-15',checkedAt:now,demo:true}};}
+  if(m.kind==='usedPowerBIExportFile')return {error:'Démonstration : l’export automatique nécessite le rapport Power BI connecté.'};
   if(m.kind==='usedPowerBIInit')return {value:{count:used.rows.length}};
   if(m.kind==='workspacePrepare'){await delay(400);await write(saved,{toolboxWorkspaceDay:{date:ToolboxUsedCatalogue.day(Date.now()),status:'prepared'}},'local');return {value:{total:4,opened:2,reused:2}};}
   if(['usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices'].includes(m.kind)){

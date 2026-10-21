@@ -1,4 +1,7 @@
 globalThis.ToolboxDictionary={
+  "Actualiser par Excel":"Refresh via Excel",
+  "Quantités, prix et NBV · Pays sélectionnés":"Quantities, prices and NBV · Selected countries",
+  "Export Excel Power BI":"Power BI Excel export",
   "Accueil": "Home",
   "Produits": "Products",
   "Codes HS": "HS codes",

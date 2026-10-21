@@ -36,7 +36,7 @@
   return records;
  }
  const regionNames=['CANADA','UK','USA'];
- const readerVersion='1.2.5';
+ const readerVersion='1.2.6';
  const regionRoots='.visualContainer,visual-container,.visual-container-component,.slicerContainer,[data-visualtype="slicer"],[role="group"],[role="listbox"],[role="combobox"],[role="region"],filter-card,.filterCard,.filter-card,.chicletSlicer,.chiclet-slicer,.slicer';
  const regionOptions='[role="option"],[role="checkbox"],[role="menuitemcheckbox"],[role="button"],button,input[type="checkbox"],.slicerItemContainer,.chiclet,.chicletItem,.slicerText,.slicerItemText,.chicletItemText';
  const regionLabel=e=>[e.getAttribute?.('aria-label'),e.getAttribute?.('title'),text(e),...[...e.labels||[]].map(text)].filter(Boolean).map(value=>String(value).trim().toUpperCase()).filter(value=>new Set(value.match(/\b(?:CANADA|UK|USA)\b/g)||[]).size===1).map(value=>value.match(/^(CANADA|UK|USA)(?:$|[\s,;(:.])/)).find(Boolean)?.[1]||null;
@@ -269,7 +269,7 @@
   const regions=regionNames.filter(name=>(external||state.selected).includes(name)),currency=currentCurrency(),initialScope=financialScope();
   const priceHeader=value=>norm(value)==='sellprice',nbvHeader=value=>norm(value)==='nbv';
   const engine=globalThis.ToolboxPowerBITableReader.create({
-   version:'used-financial-1',chunked:true,maxVerticalSteps:100000,
+   version:'used-financial-2',chunked:true,maxVerticalSteps:100000,adaptive:options.adaptive!==false,
    orderHeader:value=>/^(d365itemid|d365itemnumber|itemnumber)$/.test(norm(value)),
    customerHeader:value=>norm(value)==='sku',notesHeader:value=>priceHeader(value)||nbvHeader(value),
    isOrder:value=>/^[A-Z0-9][A-Z0-9._-]*$/i.test(String(value||'').trim())&&!/^(total|totaux)$/i.test(value),
@@ -286,6 +286,25 @@
   financialScan={next:async()=>{try{return finish(await engine.next());}catch(error){try{await engine.cancel();}catch{}retain();financialScan=null;throw error;}},cancel:()=>engine.cancel(),diagnostic:()=>engine.diagnostic()};
   try{return finish(await engine.read());}catch(error){try{await engine.cancel();}catch{}retain();financialScan=null;throw error;}
  }
+ // Advance sooner when the new visible row window has actually rendered and
+ // stabilized; retain the conservative delay when no change can be established.
+ async function settleQuantity(previous,fallback=350){
+  const start=Date.now();let last='',stable=0;
+  do{
+   await new Promise(resolve=>setTimeout(resolve,25));
+   const current=JSON.stringify(rows(scan.t));
+   if(!reportBusy()&&current===last)stable++;else stable=0;
+   last=current;const elapsed=Date.now()-start;
+   if(!reportBusy()&&stable>=2&&(current!==previous||elapsed>=fallback)){
+    scan.waitMs+=elapsed;if(elapsed<fallback)scan.fastWaits++;return;
+   }
+  }while(Date.now()-start<12000);
+  throw Error('Le tableau ne se stabilise pas après le défilement. Aucun nouveau relevé enregistré.');
+ }
+ function quantityStep(element){
+  const heights=[...scan.t.root.querySelectorAll('[role="row"],tr,.row')].slice(0,12).map(row=>row.getBoundingClientRect?.().height||0).filter(height=>height>0&&height<element.clientHeight);
+  return Math.max(40,element.clientHeight-Math.max(element.clientHeight*.1,...heights));
+ }
  async function read(options={}){
   await cancel();
   if(options.prices)return readFinancial(options);
@@ -299,9 +318,10 @@
   const declared=Number(t.root.getAttribute('aria-rowcount'));
   const headerRows=[...t.root.querySelectorAll('[role="row"],tr')].filter(e=>e.querySelector('[role="columnheader"],th')).length;
   const expected=Number.isInteger(declared)&&declared>0?Math.max(0,declared-headerRows):null;
-  scan={regions:external?[...external]:state.verified?state.selected:null,t,scrollers,saved:scrollers.map(e=>[e,e.scrollTop,e.scrollLeft]),collected:new Map(),scope:scope(),currency:reportCurrency(),steps:0,endStable:0,lastEnd:'',stalled:0,expected};
+  scan={regions:external?[...external]:state.verified?state.selected:null,t,scrollers,saved:scrollers.map(e=>[e,e.scrollTop,e.scrollLeft]),adaptive:options.adaptive!==false,waitMs:0,fastWaits:0,collected:new Map(),scope:scope(),currency:reportCurrency(),steps:0,endStable:0,lastEnd:'',stalled:0,expected};
+  const previous=JSON.stringify(rows(t));
   scrollers.forEach(e=>{e.scrollTop=0;e.dispatchEvent(new Event('scroll',{bubbles:true}));});
-  await new Promise(r=>setTimeout(r,500));return next();
+  if(scan.adaptive)await settleQuantity(previous,500);else await new Promise(r=>setTimeout(r,500));return next();
  }
  async function next(){
   if(financialScan)return financialScan.next();
@@ -320,21 +340,23 @@
      if(scan.endStable>=3){
       if(!scan.collected.size)throw Error('Aucune ligne d’inventaire lisible. Cela ne confirme pas l’absence d’articles.');
       const complete=scan.expected!==null&&scan.expected===scan.collected.size;
-      const result={regions:scan.regions,headers:scan.t.headers,rows:[...scan.collected.values()],currency:scan.currency,filters:scan.scope,steps:scan.steps,loadedToEnd:true,expected:scan.expected,complete,partial:!complete,more:false,diagnostic:diagnostic()};
+      const result={regions:scan.regions,headers:scan.t.headers,rows:[...scan.collected.values()],currency:scan.currency,filters:scan.scope,steps:scan.steps,timing:{waitMs:scan.waitMs,fastWaits:scan.fastWaits},loadedToEnd:true,expected:scan.expected,complete,partial:!complete,more:false,diagnostic:diagnostic()};
       restore();scan=null;return result;
      }
     }else{
-     scan.endStable=0;scan.scrollers.forEach(e=>{e.scrollTop+=Math.max(40,e.clientHeight*.75);e.dispatchEvent(new Event('scroll',{bubbles:true}));});scan.steps++;
+     const previous=JSON.stringify(rows(scan.t));
+     scan.endStable=0;scan.scrollers.forEach(e=>{e.scrollTop+=scan.adaptive?quantityStep(e):Math.max(40,e.clientHeight*.75);e.dispatchEvent(new Event('scroll',{bubbles:true}));});scan.steps++;
+     if(scan.adaptive)await settleQuantity(previous);
      scan.stalled=scan.scrollers.every((e,i)=>e.scrollTop===before[i])?scan.stalled+1:0;
      if(scan.stalled>=6)throw Error('Le défilement Power BI ne progresse plus. Le chargement complet n’est pas confirmé.');
     }
-    await new Promise(r=>setTimeout(r,350));
+    if(atEnd||!scan.adaptive)await new Promise(r=>setTimeout(r,350));
    }while(Date.now()<deadline);
    return {regions:scan.regions,more:true,count:scan.collected.size,expected:scan.expected,steps:scan.steps,diagnostic:diagnostic()};
   }catch(e){cancel();throw e;}
  }
  const regionProbe=()=>({readerVersion,subregion:regionState(),subregionSelectors:regionDiagnostic()});
- globalThis.ToolboxUsedPowerBIReader={read,next,cancel,diagnostic,ensureReady,regionState,ensureRegion,waitForTable,regionProbe};
+ globalThis.ToolboxUsedPowerBIReader={read,next,cancel,diagnostic,ensureReady,regionState,ensureRegion,waitForTable,regionProbe,exportContext:()=>({filters:[...document.querySelectorAll('[role="combobox"]')].filter(visible).map(text),currency:reportCurrency()})};
  // Registered in related Power BI frames, including sandboxed about:/blob: visuals.
  // Only extension messages are accepted; no page postMessage or report internals.
  if(!globalThis.chrome?.runtime?.id||typeof window==='undefined'||window.top===window||globalThis.ToolboxUsedRegionAgent)return;
