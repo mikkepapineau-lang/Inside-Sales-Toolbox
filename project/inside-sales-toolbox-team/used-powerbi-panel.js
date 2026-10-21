@@ -56,7 +56,7 @@
    const unverified=rows.some(r=>r.qtyBatch&&r.qtyBatch!==data.quantityBatch),partial=rows.some(r=>r.qtyPartial);
    const quantity=rows.length===1?numeric(get(r,'available')):null,state=unverified||partial||quantity===null?'unverified':quantity>0?'available':'empty';
    const availability={state,quantity:rows.length===1&&quantity!==null?get(r,'available'):null,caption:unverified?'À revérifier':partial?'Quantités partielles':quantity===null?'À vérifier':quantity>0?'Dispo.':'Indisponible',place:cols.warehouse>=0?[...new Set(rows.map(r=>get(r,'warehouse')).filter(Boolean))].join(' · '):''};
-   const amounts=[['price','Vente'],['nbv','NBV']].map(([key,label])=>{const values=[...new Set(rows.map(r=>get(r,key)))],raw=values.length===1&&values[0]!=='';return {label,raw,value:raw?money(values[0]):values.length>1?'Plusieurs valeurs':'Non renseigné'};});
+   const amounts=[['price','Prix de vente'],['nbv','NBV']].map(([key,label])=>{const values=[...new Set(rows.map(r=>get(r,key)))],raw=values.length===1&&values[0]!=='';return {label,raw,currency:raw?data.currency:'',value:raw?money(values[0])+' $':values.length>1?'Plusieurs valeurs':'Non renseigné'};});
    const name=[get(r,'brand'),get(r,'item')?'D365 '+get(r,'item'):''].filter(Boolean).join(' · ');
    const record=recordRow({key:'used:'+groupKey,code:get(r,'sku')||get(r,'item'),name,description:get(r,'description'),amounts,meta,availability});
    rows.forEach((r,i)=>{

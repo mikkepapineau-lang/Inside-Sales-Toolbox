@@ -369,3 +369,12 @@ html[data-toolbox-view=panel] .module-tabs button:hover{transform:translateY(-1p
 @media(max-width:360px){.module-header>.module-actions{gap:4px}.module-header>.module-actions .primary{padding:7px 8px}.toolbox-app #tool-powerbi .module-header{grid-template-columns:1fr}.toolbox-app #tool-powerbi .module-header>.module-actions{grid-column:1;grid-row:3;justify-self:end}.workspace-prep{grid-template-columns:minmax(0,1fr) auto 18px;gap:6px;padding-left:8px;padding-right:8px}#workspace-start{min-width:90px;padding:6px 8px}}
 @media(pointer:coarse){.module-header>.module-actions .primary,.module-header>.module-actions .report-link{min-height:44px}.module-header>.module-actions .report-link{width:44px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Used financial values remain legible beside quantity status in narrow panels. */
+#used-results .record-stock-footer{display:flex;flex-direction:column;align-items:stretch;gap:8px}
+#used-results .record-valuations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;margin-top:4px}
+#used-results .record-valuation{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:3px;min-width:0;padding:10px;background:#f0eaf7;border:1px solid #e0d5ec;border-radius:8px}
+#used-results .record-valuation .record-label{font-size:10px;line-height:1.4;font-weight:650;color:#64457d;letter-spacing:0}
+#used-results .record-valuation .record-amount{font-size:21px;line-height:1.25;font-weight:750;color:#2e1b5a;text-align:left;letter-spacing:-.4px;max-width:100%;overflow-wrap:anywhere}
+#used-results .record-valuation .record-amount:not(.source-value){font-size:12px;font-weight:550;letter-spacing:0}
+#used-results .record-currency{font-size:10px;font-weight:600;color:#725889;line-height:1.3}

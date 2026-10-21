@@ -26,3 +26,7 @@ Le ZIP publié 3.5.12 et le numéro installable sont inchangés. Pour cet essai 
 53 scripts vérifiés et 12 suites du noyau réussies; archives-only réussi. Le test SUBREGION couvre les styles observés Canada/UK, les sept combinaisons avec lectures effectives du lecteur de production sur fixtures, les transitions entre pays et les refus pour styles inconnus, thème différent, transparence, état entièrement blanc, état accessible contradictoire et groupes multiples ou non nommés. Les tests existants des relevés régionaux et du pont de visuels restent réussis.
 
 La reconnaissance est testée localement contre les éléments observés dans les diagnostics. La réussite du téléchargement de quantités dans la session Power BI de l’utilisateur reste à confirmer. Aucun nouveau ZIP ni tag n’est créé.
+
+## Suite : prix et NBV
+
+L’utilisateur a confirmé la reconnaissance du visuel dans sa session. Le lecteur suivant 1.2.3 conserve cette correction et ajoute le parcours horizontal des données financières; voir [Prix + NBV](used-prices-horizontal.md) pour les six fichiers de mise à jour et l’essai restant à effectuer.
