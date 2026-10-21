@@ -1,4 +1,4 @@
-// Automate only the report's visible Export data dialog. The native XLSX stays
+// Automate the report's native Export data controls. The native XLSX stays
 // local: no credentials, report API, dataset internals or external service.
 (()=>{
  let active=null;
@@ -20,8 +20,15 @@
    return headers.filter(h=>['sku','description','d365itemid','d365itemnumber','qtyavailable','sellprice','nbv'].includes(h)).length>=2;
   });return single(found,'Tableau Used Gear absent ou ambigu');
  }
+ const menuCandidates=root=>unique([...root.querySelectorAll('button,[role="button"]')].filter(e=>/^(moreoptions|plusdoptions|autresoptions|optionssupplementaires)$/.test(norm(label(e)))));
+ function menuScope(table){
+  const roots=[];
+  for(let node=table;node;node=node.parentElement)if(node.matches('.visualContainer,visual-container,.visual-container,.visual-container-component,.tableEx'))roots.push(node);
+  // Power BI can put the header beside the inner visual, in its outer host.
+  return roots.find(root=>menuCandidates(root).length)||roots[0]||table;
+ }
  async function revealMenu(table,container,job){
-  const candidates=()=>unique([...container.querySelectorAll('button,[role="button"]')].filter(e=>/^(moreoptions|plusdoptions|autresoptions|optionssupplementaires)$/.test(norm(label(e)))));
+  const candidates=()=>menuCandidates(container);
   const target=table.querySelector('[role="gridcell"],[role="cell"],td')||table;
   const rect=target.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
   const init={bubbles:true,clientX:x,clientY:y,view:window,relatedTarget:null};
@@ -35,15 +42,20 @@
   }
   if(typeof PointerEvent==='function')target.dispatchEvent(new PointerEvent('pointermove',{...init,pointerType:'mouse',pointerId:1}));
   target.dispatchEvent(new MouseEvent('mousemove',init));
-  let focused=null;
+  let focused=null;const started=Date.now();
   return wait(()=>{
    if(!table.isConnected||!container.isConnected)throw Error('Le tableau a changé avant l’ouverture du menu.');
    const buttons=candidates(),shown=buttons.filter(visible).filter(enabled);
-   if(shown.length>1)throw Error('Plusieurs menus du tableau sont visibles. Aucun export lancé.');
+   if(shown.length>1||buttons.length>1&&shown.length!==1)throw Error('Plusieurs menus du tableau sont visibles. Aucun export lancé.');
+   job.menuState={candidates:buttons.length,visible:shown.length,disabled:buttons.filter(e=>!enabled(e)).length};
    if(shown.length===1)return shown[0];
+   // A hover-only CSS header can still expose its unique native button in DOM.
+   // Activate that control directly; do not alter styles, disabled state or any
+   // report internals. The next stage must confirm the actual export menu.
+   if(Date.now()-started>=600&&buttons.length===1&&enabled(buttons[0])){job.menuState.activation='native-button';return buttons[0];}
    if(buttons.length===1&&enabled(buttons[0])&&focused!==buttons[0]){focused=buttons[0];focused.focus({preventScroll:true});}
    return null;
-  },job,'Les trois points du tableau restent invisibles après le survol simulé. Ce rapport peut exiger un survol réel; place le curseur dans le tableau puis réessaie.',4000);
+  },job,'Le bouton natif Plus d’options du tableau est absent, désactivé ou ambigu. Aucun export lancé.',4000);
  }
  function diagnostic(){return {dialogs:[...document.querySelectorAll('[role="dialog"]')].filter(visible).slice(0,3).map(e=>({buttons:[...e.querySelectorAll('button,[role="button"]')].filter(visible).map(label).slice(0,12),options:[...e.querySelectorAll('label,[role="radio"],[role="combobox"],select')].filter(visible).map(label).slice(0,12)}))};}
  async function run(){
@@ -86,7 +98,7 @@
   try{
    HTMLAnchorElement.prototype.click=wrappedClick;EventTarget.prototype.dispatchEvent=wrappedDispatch;window.open=wrappedOpen;document.addEventListener('click',clicked,true);
    URL.createObjectURL=wrapped;if(URL.createObjectURL!==wrapped)throw Error('Capture du fichier Excel indisponible dans ce navigateur.');
-   const table=reportTable(),container=table.closest('.visualContainer,visual-container,.visual-container,.visual-container-component')||table.closest('.tableEx')||table;
+   const table=reportTable(),container=menuScope(table);
    const more=await revealMenu(table,container,job);more.click();
    const menu=await wait(()=>{
     const items=[...document.querySelectorAll('[role="menuitem"],button,[role="button"]')].filter(visible).filter(enabled).filter(e=>/^(exportdata|exporterlesdonnees|exporterdesdonnees|exporterdonnees)$/.test(norm(label(e))));
@@ -118,7 +130,7 @@
    job.armed=true;confirm.click();
    const file=await wait(()=>{if(job.problem)throw Error(job.problem);if(job.candidates.length>1)throw Error('Plusieurs fichiers générés pendant l’export. Aucun import automatique.');return job.candidates[0]?.ready?job.candidates[0].value:null;},job,'Power BI n’a pas fourni de fichier XLSX capturable. Le téléchargement peut être repris avec Importer Excel.',60000);
    await delay(160);if(job.candidates.length!==1)throw Error('Plusieurs fichiers Excel détectés. Aucun import automatique.');return file;
-  }catch(error){return {error:String(error.message||error),diagnostic:diagnostic()};}
+  }catch(error){return {error:String(error.message||error),diagnostic:{...diagnostic(),menu:job.menuState}};}
   finally{
    job.armed=false;for(const controller of job.controllers)controller.abort();document.removeEventListener('click',clicked,true);
    if(URL.createObjectURL===wrapped)URL.createObjectURL=original;

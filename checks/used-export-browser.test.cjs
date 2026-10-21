@@ -17,6 +17,16 @@ const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('nod
   await setup({linkMode,hover:true});const result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.equal(result.error,undefined,JSON.stringify(result));assert.equal(result.base64,'UEsDBAoU');assert.equal(await page.evaluate(()=>window.downloadPending),true,'must finish while browser still awaits save');
   assert(await page.evaluate(()=>URL.createObjectURL===originalURL&&HTMLAnchorElement.prototype.click===originalClick&&EventTarget.prototype.dispatchEvent===originalDispatch&&window.open===originalOpen));
  }
+ // CSS-only hover cannot be created by dispatchEvent. The native button still
+ // opens the real menu, even with the pointer elsewhere and opacity zero.
+ for(const hidden of ['opacity','visibility','display']){
+  await setup();await page.mouse.move(1500,900);await page.evaluate(hidden=>{
+   const button=document.querySelector('#more'),host=document.createElement('visual-container'),inner=document.querySelector('.visualContainer');inner.before(host);host.append(inner);host.prepend(button);
+   const style=document.createElement('style');style.textContent=hidden==='opacity'?'visual-container>#more{opacity:0} visual-container:hover>#more{opacity:1}':hidden==='visibility'?'visual-container>#more{visibility:hidden} visual-container:hover>#more{visibility:visible}':'visual-container>#more{display:none} visual-container:hover>#more{display:block}';document.head.append(style);
+  },hidden);
+  const result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.equal(result.error,undefined,JSON.stringify(result));assert.equal(result.base64,'UEsDBAoU');
+ }
+ await setup();await page.evaluate(()=>{const more=document.querySelector('#more');more.style.opacity='0';const duplicate=more.cloneNode(true);document.querySelector('.visualContainer').append(duplicate);});let ambiguous=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(ambiguous.error,/Plusieurs menus/);assert.equal(await page.evaluate(()=>window.selected),undefined);
  await setup({duplicate:true});let result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(result.error,/Plusieurs fichiers/);assert.equal(await page.evaluate(()=>URL.createObjectURL===window.originalURL),true);
  await setup();await page.evaluate(()=>document.querySelector('#current').parentElement.onclick=e=>e.preventDefault());result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(result.error,/pas confirmé/);assert.equal(await page.evaluate(()=>window.selected),undefined);
  await setup();await page.evaluate(()=>document.querySelector('#current').disabled=true);result=await page.evaluate(()=>ToolboxUsedExportUI.run());assert.match(result.error,/désactivé/);
