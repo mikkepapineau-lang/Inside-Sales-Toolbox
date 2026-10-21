@@ -2,11 +2,13 @@
 
 État du 21 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
-## Publication des archives en attente d'accord
+## Autorisation et accès aux archives
 
-Le dépôt est public. La revue automatique a refusé le transfert des archives originales vers ce dépôt : elles pourraient contenir du code ou des données internes, et l'autorisation de divulgation publique de ces archives doit être explicite. Ne pas publier ces ZIP, leurs contenus encodés ou un autre regroupement, ni déléguer leur publication, avant cet accord. Les archives sont conservées dans le dossier de transfert sauvegardé. Le code actuel et les consignes sont déjà sur GitHub; ses vérifications ont réussi.
+Michaël a confirmé directement dans la conversation d'origine, le 21 octobre 2026, son accord de publication des 44 archives originales manquantes, dont le ZIP 3.5.12, dans le dépôt GitHub public, après avoir été informé du risque de données internes. Le refus automatique précédent est résolu par cet accord direct. Les cinq autres ZIP du lot sont déjà identiques dans le dépôt public.
 
-L'environnement Codex a cloné le commit `7df6d9bf639d4dfe0c6e0ff9192082292c5206b8` et confirmé les tests. Il n'expose pas les outils Library et son montage `/workspace/library-files` est vide : un identifiant Library seul ne rend donc pas le ZIP disponible dans cette session. La tâche de reprise existe, mais les 44 imports et la publication 3.5.12 restent à effectuer après résolution de l'accès au fichier et de l'accord de publication publique.
+L'environnement Codex est publié. Son clone a confirmé le code, les 53 scripts et les 12 suites du noyau. Il n'expose pas les outils Library et son montage `/workspace/library-files` est vide : pour lui transmettre les archives, un dossier provisoire `.migration/2026-10-21-original-archives/` contient les 49 ZIP originaux regroupés sans modification, comprimés et encodés en parties ordonnées. Lire son README, vérifier la taille, le SHA256 et le manifeste avant toute importation. L'accès ne dépend plus de Library.
+
+Après l'importation et la vérification des originaux sous `downloads/`, retirer le dossier provisoire dans un commit séparé et actualiser ce document avec les liens de publication. L'historique doit rester conservé. Les imports et la publication ne sont annoncés terminés qu'après vérification effective de GitHub.
 
 ## Point de départ
 
@@ -44,7 +46,7 @@ Le dépôt distant contenait déjà neuf archives originales et deux checkpoints
 4. Valider `python3 scripts/check.py`, `python3 scripts/verify-version-archives.py --archives-only` et `python3 scripts/release.py --edition equipe --check`. Vérifier les workflows et publier la version existante 3.5.12 avec son tag, sans fabriquer un nouvel export.
 5. Confirmer les commits, les archives et la publication réellement présents sur GitHub. Un fichier préparé ou une tâche lancée ne prouve pas que la publication a réussi.
 
-La copie `.release/equipe.json` jointe n'est volontairement envoyée à `main` qu'avec son ZIP original, afin de déclencher une publication vérifiable.
+Le fichier `.release/equipe.json` se trouve aussi dans le dossier de transport, sous `release/equipe.json`. L'envoyer à `main` uniquement avec son ZIP original afin de déclencher une publication vérifiable.
 
 ## Préférences durables
 
