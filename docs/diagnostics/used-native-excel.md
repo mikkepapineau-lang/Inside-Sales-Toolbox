@@ -29,3 +29,23 @@ Les lignes sont plus compactes : marges réduites, prix et NBV côte à côte su
 - Fixture de 400 lignes : mêmes données avec attentes adaptatives et conservatrices, rendu différé de cellules également testé. Minuteries simulées : environ 24,6 s contre 105,5 s; **ce n’est pas une mesure dans Power BI connecté**.
 
 L’export automatique et sa durée réelle restent à valider dans la session Power BI de l’utilisateur. Le test local reproduit le parcours des captures, sans prétendre valider les droits ou le mécanisme de téléchargement du vrai rapport. InternalReference demeure à confirmer séparément dans D365 connecté.
+
+## Installer cette évolution sur le poste d’essai
+
+Dans le dossier permanent de l’édition équipe déjà corrigée, remplacer les fichiers suivants et ajouter `used-export-ui.js`. Les liens sont figés au commit de code testé `94f61ba1575cb9703d000b5e82aa25a6c8889ec3` :
+
+- [powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/powerbi-reader.js)
+- [used-regions.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/used-regions.js)
+- [used-powerbi-reader.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/used-powerbi-reader.js)
+- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/used-powerbi-worker.js)
+- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/used-powerbi-panel.js)
+- [used-refresh-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/used-refresh-ui.js)
+- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/used-export-ui.js)
+- [popup.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/popup.html)
+- [sidepanel.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/sidepanel.html)
+- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/theme.css)
+- [list-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/list-ui.js)
+- [i18n.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/i18n.js)
+- [i18n-dictionary.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/94f61ba1575cb9703d000b5e82aa25a6c8889ec3/project/inside-sales-toolbox-team/i18n-dictionary.js)
+
+Enregistrer les fichiers bruts sous leur nom exact, sans suffixe `.txt`. Recharger l’extension dans `edge://extensions` ou `chrome://extensions`, actualiser le rapport puis rouvrir le panneau. Choisir un pays et essayer Actualiser par Excel sur un article dont les quantités, prix et NBV sont connus. Vérifier les valeurs, puis refaire l’essai avec un autre pays. Un message explicite signale une interface ou un téléchargement non capturable; ne pas annoncer la réussite avant cet essai connecté.
