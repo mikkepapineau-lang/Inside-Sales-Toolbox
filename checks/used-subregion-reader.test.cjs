@@ -27,7 +27,7 @@ vm.runInContext(fs.readFileSync('project/inside-sales-toolbox-team/used-powerbi-
  // Modern visual containers and delayed control rendering must not be treated as absent immediately.
  surface='modern';delayUntil=clock+1000;await R.ensureRegion('USA');assert.deepEqual([...R.regionState().selected],['USA']);assert(clock>=delayUntil);delayUntil=0;
  // The table is in the top document; a custom slicer lives in an accessible about:blank frame.
- surface='iframe';await R.ensureRegion('UK+USA');assert.deepEqual([...R.regionState().selected],['UK','USA']);r=await R.read();assert.equal(r.rows[0].values[2],'27');assert.deepEqual([...r.regions],['UK','USA']);let diagnostic=R.diagnostic();assert.equal(diagnostic.readerVersion,'1.2.1');assert.equal(diagnostic.subregionSelectors.documents,2);assert.equal(diagnostic.embeddedFrames[0].documentAccessible,true);
+ surface='iframe';await R.ensureRegion('UK+USA');assert.deepEqual([...R.regionState().selected],['UK','USA']);r=await R.read();assert.equal(r.rows[0].values[2],'27');assert.deepEqual([...r.regions],['UK','USA']);let diagnostic=R.diagnostic();assert.equal(diagnostic.readerVersion,'1.2.2');assert.equal(diagnostic.subregionSelectors.documents,2);assert.equal(diagnostic.embeddedFrames[0].documentAccessible,true);
  const frameClicks=clicks;blocked=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);assert.equal(clicks,frameClicks);assert.equal(R.diagnostic().embeddedFrames[0].documentAccessible,false);blocked=false;
  duplicateFrame=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);assert.equal(clicks,frameClicks);duplicateFrame=false;
  // Open the explicitly collapsed Filters pane, then its named SUBREGION dropdown.
@@ -49,5 +49,31 @@ vm.runInContext(fs.readFileSync('project/inside-sales-toolbox-team/used-powerbi-
  assert.equal(Object.keys(visual[0].computedStyle).length,0);assert.equal(Object.keys(visual[0].dataSelection).length,0);
  delete controls[0].ownerDocument;delete controls[0].__data__;c.getComputedStyle=oldStyle;
  unknown=true;const before=clicks;await assert.rejects(R.ensureRegion('CANADA'),/accessible/);assert.equal(clicks,before);unknown=false;ambiguous=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);
+ // Reproduce the live custom slicer profile, independently of the requested country.
+ ambiguous=false;unknown=true;
+ for(const control of controls){
+  control.tagName='LI';const read=control.getAttribute;
+  control.getAttribute=k=>k==='class'?'slicerItemContainer':read(k);
+ }
+ const profile=node=>({visibility:'visible',display:'flex',opacity:'1',backgroundColor:selected.has(node.innerText)?'rgb(248, 163, 195)':'rgb(255, 255, 255)',color:'rgb(46, 27, 90)',borderTopColor:'rgb(0, 0, 0)'});
+ c.getComputedStyle=profile;selected=new Set(['CANADA']);
+ assert.deepEqual([...R.regionState().selected],['CANADA']);assert.equal(R.regionState().selectionSource,'custom-slicer-pink-v1');
+ for(const scope of ['UK','USA','CANADA','CANADA+UK','CANADA+USA','UK+USA','ALL']){
+  await R.ensureRegion(scope);const expected=scope==='ALL'?['CANADA','UK','USA']:scope.split('+');
+  assert.deepEqual([...R.regionState().selected],expected);
+  r=await R.read();assert.deepEqual([...r.regions],expected);
+ }
+ const guardClicks=clicks;
+ for(const invalid of [{backgroundColor:'rgb(0, 0, 0)'},{color:'rgb(0, 0, 0)'},{opacity:'0.5'}]){
+  c.getComputedStyle=node=>({...profile(node),...invalid});await assert.rejects(R.ensureRegion('CANADA'),/accessible/);assert.equal(clicks,guardClicks);
+ }
+ c.getComputedStyle=profile;selected.clear();await assert.rejects(R.ensureRegion('CANADA'),/accessible/);assert.equal(clicks,guardClicks);
+ selected=new Set(['UK']);const readAttr=controls[0].getAttribute;
+ controls[0].getAttribute=k=>k==='aria-checked'?'mixed':readAttr(k);
+ await assert.rejects(R.ensureRegion('CANADA'),/accessible/);assert.equal(clicks,guardClicks);controls[0].getAttribute=readAttr;
+ // Even matching colors cannot resolve multiple groups or an unlabelled container.
+ ambiguous=true;await assert.rejects(R.ensureRegion('CANADA'),/introuvable/);assert.equal(clicks,guardClicks);ambiguous=false;
+ separate=true;await assert.rejects(R.ensureRegion('CANADA'),/accessible/);assert.equal(clicks,guardClicks);separate=false;
+ console.log('PASS observed custom SUBREGION profile: live Canada/UK styles, all seven combinations, actual reads and guards for unknown paint, theme, opacity, all-white, contradictory state and ambiguous groups');
  console.log('PASS all seven SUBREGION combinations, separate caption, modern containers, delayed rendering, same-origin custom slicers, blocked/ambiguous frame guards, collapsed Filters pane/dropdown opening, native checkbox states and no clicks on unreadable or ambiguous selectors');
 })().catch(e=>{console.error(e);process.exitCode=1;});

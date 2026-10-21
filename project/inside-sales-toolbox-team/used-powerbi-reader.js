@@ -34,7 +34,7 @@
   return records;
  }
  const regionNames=['CANADA','UK','USA'];
- const readerVersion='1.2.1';
+ const readerVersion='1.2.2';
  const regionRoots='.visualContainer,visual-container,.visual-container-component,.slicerContainer,[data-visualtype="slicer"],[role="group"],[role="listbox"],[role="combobox"],[role="region"],filter-card,.filterCard,.filter-card,.chicletSlicer,.chiclet-slicer,.slicer';
  const regionOptions='[role="option"],[role="checkbox"],[role="menuitemcheckbox"],[role="button"],button,input[type="checkbox"],.slicerItemContainer,.chiclet,.chicletItem,.slicerText,.slicerItemText,.chicletItemText';
  const regionLabel=e=>[e.getAttribute?.('aria-label'),e.getAttribute?.('title'),text(e),...[...e.labels||[]].map(text)].filter(Boolean).map(value=>String(value).trim().toUpperCase()).filter(value=>new Set(value.match(/\b(?:CANADA|UK|USA)\b/g)||[]).size===1).map(value=>value.match(/^(CANADA|UK|USA)(?:$|[\s,;(:.])/)).find(Boolean)?.[1]||null;
@@ -137,10 +137,38 @@
   visit(control,1);
   return {country:regionLabel(control),...describe(control),state:selectionState(control,root),descendants};
  }
+ // Profile observed in two live diagnostics: Canada-only, then UK-only.
+ // This is specific to the named custom SUBREGION slicer, not a generic color rule.
+ function customVisualRegionState(group){
+  if(!group.named)return null;
+  const selected=[];
+  for(const control of group.controls){
+   if(control.tagName!=='LI'||!String(control.getAttribute?.('class')||'').split(/\s+/).includes('slicerItemContainer'))return null;
+   // Present accessible signals, including contradictions, must not be overridden by paint.
+   const nested=control.querySelectorAll?[...control.querySelectorAll(selectionSelector)]:[];
+   if(nested.length>24)return null;
+   const nodes=[control,...nested];
+   for(let node=control.parentElement,depth=0;node&&node!==group.root&&depth<3;node=node.parentElement,depth++){
+    if(regionLabel(node)!==regionLabel(control))break;nodes.push(node);
+   }
+   if(nodes.some(node=>{const s=selectionSignals(node);return s.invalid||s.values.length;}))return null;
+   const style=visualSelectionDiagnostic(control).computedStyle;
+   const compact=value=>String(value||'').replace(/\s/g,'');
+   if(style.display!=='flex'||style.visibility!=='visible'||style.opacity!=='1'||compact(style.color)!=='rgb(46,27,90)'||compact(style.borderTopColor)!=='rgb(0,0,0)')return null;
+   const background=compact(style.backgroundColor);
+   if(background==='rgb(248,163,195)')selected.push(regionLabel(control));
+   else if(background!=='rgb(255,255,255)')return null;
+  }
+  // All-white is ambiguous (cleared selection / transition); do not assume ALL.
+  return selected.length?{verified:true,selected,empty:false,selectionSource:'custom-slicer-pink-v1'}:null;
+ }
  function regionState(){
   const group=regionControls();if(!group)return {verified:false,selected:[],reason:'Sélecteur SUBREGION introuvable ou ambigu.'};
   const states=group.controls.map(control=>selectionState(control,group.root));
-  if(states.some(value=>value===null))return {verified:false,selected:[],reason:'L’état du sélecteur SUBREGION n’est pas accessible ou est contradictoire.'};
+  if(states.some(value=>value===null)){
+   const visual=states.every(value=>value===null)?customVisualRegionState(group):null;
+   return visual||{verified:false,selected:[],reason:'L’état du sélecteur SUBREGION n’est pas accessible ou est contradictoire.'};
+  }
   const empty=states.every(value=>value===false),selected=empty?[...regionNames]:regionNames.filter((_,i)=>states[i]);return {verified:true,selected,empty};
  }
  const filterPaneNames=new Set(['filters','filtres','filterpane','filterspane','voletdesfiltres','showfilters','showfilterpane','showfilterspane','expandfilterpane','expandfilterspane','afficherlesfiltres','afficherlevoletdesfiltres','developperlevoletdesfiltres']);
@@ -183,7 +211,7 @@
   await revealRegionControls();let state=regionState();if(!state.verified)throw Error(state.reason+' Ouvre le filtre dans Power BI, puis utilise Diagnostic inventaire usagé.');
   for(let attempt=0;attempt<7&&!same(state);attempt++){
    const group=regionControls();if(!group)throw Error('Le sélecteur SUBREGION a changé.');
-   let name=state.empty&&desired.length<regionNames.length?desired[0]:regionNames.find(n=>state.selected.includes(n)!==desired.includes(n));
+   let name=state.empty&&desired.length<regionNames.length?desired[0]:(desired.find(n=>!state.selected.includes(n))||regionNames.find(n=>state.selected.includes(n)&&!desired.includes(n)));
    const control=group.controls[regionNames.indexOf(name)];if(!control||control.disabled||control.getAttribute('aria-disabled')==='true')throw Error('La sous-région ne peut pas être sélectionnée.');
    const before=JSON.stringify(state.selected);control.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,ctrlKey:!state.empty}));
    const deadline=Date.now()+2500;do{await new Promise(r=>setTimeout(r,150));state=regionState();if(!state.verified)throw Error(state.reason);if(JSON.stringify(state.selected)!==before)break;}while(Date.now()<deadline);
