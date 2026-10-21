@@ -1,6 +1,6 @@
 # Actualiser les sous-régions sélectionnées
 
-> Suite actuelle : [actualisation native Excel, accélération et lignes compactes](used-native-excel.md). Cette page conserve le contexte de l’étape régionale précédente.
+> Suite actuelle : [trois exports Excel et produits comparés par pays](used-country-excel.md). Cette page conserve le contexte de l’étape régionale précédente.
 
 Cette évolution de développement suit la confirmation utilisateur du bon fonctionnement du sélecteur SUBREGION et du défilement horizontal. Le lecteur interne passe à **1.2.5**. Le numéro installable, le ZIP et le tag publiés 3.5.12 restent inchangés.
 

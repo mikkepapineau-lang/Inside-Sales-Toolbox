@@ -36,3 +36,22 @@ Une lecture ou un import de secours remplace la vue concernée et invalide le re
 `node checks/used-export-panel-browser.test.cjs` après reconstruction du document d’aperçu : bouton réel, trois XLSX distincts lus par le parseur de production avec contrôle CRC, une fiche produit avec trois pays et valeurs différentes, footer quotidien, dates de sources, refus d’une empreinte erronée et conservation du relevé précédent. Les tests du panneau Quantités/Prix + NBV restent passants.
 
 Aucune nouvelle version installable, archive ou tag n’est créé. Édition équipe uniquement. Les essais Power BI et D365 connectés restent distincts.
+
+## Mettre à jour le poste d’essai
+
+Pour le poste qui utilise déjà les correctifs précédents d’export Excel, remplacer **les dix fichiers suivants ensemble** dans le dossier permanent de l’édition équipe. Les liens sont figés au commit de code vérifié `3315b1528b6303d42a592635e4599039c0b81133`. Cette évolution remplace l’ancienne consigne de ne changer que deux fichiers.
+
+- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-export-ui.js)
+- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-powerbi-worker.js)
+- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-powerbi-panel.js)
+- [used-regions.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-regions.js)
+- [used-filter-model.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-filter-model.js)
+- [used-refresh-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/used-refresh-ui.js)
+- [popup.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/popup.html)
+- [sidepanel.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/sidepanel.html)
+- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/theme.css)
+- [i18n-dictionary.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/3315b1528b6303d42a592635e4599039c0b81133/project/inside-sales-toolbox-team/i18n-dictionary.js)
+
+Enregistrer chaque fichier brut sous son nom exact, sans `.txt`. Les moteurs `powerbi-reader.js`, `used-powerbi-reader.js`, le parseur `used-excel.js` et les autres fichiers des corrections précédentes restent nécessaires. Recharger l’extension dans `edge://extensions` ou `chrome://extensions`, actualiser le rapport Power BI puis rouvrir le panneau.
+
+Cliquer une seule fois Actualiser par Excel. Vérifier la succession Canada, UK et USA et attendre la réussite des trois fichiers avant de comparer un produit connu. Contrôler les trois quantités, les prix/NBV et les dates sous Options du catalogue. Vérifier aussi un produit absent d’un relevé et un NBV zéro. L’option Données résumées et l’effet réel de la reprise d’initialisation restent à confirmer dans ce rapport connecté.
