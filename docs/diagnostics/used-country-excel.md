@@ -1,8 +1,8 @@
 # Trois exports Excel, une fiche par produit
 
-Le bouton principal **Actualiser par Excel** sélectionne successivement **Canada, UK et USA**, exporte chaque tableau au format XLSX, puis regroupe les trois relevés dans le Toolbox. Il actualise **quantités disponibles, prix de vente et NBV** pour chaque pays. Ce parcours remplace le projet d’un unique export global, qui ne permettait pas d’attribuer les quantités à une sous-région.
+Le bouton principal **Actualiser par Excel** sélectionne successivement **Canada, UK et USA**, exporte chaque tableau au format XLSX, puis regroupe les trois relevés dans le Toolbox. Il actualise **quantités disponibles et NBV par pays**, ainsi que le **prix de vente commun au produit**. Ce parcours remplace le projet d’un unique export global, qui ne permettait pas d’attribuer les quantités à une sous-région.
 
-Chaque fiche regroupe les lignes liées à la même identité de catalogue (D365 ou correspondance SKU/fabricant/modèle sans ambiguïté). Elle affiche un relevé distinct par pays. Les quantités ne sont pas additionnées et un prix d’un autre pays n’est pas emprunté. Zéro reste zéro; une valeur absente ou non associable reste non renseignée. Les nouveaux produits détectés sont ajoutés aux identités du catalogue. Les correspondances ambiguës restent ignorées plutôt que fusionnées arbitrairement.
+Chaque fiche regroupe les lignes liées à la même identité de catalogue (D365 ou correspondance SKU/fabricant/modèle sans ambiguïté). Elle affiche un relevé distinct par pays. Les quantités ne sont pas additionnées. Les quantités et les NBV restent propres à leur pays. Le prix de vente commun est affiché une seule fois en haut de la fiche. Si les relevés donnent des prix différents, la fiche affiche « Plusieurs valeurs »; les prix sources restent consultables dans les détails, sans écrasement des données. Zéro reste zéro; une valeur absente ou non associable reste non renseignée. Les nouveaux produits détectés sont ajoutés aux identités du catalogue. Les correspondances ambiguës restent ignorées plutôt que fusionnées arbitrairement.
 
 Les trois fichiers sont préparés et contrôlés avant un unique enregistrement local. Si un export, une devise, une empreinte, les autres filtres du rapport ou une lecture XLSX ne conviennent pas, le relevé précédent et ses dates restent conservés. Annuler arrête l’ensemble. Le travail temporaire n’est pas enregistré comme un relevé partiellement actualisé. Les relevés de quantités et de prix restent compacts : un jeu d’identités de produits et des valeurs indexées par pays, sans trois copies intégrales du catalogue.
 
@@ -18,12 +18,12 @@ La capture du fichier et du lien natif conserve les correctifs précédents du t
 
 ## Présentation et dates
 
-- Les produits usagés utilisent les mêmes fiches que **Neuf / Stock D365** : SKU, badge de disponibilité, fabricant, numéro D365, description et détails sources dépliables. Les pays prennent la place des blocs entrepôts, avec leur quantité disponible en grand, leurs quantités possédée/maximale et leurs propres prix et NBV mis en évidence. Une ligne source distincte reste affichée quand plusieurs lignes existent pour un même emplacement. Les valeurs ne sont pas additionnées.
-- Le gros bouton Excel est l’action principale.
+- Les produits usagés utilisent les mêmes fiches que **Neuf / Stock D365** : SKU, badge de disponibilité, fabricant, numéro D365, description et détails sources dépliables. Les pays prennent la place des blocs entrepôts, avec leur quantité disponible en grand, leurs quantités possédée/maximale et leur NBV mis en évidence. Le prix de vente figure une seule fois au-dessus des pays, avec la même mise en évidence. Une ligne source distincte reste affichée quand plusieurs lignes existent pour un même emplacement. Les valeurs ne sont pas additionnées.
+- **Actualisation du catalogue** se trouve sous les filtres de recherche et se replie/se déplie. Le groupe est fermé par défaut; le gros bouton Excel reste l’action principale à son ouverture. La lecture de secours est rangée dans ce même groupe.
 - **Lecture de secours dans Power BI**, repliée au premier affichage, contient les anciennes lectures Quantités et Prix + NBV et la sélection des pays. Elles défilent dans le tableau et restent plus lentes.
 - L’import d’un fichier choisi manuellement reste dans **Options du catalogue**.
 - Une mention rappelle qu’une actualisation quotidienne suffit généralement, selon la cadence quotidienne du rapport indiquée par l’utilisateur. Aucun blocage n’empêche une actualisation supplémentaire.
-- **Derniers exports Excel** affiche la date et l’heure du dernier fichier du lot importé. **Options du catalogue** précise les trois dates, et chaque ligne pays porte sa date en infobulle. Il s’agit des heures de récupération des fichiers utilisés, pas de la date de rafraîchissement du modèle BI. Un échec ne rajeunit pas ces dates.
+- **Derniers exports Excel** reste visible dans le titre du groupe replié et affiche la date et l’heure du dernier fichier du lot importé. **Options du catalogue** précise les trois dates, et chaque ligne pays porte sa date en infobulle. Il s’agit des heures de récupération des fichiers utilisés, pas de la date de rafraîchissement du modèle BI. Un échec ne rajeunit pas ces dates.
 - Le filtre **Disponibles seulement** conserve les autres lignes pays d’un produit disponible dans au moins un pays, afin de pouvoir comparer aussi un zéro confirmé.
 
 Une lecture ou un import de secours remplace la vue concernée et invalide le regroupement Excel précédent; les relevés ne sont pas présentés comme provenant tous d’un nouveau lot. Relancer le bouton principal reconstitue les trois relevés ensemble.
@@ -34,7 +34,7 @@ Une lecture ou un import de secours remplace la vue concernée et invalide le re
 
 `node checks/used-export-browser.test.cjs` : vrai Chromium et contrôles natifs fictifs, initialisation exigeant deux activations absorbée dans une seule demande avec une seule confirmation Exporter, exclusion d’un visuel voisin, choix de l’option résumée lorsqu’elle est seule disponible, absence de forçage d’options désactivées, contrôles de capture et d’annulation.
 
-`node checks/used-export-panel-browser.test.cjs` après reconstruction du document d’aperçu : bouton réel, trois XLSX distincts lus par le parseur de production avec contrôle CRC, une fiche produit avec trois pays et valeurs différentes, footer quotidien, dates de sources, refus d’une empreinte erronée et conservation du relevé précédent. Les tests du panneau Quantités/Prix + NBV restent passants.
+`node checks/used-export-panel-browser.test.cjs` après reconstruction du document d’aperçu : bouton réel, trois XLSX distincts lus par le parseur de production avec contrôle CRC, une fiche produit avec un seul prix de vente commun et trois pays aux quantités/NBV différents, groupe d’actualisation repliable avec date visible, footer quotidien, dates de sources, refus d’une empreinte erronée et conservation du relevé précédent. Les tests du panneau Quantités/Prix + NBV restent passants.
 
 La présentation commune a aussi été observée dans Chromium à 320 et 390 px. À 320 px, les quantités et montants à zéro, un pays absent et les informations sources dépliées restent accessibles, sans débordement horizontal de la fiche. Les vues Neuf et Usagé partagent leurs styles de carte et de disponibilité.
 
@@ -42,21 +42,21 @@ Aucune nouvelle version installable, archive ou tag n’est créé. Édition éq
 
 ## Mettre à jour le poste d’essai
 
-**Si les trois exports par pays du commit `3315b15` sont déjà installés**, seuls **used-powerbi-panel.js** et **theme.css** sont à remplacer pour obtenir les fiches communes avec Neuf. Utiliser leurs liens ci-dessous.
+**Si les trois exports par pays ou les premières fiches communes avec Neuf sont déjà installés**, remplacer ensemble **used-powerbi-panel.js**, **theme.css**, **popup.html**, **sidepanel.html** et **i18n-dictionary.js** pour obtenir le prix de vente commun et le groupe d’actualisation repliable sous les filtres. Utiliser leurs liens ci-dessous.
 
-Pour passer des correctifs antérieurs d’export Excel à l’ensemble des trois exports par pays et à ces fiches communes, remplacer **les dix fichiers suivants ensemble** dans le dossier permanent de l’édition équipe. Les liens sont figés au commit de code vérifié `961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c`.
+Pour passer des correctifs antérieurs d’export Excel à l’ensemble des trois exports par pays et à ces fiches communes, remplacer **les dix fichiers suivants ensemble** dans le dossier permanent de l’édition équipe. Les liens sont figés au commit de code vérifié `e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd`.
 
-- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-export-ui.js)
-- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-powerbi-worker.js)
-- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-powerbi-panel.js)
-- [used-regions.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-regions.js)
-- [used-filter-model.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-filter-model.js)
-- [used-refresh-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/used-refresh-ui.js)
-- [popup.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/popup.html)
-- [sidepanel.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/sidepanel.html)
-- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/theme.css)
-- [i18n-dictionary.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/961e7c1afcd5bcf0f6911250a6bde9aa99be3a6c/project/inside-sales-toolbox-team/i18n-dictionary.js)
+- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-export-ui.js)
+- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-powerbi-worker.js)
+- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-powerbi-panel.js)
+- [used-regions.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-regions.js)
+- [used-filter-model.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-filter-model.js)
+- [used-refresh-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-refresh-ui.js)
+- [popup.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/popup.html)
+- [sidepanel.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/sidepanel.html)
+- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/theme.css)
+- [i18n-dictionary.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/i18n-dictionary.js)
 
 Enregistrer chaque fichier brut sous son nom exact, sans `.txt`. Les moteurs `powerbi-reader.js`, `used-powerbi-reader.js`, le parseur `used-excel.js` et les autres fichiers des corrections précédentes restent nécessaires. Recharger l’extension dans `edge://extensions` ou `chrome://extensions`, actualiser le rapport Power BI puis rouvrir le panneau.
 
-Cliquer une seule fois Actualiser par Excel. Vérifier la succession Canada, UK et USA et attendre la réussite des trois fichiers avant de comparer un produit connu. Contrôler les trois quantités, les prix/NBV et les dates sous Options du catalogue. Vérifier aussi un produit absent d’un relevé et un NBV zéro. L’option Données résumées et l’effet réel de la reprise d’initialisation restent à confirmer dans ce rapport connecté.
+Déplier Actualisation du catalogue sous les filtres, puis cliquer une seule fois Actualiser par Excel. Vérifier la succession Canada, UK et USA et attendre la réussite des trois fichiers avant de comparer un produit connu. Contrôler le prix de vente commun, les trois quantités/NBV et les dates sous Options du catalogue. Replier Actualisation du catalogue et vérifier que la date du dernier export reste visible. Vérifier aussi un produit absent d’un relevé et un NBV zéro. L’option Données résumées et l’effet réel de la reprise d’initialisation restent à confirmer dans ce rapport connecté.
