@@ -1,16 +1,16 @@
 // DOM-only extraction of both virtualized axes. No report internals or private API.
 (()=>{
- const version='2.2.0',norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
- if(globalThis.ToolboxPowerBIReader?.version===version)return;
+ function createReader(profile={}){
+ const version=profile.version||'2.2.0',norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
  const text=e=>String(e?.innerText||e?.textContent||e?.getAttribute?.('aria-label')||'').replace(/\s+/g,' ').trim();
  const noteText=e=>String(e?.innerText||e?.textContent||e?.getAttribute?.('aria-label')||'').replace(/\r\n?/g,'\n').replace(/[\t\u00a0\u202f]+/g,' ').trim();
  const visible=e=>!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&getComputedStyle(e).display!=='none';
- const orderHeader=s=>/^(salesordernumber|sonumber|numerodecommande|numerocommande)$/.test(norm(s));
- const customerHeader=s=>/^(accountname|customername|nomducompte|nomduclient|customer|client)$/.test(norm(s));
- const notesHeader=s=>/^(internalnotes|internalnote|solinternalnotes|notesinternes|noteinterne)$/.test(norm(s));
- const isOrder=s=>/^SO-[A-Z0-9]+(?:-[A-Z0-9]+)*$/i.test(String(s||''));
+ const orderHeader=profile.orderHeader||(s=>/^(salesordernumber|sonumber|numerodecommande|numerocommande)$/.test(norm(s)));
+ const customerHeader=profile.customerHeader||(s=>/^(accountname|customername|nomducompte|nomduclient|customer|client)$/.test(norm(s)));
+ const notesHeader=profile.notesHeader||(s=>/^(internalnotes|internalnote|solinternalnotes|notesinternes|noteinterne)$/.test(norm(s)));
+ const isOrder=profile.isOrder||(s=>/^SO-[A-Z0-9]+(?:-[A-Z0-9]+)*$/i.test(String(s||'')));
  const busy=()=>!!document.querySelector('[aria-busy="true"]');
- const ready=()=>/Order Completely Ready to PIK|SO Completely Ready To PIK/i.test(document.body?.innerText||'');
+ const ready=profile.ready||(()=>/Order Completely Ready to PIK|SO Completely Ready To PIK/i.test(document.body?.innerText||''));
  const delay=ms=>new Promise(r=>setTimeout(r,ms));let lastScan;
  function attribute(e,name,root){for(let n=e;n;n=n.parentElement){const value=n.getAttribute?.(name);if(value!==null&&value!==undefined&&value!=='')return value;if(n===root)break;}return '';}
  function headings(root){
@@ -56,14 +56,14 @@
   while(Date.now()<deadline){if(ready()&&!busy()){await delay(500);return;}await delay(250);}
   throw Error('Ready to PIK a été sélectionné, mais son chargement n’est pas confirmé. Réessaie après le chargement.');
  }
- async function read(){
+ async function* scanRows(){
   lastScan={headers:[],horizontalSteps:0,verticalSteps:0,rows:0,phase:'Identification du tableau'};
   const known=tables(),candidates=known.length?known:tables(true);
   if(candidates.length!==1)return {error:candidates.length?'Plusieurs tableaux de commandes détectés. Affiche uniquement Ready to PIK.':'Tableau de commandes non accessible. Ouvre Ready to PIK; au besoin, sélectionne le tableau et utilise Alt + Maj + F11.',diagnostic:diagnostic()};
   const root=candidates[0].root;
   if(!ready())return {error:'La page Ready to PIK n’est pas confirmée. Ouvre cette page du rapport.',diagnostic:diagnostic()};
   if(busy())return {error:'Power BI charge encore le rapport. Réessaie après le chargement.',diagnostic:diagnostic()};
-  const scope=()=>JSON.stringify([...document.querySelectorAll('[role="combobox"]')].filter(visible).map(text)),initialScope=scope();
+  const scope=()=>JSON.stringify({filters:[...document.querySelectorAll('[role="combobox"]')].filter(visible).map(text),extra:profile.scope?.()}),initialScope=scope();
   const areas=scrollAreas(root),ys=areas.filter(vertical),saved=areas.map(e=>[e,Number(e.scrollTop||0),Number(e.scrollLeft||0)]),savedNodes=new Set(areas),probed=new WeakMap(),customDrivers=new WeakMap(),customSaved=[];let xs=[];
   const columns=[],byPosition=new Map(),byName=new Map(),collected=new Map(),rowIds=new WeakMap();let rowSequence=0;
   const check=()=>{if(root.isConnected===false||!ready()||scope()!==initialScope)throw Error('Le rapport a changé pendant la lecture. Réessaie.');};
@@ -207,10 +207,12 @@
    for(const [order,record]of page)merge(collected,order,record);
    lastScan.rows=collected.size;
   }
+  let chunkStart=Date.now();
   try{
    for(const e of ys){e.scrollTop=0;dispatch(e);}await left();await settled(350);
    await sweep();
-   for(let i=0;i<45&&ys.some(e=>!endY(e));i++){
+   for(let i=0;i<(profile.maxVerticalSteps||45)&&ys.some(e=>!endY(e));i++){
+    if(profile.chunked&&Date.now()-chunkStart>=3000){yield {more:true,count:collected.size,expected:null,diagnostic:diagnostic()};chunkStart=Date.now();}
     for(const e of ys){e.scrollTop=Math.min(e.scrollHeight-e.clientHeight,Number(e.scrollTop||0)+Math.max(40,e.clientHeight*.8));dispatch(e);}
     await settled(250);lastScan.verticalSteps++;await sweep();
    }
@@ -219,8 +221,9 @@
    const ordered=columns.every(c=>c.position)?[...columns].sort((a,b)=>a.position-b.position):columns;
    const headers=ordered.map(c=>c.label),rows=[...collected.values()].map(record=>{const unreadColumns=ordered.map((c,i)=>record.values.has(c)?-1:i).filter(i=>i>=0);return {values:ordered.map(c=>record.values.get(c)??''),href:record.href,...(unreadColumns.length?{unreadColumns}:{})};});
    lastScan={...lastScan,headers,phase:'Lecture terminée'};
+   if(profile.requiredDetails&&!profile.requiredDetails.every(test=>headers.some(test)))throw Error('Sell Price ou NBV reste inaccessible après le parcours horizontal. Aucun prix enregistré.');
    const warning=lastScan.horizontalSteps&&!headers.some(notesHeader)?'Le défilement a été effectué, mais Internal Notes n’est pas encore lisible dans le rapport. Consulte Diagnostic Power BI.':'';
-   return {headers,rows,partial:true,limited:ys.some(e=>!endY(e)),steps:lastScan.verticalSteps,horizontalSteps:lastScan.horizontalSteps,...(warning?{warning}:{}),diagnostic:diagnostic()};
+   return {headers,rows,partial:true,loadedToEnd:!ys.some(e=>!endY(e)),limited:ys.some(e=>!endY(e)),steps:lastScan.verticalSteps,horizontalSteps:lastScan.horizontalSteps,...(warning?{warning}:{}),diagnostic:diagnostic()};
   }catch(e){lastScan={...lastScan,phase:'Lecture interrompue',error:e.message};throw e;}
   finally{
    for(const [e,top,left]of [...saved].reverse()){if(e.isConnected===false)continue;e.scrollTop=top;e.scrollLeft=left;dispatch(e);}
@@ -230,5 +233,16 @@
    }
   }
  }
- globalThis.ToolboxPowerBIReader={version,read,diagnostic,ensureReady};
+ let active=null;
+ async function next(){
+  if(!active)throw Error('La lecture du tableau a été interrompue.');
+  try{const result=await active.next();if(result.done)active=null;return result.value;}
+  catch(error){active=null;throw error;}
+ }
+ async function cancel(){const running=active;active=null;if(running)await running.return();return {cancelled:true};}
+ async function read(){await cancel();active=scanRows();return next();}
+ return {version,read,next,cancel,diagnostic,ensureReady};
+ }
+ globalThis.ToolboxPowerBITableReader={create:createReader};
+ if(globalThis.ToolboxPowerBIReader?.version!=='2.2.0')globalThis.ToolboxPowerBIReader=createReader();
 })();

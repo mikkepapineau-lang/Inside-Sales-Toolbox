@@ -35,7 +35,7 @@ function fixture(){
   if(!targets.length)throw Error('Could not establish connection');
   const responses=await Promise.all(targets.map(agent=>new Promise(resolve=>{let answered=false,pending=false;const reply=value=>{answered=true;resolve(clone(value));};for(const listener of agent.listeners)pending=listener(clone(message),{id:'self'},reply)===true||pending;if(!pending&&!answered)resolve(undefined);})));return responses.find(Boolean);
  }},scripting:{getRegisteredContentScripts:async()=>clone(registered),registerContentScripts:async scripts=>{if(failRegister)throw Error('Registration denied');specs.push(clone(scripts[0]));registered=clone(scripts);},updateContentScripts:async scripts=>{registered=clone(scripts);},executeScript:async options=>{
-  if(options.files){vm.runInContext(readerSource,main);return [{frameId:0,documentId:'main-'+generation}];}
+  if(options.files){for(const file of options.files)vm.runInContext(fs.readFileSync(dir+file,'utf8'),main);return [{frameId:0,documentId:'main-'+generation}];}
   main.__args=clone(options.args||[]);const result=await vm.runInContext('('+options.func.toString()+')(...__args)',main);
   if(Array.isArray(options.args?.[0])){reads++;if(mutateOnRead)selected=new Set(['UK']);if(loseOnRead)agents=[];}
   if(mutateOnNext&&options.func.toString().includes('.next()'))selected=new Set(['UK']);

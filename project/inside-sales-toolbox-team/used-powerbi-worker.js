@@ -154,7 +154,7 @@ async function readUsedPowerBI(kind,payload={}){
   if(!isUsedPowerBI(tab)||/singleSignOn|signin|login/i.test(tab.url))throw Error('Connecte-toi à Power BI dans l’onglet du rapport, puis clique sur Actualiser.');
   async function inspect(target,label){
    stage='Accès au contenu · '+label;
-   await chrome.scripting.executeScript({target,files:['used-powerbi-reader.js']});
+   await chrome.scripting.executeScript({target,files:['powerbi-reader.js','used-powerbi-reader.js']});
    stage='Lecture du tableau · '+label;
    if(kind==='usedPowerBIDiagnostic')return chrome.scripting.executeScript({target,func:()=>({diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()})});
    stage='Sélection de la sous-région · '+label;
@@ -163,7 +163,7 @@ async function readUsedPowerBI(kind,payload={}){
    if(!prepared.some(f=>f.result?.regionReady&&ToolboxUsedRegions.matches(f.result.regions,region)))return prepared;
    stage='Lecture du tableau · '+label;
    await progress('reading','Lecture des lignes Power BI…',{tabId:tab.id,count:0});
-   return chrome.scripting.executeScript({target,func:async()=>{try{return await globalThis.ToolboxUsedPowerBIReader.read();}catch(e){return {error:e.message,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()};}},args:[false]});
+   return chrome.scripting.executeScript({target,func:async priceMode=>{try{return await globalThis.ToolboxUsedPowerBIReader.read({prices:priceMode});}catch(e){return {error:e.message,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()};}},args:[prices]});
   }
   // A sandboxed child frame must not block extraction from the main report page.
   let frames=await inspect({tabId:tab.id},'page principale');
@@ -190,7 +190,7 @@ async function readUsedPowerBI(kind,payload={}){
     const source=bridgeFailure();scanTarget={tabId:tab.id,...(source.documentId?{documentIds:[source.documentId]}:{frameIds:[source.frameId]})};
     stage='Lecture du tableau lié au visuel SUBREGION';await progress('reading','Sous-région confirmée · chargement du tableau…',{tabId:tab.id,count:0});
     const regions=ToolboxUsedRegions.names.filter(name=>region==='ALL'||region.split('+').includes(name));
-    frames=await chrome.scripting.executeScript({target:scanTarget,func:async regions=>{try{await globalThis.ToolboxUsedPowerBIReader.waitForTable();return await globalThis.ToolboxUsedPowerBIReader.read({externalRegions:regions});}catch(error){return {error:error.message,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()};}},args:[regions]});
+    frames=await chrome.scripting.executeScript({target:scanTarget,func:async(regions,priceMode)=>{try{await globalThis.ToolboxUsedPowerBIReader.waitForTable();return await globalThis.ToolboxUsedPowerBIReader.read({externalRegions:regions,prices:priceMode});}catch(error){return {error:error.message,diagnostic:globalThis.ToolboxUsedPowerBIReader.diagnostic()};}},args:[regions,prices]});
     await usedRegionFrameCommand(tab.id,remoteRegion,'usedRegionProbe',region);
    }
   }

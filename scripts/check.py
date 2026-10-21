@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TESTS = (
     'pricing-model', 'pricing-rate', 'order-custom-scrollbar', 'order-horizontal-reader',
     'ready-report-routing', 'order-notes-report', 'order-notes', 'workspace',
-    'used-reader', 'used-embedded-frames', 'used-regional-worker', 'used-subregion-reader',
+    'used-reader', 'used-financial-horizontal', 'used-embedded-frames', 'used-regional-worker', 'used-subregion-reader',
 )
 
 def main():

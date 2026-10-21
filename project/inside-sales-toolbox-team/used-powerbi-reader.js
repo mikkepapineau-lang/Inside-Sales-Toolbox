@@ -34,7 +34,7 @@
   return records;
  }
  const regionNames=['CANADA','UK','USA'];
- const readerVersion='1.2.2';
+ const readerVersion='1.2.3';
  const regionRoots='.visualContainer,visual-container,.visual-container-component,.slicerContainer,[data-visualtype="slicer"],[role="group"],[role="listbox"],[role="combobox"],[role="region"],filter-card,.filterCard,.filter-card,.chicletSlicer,.chiclet-slicer,.slicer';
  const regionOptions='[role="option"],[role="checkbox"],[role="menuitemcheckbox"],[role="button"],button,input[type="checkbox"],.slicerItemContainer,.chiclet,.chicletItem,.slicerText,.slicerItemText,.chicletItemText';
  const regionLabel=e=>[e.getAttribute?.('aria-label'),e.getAttribute?.('title'),text(e),...[...e.labels||[]].map(text)].filter(Boolean).map(value=>String(value).trim().toUpperCase()).filter(value=>new Set(value.match(/\b(?:CANADA|UK|USA)\b/g)||[]).size===1).map(value=>value.match(/^(CANADA|UK|USA)(?:$|[\s,;(:.])/)).find(Boolean)?.[1]||null;
@@ -232,7 +232,7 @@
   }while(Date.now()<deadline);
   throw Error('La mise à jour du tableau après sélection de la sous-région n’est pas confirmée.');
  }
- function diagnostic(){return {readerVersion,subregion:regionState(),subregionSelectors:regionDiagnostic(),embeddedFrames:[...document.querySelectorAll('iframe')].filter(visible).slice(0,8).map(frame=>{let origin='',documentAccessible=false;try{origin=new URL(frame.getAttribute('src')||'',location.href).origin;}catch{}try{documentAccessible=!!(frame.contentDocument?.body||frame.contentDocument?.documentElement);}catch{}return {title:frame.getAttribute('title')||'',origin,documentAccessible};}),tables:tables().map(t=>({headers:t.headers,rowCount:rows(t).length})),gridCount:document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx').length,frame:location.origin,readyLabel:tables().length===1,currency:(String(document.body?.innerText||'').match(/Display\s+Currency\s+(CAD|USD|EUR|GBP)\b/i)||[])[1]||'',busy:!!document.querySelector('[aria-busy="true"]')};}
+ function diagnostic(){return {readerVersion,...(financialScan?{financialScan:financialScan.diagnostic()}:{ }),subregion:regionState(),subregionSelectors:regionDiagnostic(),embeddedFrames:[...document.querySelectorAll('iframe')].filter(visible).slice(0,8).map(frame=>{let origin='',documentAccessible=false;try{origin=new URL(frame.getAttribute('src')||'',location.href).origin;}catch{}try{documentAccessible=!!(frame.contentDocument?.body||frame.contentDocument?.documentElement);}catch{}return {title:frame.getAttribute('title')||'',origin,documentAccessible};}),tables:tables().map(t=>({headers:t.headers,rowCount:rows(t).length})),gridCount:document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx').length,frame:location.origin,readyLabel:tables().length===1,currency:(String(document.body?.innerText||'').match(/Display\s+Currency\s+(CAD|USD|EUR|GBP)\b/i)||[])[1]||'',busy:!!document.querySelector('[aria-busy="true"]')};}
  async function ensureReady(){
   if(diagnostic().readyLabel)return;
   const name=e=>[text(e),e.getAttribute('aria-label'),e.getAttribute('title')].filter(Boolean).some(s=>/^LP\s+Catalog\s*[-–]\s*Used\s+Gear$/i.test(String(s).trim()));
@@ -250,12 +250,39 @@
   while(Date.now()<deadline){if(diagnostic().readyLabel&&!diagnostic().busy){await new Promise(r=>setTimeout(r,500));return;}await new Promise(r=>setTimeout(r,250));}
   throw Error('LP Catalog - Used Gear a été sélectionné, mais son chargement n’est pas confirmé. Réessaie après le chargement.');
  }
- let scan=null;
+ let scan=null,financialScan=null;
  const scope=()=>JSON.stringify({regions:regionState(),filters:[...document.querySelectorAll('[role="combobox"]')].filter(visible).map(text)});
  function restore(){if(scan)for(const [e,top,left] of scan.saved){e.scrollTop=top;e.scrollLeft=left;e.dispatchEvent(new Event('scroll',{bubbles:true}));}}
- function cancel(){restore();scan=null;return {cancelled:true};}
+ function cancel(){restore();scan=null;if(financialScan){const current=financialScan;financialScan=null;return current.cancel();}return {cancelled:true};}
+ async function readFinancial(options){
+  if(!globalThis.ToolboxPowerBITableReader?.create)throw Error('Le moteur de lecture horizontale est absent. Recharge l’extension et le rapport.');
+  const external=options.externalRegions,state=regionState();
+  if(external!==undefined&&(!Array.isArray(external)||external.length!==3||new Set(external).size!==3||external.some(name=>!regionNames.includes(name))))throw Error('Sous-région externe invalide pour les prix.');
+  if(!external&&(!state.verified||state.selected.length!==3))throw Error('Les prix et NBV exigent CANADA + UK + USA confirmés.');
+  if(external&&state.verified&&state.selected.length!==3)throw Error('Les sélecteurs SUBREGION ne concordent pas.');
+  const currentCurrency=()=>String(document.body?.innerText||'').match(/Display\s+Currency\s+(CAD|USD|EUR|GBP)\b/i)?.[1]||'';
+  const regions=[...regionNames],currency=currentCurrency(),initialScope=scope();
+  const priceHeader=value=>norm(value)==='sellprice',nbvHeader=value=>norm(value)==='nbv';
+  const engine=globalThis.ToolboxPowerBITableReader.create({
+   version:'used-financial-1',chunked:true,maxVerticalSteps:100000,
+   orderHeader:value=>/^(d365itemid|d365itemnumber|itemnumber)$/.test(norm(value)),
+   customerHeader:value=>norm(value)==='sku',notesHeader:value=>priceHeader(value)||nbvHeader(value),
+   isOrder:value=>/^[A-Z0-9][A-Z0-9._-]*$/i.test(String(value||'').trim())&&!/^(total|totaux)$/i.test(value),
+   ready:()=>true,scope:()=>({filters:scope(),currency:currentCurrency()}),requiredDetails:[priceHeader,nbvHeader]
+  });
+  const finish=value=>{
+   if(scope()!==initialScope||currentCurrency()!==currency)throw Error('Les filtres ou la devise ont changé pendant la lecture des prix.');
+   if(value?.error)throw Error(value.error);
+   if(value?.more)return {...value,regions,currency};
+   if(!value?.rows?.length||!value.loadedToEnd)throw Error('Le parcours des prix et NBV n’est pas terminé. Aucun prix enregistré.');
+   financialScan=null;return {...value,regions,currency,filters:initialScope,complete:false,expected:null,more:false};
+  };
+  financialScan={next:async()=>{try{return finish(await engine.next());}catch(error){financialScan=null;try{await engine.cancel();}catch{}throw error;}},cancel:()=>engine.cancel(),diagnostic:()=>engine.diagnostic()};
+  try{return finish(await engine.read());}catch(error){financialScan=null;try{await engine.cancel();}catch{}throw error;}
+ }
  async function read(options={}){
-  cancel();
+  await cancel();
+  if(options.prices)return readFinancial(options);
   const external=options.externalRegions;
   if(external!==undefined&&(!Array.isArray(external)||!external.length||external.length>3||new Set(external).size!==external.length||external.some(name=>!regionNames.includes(name))))throw Error('Sous-région externe invalide.');
   const state=regionState();
@@ -271,6 +298,7 @@
   await new Promise(r=>setTimeout(r,500));return next();
  }
  async function next(){
+  if(financialScan)return financialScan.next();
   if(!scan)throw Error('La lecture du catalogue a été interrompue. Relance Actualiser.');
   const deadline=Date.now()+6500;
   try{
