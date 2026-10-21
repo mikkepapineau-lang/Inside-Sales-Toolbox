@@ -1,5 +1,7 @@
 # Usagé : lecture horizontale des prix et mise en évidence
 
+**Évolution suivante :** les deux boutons suivent désormais les pays choisis; la restriction financière globale décrite ci-dessous appartient à l’étape précédente. Utiliser la [notice de mise à jour régionale](used-selected-regions.md) pour le lecteur 1.2.5 et les fichiers à remplacer.
+
 Le retour utilisateur confirme la reconnaissance du sélecteur SUBREGION et signale que Sell Price / NBV ne sont accessibles qu’à droite du tableau. Le lecteur de quantités ne parcourait que la hauteur; ses en-têtes restaient ceux de la fenêtre de départ.
 
 ## Correction de lecture
