@@ -12,7 +12,7 @@
  const enabled=e=>!e.disabled&&e.getAttribute?.('aria-disabled')!=='true';
  const unique=nodes=>nodes.filter((e,i)=>nodes.indexOf(e)===i&&!nodes.some(other=>other!==e&&e.contains(other)));
  const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
- async function wait(find,job,message,ms=12000){const end=Date.now()+ms;do{if(job.cancelled)throw Error('Export Excel arrêté.');const value=find();if(value)return value;await delay(80);}while(Date.now()<end);throw Error(message);}
+ async function wait(find,job,message,ms=12000){const end=Date.now()+ms;do{if(job.cancelled)throw Error('Export Excel arrêté.');const value=find();if(value)return value;await delay(80);}while(Date.now()<end);const error=Error(message);error.exportPreparationTimeout=true;throw error;}
  function single(nodes,message){const choices=unique(nodes.filter(visible).filter(enabled));if(choices.length!==1)throw Error(message+' ('+choices.length+' cible).');return choices[0];}
  function reportTable(){
   const found=[...document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx')].filter(visible).filter(root=>{
@@ -35,10 +35,13 @@
   const roots=[];
   for(let node=table;node;node=node.parentElement)if(node.matches(visualSelector))roots.push(node);
   // Power BI can put the header beside the inner visual, in its outer host.
-  return roots.find(root=>menuCandidates(root).length)||roots[0]||table;
+  return roots.find(root=>ownedMenuCandidates(table,root).length)||roots[0]||table;
+ }
+ function ownedMenuCandidates(table,root){
+  return menuCandidates(root).filter(button=>{const owner=button.closest('.visualContainerHost,visual-container');return !owner||owner.contains(table);});
  }
  async function revealMenu(table,container,job){
-  const candidates=()=>menuCandidates(container);
+  const candidates=()=>{container=menuScope(table);return ownedMenuCandidates(table,container);};
   const target=table.querySelector('[role="gridcell"],[role="cell"],td')||table;
   const rect=target.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
   const init={bubbles:true,clientX:x,clientY:y,view:window,relatedTarget:null};
@@ -68,10 +71,49 @@
   },job,'EXPORT_MENU : aucun bouton Plus d’options utilisable. Le diagnostic des contrôles est disponible dans Options du catalogue.',4000).catch(error=>{
    if(error.message.startsWith('EXPORT_MENU')){
     const state=job.menuState||{},reason=state.candidates===0?'aucun contrôle reconnu':state.disabled===state.candidates?'contrôle désactivé':'contrôle non utilisable';
-    throw Error('EXPORT_MENU : '+reason+' ('+(state.candidates??0)+' candidat, '+(state.disabled??0)+' désactivé). Détails dans Options du catalogue → diagnostic.');
+    const detail=Error('EXPORT_MENU : '+reason+' ('+(state.candidates??0)+' candidat, '+(state.disabled??0)+' désactivé). Détails dans Options du catalogue → diagnostic.');detail.exportPreparationTimeout=state.candidates===0;throw detail;
    }
    throw error;
   });
+ }
+ async function openExportDialog(job){
+  const menuItems=()=>{
+   const matches=unique([...document.querySelectorAll('[role="menuitem"],button,[role="button"]')].filter(visible).filter(e=>/^(exportdata|exporterlesdonnees|exporterdesdonnees|exporterdonnees)$/.test(norm(label(e)))));
+   if(matches.length>1)throw Error('Plusieurs commandes Exporter les données.');
+   if(matches[0]&&!enabled(matches[0]))throw Error('Exporter les données est désactivé par le rapport.');return matches[0];
+  };
+  if([...document.querySelectorAll('[role="dialog"]')].some(visible))throw Error('Une fenêtre est déjà ouverte dans Power BI. Ferme-la puis relance l’actualisation.');
+  for(let attempt=1;attempt<=2;attempt++){
+   job.preparationAttempts=attempt;
+   try{
+    const table=reportTable(),more=await revealMenu(table,menuScope(table),job);job.menuButton=more;
+    // A prior click may have opened the native menu without the first lookup
+    // seeing it. Do not toggle an already open menu closed on preparation retry.
+    if(!(job.openedMenu&&menuItems())){more.click();job.openedMenu=true;}
+    const menu=await wait(menuItems,job,'Le menu Exporter les données ne s’ouvre pas.',2800);menu.click();
+    return await wait(()=>{const dialogs=unique([...document.querySelectorAll('[role="dialog"]')].filter(visible));if(dialogs.length>1)throw Error('Plusieurs fenêtres d’export sont ouvertes.');return dialogs[0];},job,'La fenêtre d’export Power BI ne s’ouvre pas.',2800);
+   }catch(error){
+    if(job.cancelled||job.armed||attempt===2||!error.exportPreparationTimeout)throw error;
+    await delay(180);
+   }
+  }
+ }
+ function exportOption(dialog,kind){
+  const names=kind==='layout'?/^(datawithcurrentlayout|donneesavecdispositionactuelle)/:/^(summarizeddata|summarydata|donneesresumees)/;
+  const candidates=[];
+  for(const node of dialog.querySelectorAll('label,[role="radio"],input[type="radio"]')){
+   let candidate=node;
+   for(let depth=0;candidate&&candidate!==dialog&&depth<4;depth++,candidate=candidate.parentElement)if(names.test(norm(label(candidate)))){candidates.push(candidate);break;}
+  }
+  const found=unique(candidates.filter(visible));if(found.length>1)throw Error('Plusieurs choix d’export '+kind+' ont été détectés.');return found[0];
+ }
+ const optionEnabled=node=>!!node&&enabled(node)&&!node.closest('[aria-disabled="true"],[disabled]')&&![...node.querySelectorAll('input[type="radio"],[role="radio"]')].some(e=>!enabled(e));
+ async function chooseExportOption(dialog,job){
+  const layout=exportOption(dialog,'layout');let chosen=layout;
+  if(optionEnabled(layout))job.exportMode='layout';
+  else{chosen=exportOption(dialog,'summarized');if(!optionEnabled(chosen))throw Error('Aucun export Excel de tableau n’est disponible (disposition actuelle et données résumées désactivées ou absentes).');job.exportMode='summarized';}
+  chosen.click();
+  await wait(()=>[chosen,...chosen.querySelectorAll('input[type="radio"],[role="radio"]')].some(e=>e.matches('input[type="radio"]')?e.checked:e.getAttribute('aria-checked')==='true'),job,'Power BI n’a pas confirmé le choix d’export Excel. Aucun export lancé.',2000);
  }
  function diagnostic(){return {dialogs:[...document.querySelectorAll('[role="dialog"]')].filter(visible).slice(0,3).map(e=>({buttons:[...e.querySelectorAll('button,[role="button"]')].filter(visible).map(label).slice(0,12),options:[...e.querySelectorAll('label,[role="radio"],[role="combobox"],select')].filter(visible).map(label).slice(0,12)}))};}
  function exportDiagnostic(job){
@@ -81,7 +123,7 @@
    ancestors.push({...info(node),controls:[...node.querySelectorAll(controlSelector)].slice(0,24).map(info)});
    if(node.matches?.('body'))break;
   }
-  return {version:'native-export-4',menu:job?.menuState,tableAncestors:ancestors,headers:[...document.querySelectorAll('.visualHeader,.visual-header,.visualHeaderItemContainer,.visualHeaderItem,.vcMenu')].slice(0,32).map(info),...diagnostic()};
+  return {version:'native-export-5',preparationAttempts:job?.preparationAttempts,exportMode:job?.exportMode,menu:job?.menuState,tableAncestors:ancestors,headers:[...document.querySelectorAll('.visualHeader,.visual-header,.visualHeaderItemContainer,.visualHeaderItem,.vcMenu')].slice(0,32).map(info),...diagnostic()};
  }
  async function run(){
   if(active)throw Error('Un export Excel est déjà en cours.');
@@ -123,28 +165,7 @@
   try{
    HTMLAnchorElement.prototype.click=wrappedClick;EventTarget.prototype.dispatchEvent=wrappedDispatch;window.open=wrappedOpen;document.addEventListener('click',clicked,true);
    URL.createObjectURL=wrapped;if(URL.createObjectURL!==wrapped)throw Error('Capture du fichier Excel indisponible dans ce navigateur.');
-   const table=reportTable(),container=menuScope(table);
-   const more=await revealMenu(table,container,job);more.click();
-   const menu=await wait(()=>{
-    const items=[...document.querySelectorAll('[role="menuitem"],button,[role="button"]')].filter(visible).filter(enabled).filter(e=>/^(exportdata|exporterlesdonnees|exporterdesdonnees|exporterdonnees)$/.test(norm(label(e))));
-    const values=unique(items);if(values.length>1)throw Error('Plusieurs commandes Exporter les données.');return values[0];
-   },job,'Exporter les données est indisponible. Vérifie les droits d’export de ce rapport.');menu.click();
-   const dialog=await wait(()=>{const dialogs=unique([...document.querySelectorAll('[role="dialog"]')].filter(visible));if(dialogs.length>1)throw Error('Plusieurs fenêtres d’export sont ouvertes.');return dialogs[0];},job,'La fenêtre d’export Power BI ne s’ouvre pas.');
-   const optionNames=/^(datawithcurrentlayout|donneesavecdispositionactuelle)/;
-   const candidates=[];
-   for(const node of dialog.querySelectorAll('label,[role="radio"],input[type="radio"]')){
-    let candidate=node;
-    for(let depth=0;candidate&&candidate!==dialog&&depth<4;depth++,candidate=candidate.parentElement){
-     if(optionNames.test(norm(label(candidate)))){candidates.push(candidate);break;}
-    }
-   }
-   const layout=single(candidates,'L’option Données avec disposition actuelle est absente ou ambiguë');
-   if(layout.querySelector?.('input[type="radio"]')?.disabled)throw Error('L’export avec disposition actuelle est désactivé.');
-   layout.click();
-   await wait(()=>{
-    const radios=[layout,...layout.querySelectorAll('input[type="radio"],[role="radio"]')];
-    return radios.some(e=>e.matches('input[type="radio"]')?e.checked:e.getAttribute('aria-checked')==='true');
-   },job,'Power BI n’a pas confirmé Données avec disposition actuelle. Aucun export lancé.',2000);
+   const dialog=await openExportDialog(job);await chooseExportOption(dialog,job);
    const selects=[...dialog.querySelectorAll('select')].filter(visible);
    if(selects.length){const selected=selects.filter(e=>[...e.options].some(o=>/\.xlsx/i.test(o.textContent||'')));if(selected.length!==1)throw Error('Le format Excel .xlsx n’est pas disponible.');const option=[...selected[0].options].find(o=>/\.xlsx/i.test(o.textContent||''));if(selected[0].value!==option.value){if(selected[0].disabled)throw Error('Le format XLSX ne peut pas être sélectionné.');selected[0].value=option.value;selected[0].dispatchEvent(new Event('change',{bubbles:true}));}}
    else if(!/\.xlsx\b/i.test(dialog.innerText||dialog.textContent||'')){
@@ -154,7 +175,7 @@
    const confirm=single([...dialog.querySelectorAll('button,[role="button"]')].filter(e=>/^(export|exporter)$/.test(norm(label(e)))),'Bouton Exporter absent ou ambigu');
    job.armed=true;confirm.click();
    const file=await wait(()=>{if(job.problem)throw Error(job.problem);if(job.candidates.length>1)throw Error('Plusieurs fichiers générés pendant l’export. Aucun import automatique.');return job.candidates[0]?.ready?job.candidates[0].value:null;},job,'Power BI n’a pas fourni de fichier XLSX capturable. Le téléchargement peut être repris avec Importer Excel.',60000);
-   await delay(160);if(job.candidates.length!==1)throw Error('Plusieurs fichiers Excel détectés. Aucun import automatique.');return file;
+   await delay(160);if(job.candidates.length!==1)throw Error('Plusieurs fichiers Excel détectés. Aucun import automatique.');return {...file,exportMode:job.exportMode,preparationAttempts:job.preparationAttempts};
   }catch(error){return {error:String(error.message||error),diagnostic:exportDiagnostic(job)};}
   finally{
    job.armed=false;for(const controller of job.controllers)controller.abort();document.removeEventListener('click',clicked,true);

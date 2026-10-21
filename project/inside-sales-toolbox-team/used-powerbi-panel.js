@@ -1,5 +1,5 @@
 (()=>{
- const el=id=>document.getElementById(id);let data=null,catalogue=null,regionSnapshots={},regionPrices={},memoFinancial=null,shownRegion='ALL',memoBase=null,memoSnapshot=null,requesting=false,status={},visibleLimit=80,importing=false,indexedData=null,filterIndex=null,filterSaveTimer,filtersTouched=false;
+ const el=id=>document.getElementById(id),tr=value=>globalThis.ToolboxI18n?.t(value)||value;let data=null,catalogue=null,countryMeta=null,countryMemo=null,batchCancelled=false,regionSnapshots={},regionPrices={},memoFinancial=null,shownRegion='ALL',memoBase=null,memoSnapshot=null,requesting=false,status={},visibleLimit=80,importing=false,indexedData=null,filterIndex=null,filterSaveTimer,filtersTouched=false;
  const filterUI=ToolboxUsedFilters.mount(changeFilters);
  const {node,row:recordRow,fieldList,diagnostics,time,link}=ToolboxList;
  const numeric=ToolboxUsedCatalogue.number;
@@ -8,40 +8,58 @@
  const region=()=>filterUI.state.subregion||'ALL';
  function selectData(){
   const current=region(),snapshot=regionSnapshots[current],financial=regionPrices[current];
+  if(countryMeta){
+   if(!countryMemo||countryMemo.base!==catalogue||countryMemo.meta!==countryMeta||countryMemo.q!==regionSnapshots||countryMemo.f!==regionPrices||countryMemo.region!==current)countryMemo={base:catalogue,meta:countryMeta,q:regionSnapshots,f:regionPrices,region:current,value:ToolboxUsedRegions.countryView(catalogue,regionSnapshots,regionPrices,countryMeta,current)};
+   if(countryMemo.value){data=countryMemo.value;return;}
+  }
   if(current==='ALL'){data=catalogue;memoBase=null;memoSnapshot=null;return;}
   if(catalogue!==memoBase||snapshot!==memoSnapshot||financial!==memoFinancial){memoBase=catalogue;memoSnapshot=snapshot;memoFinancial=financial;data=catalogue?ToolboxUsedRegions.financialView(catalogue,ToolboxUsedRegions.view(catalogue,snapshot,current),financial,current):null;}
  }
+ const exactDate=at=>new Intl.DateTimeFormat(document.documentElement.lang==='en-CA'?'en-CA':'fr-CA',{dateStyle:'medium',timeStyle:'short'}).format(new Date(at));
+ async function parseNativeExcel(file){
+  if(typeof file?.base64!=='string'||file.base64.length>35000000)throw Error('Fichier Excel reçu invalide.');
+  const bytes=Uint8Array.from(atob(file.base64),c=>c.charCodeAt(0)),hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(bytes.length!==file.size||hash!==file.sha256)throw Error('L’empreinte du fichier Excel reçu ne correspond pas.');
+  return {sha256:hash,data:await ToolboxUsedExcel.read(new File([bytes],file.name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),exportId:file.exportId};
+ }
  async function refresh(kind='usedPowerBIReadForce'){
   if(requesting||status.state==='loading'||importing)return;
+  if(kind==='usedPowerBIExportFile'){el('used-fallback').open=false;filterUI.state.subregion='ALL';shownRegion='ALL';memoBase=null;memoSnapshot=null;memoFinancial=null;changeFilters();}
   const prices=kind==='usedPowerBIReadPrices',excel=kind==='usedPowerBIExportFile',targetRegion=region(),operation=excel?'export':prices?'prices':'quantities';
-  requesting=true;status={state:'loading',phase:'starting',region:targetRegion,operation,message:prices?'Lecture des prix et NBV de la sélection…':'Préparation de la lecture des quantités…'};render();
-  try{let result=await chrome.runtime.sendMessage({kind,region:targetRegion,foreground:el('used-foreground').checked});if(result?.error)throw Error(result.error);if(!result?.value)throw Error('La mise à jour n’a pas été confirmée.');
+  requesting=true;status={state:'loading',phase:'starting',region:targetRegion,operation,message:excel?'Préparation des trois exports Canada, UK et USA…':prices?'Lecture des prix et NBV de la sélection…':'Préparation de la lecture des quantités…'};render();
+  let batchId,activeCountry;batchCancelled=false;
+  try{let result;
    if(excel){
-    const file=result.value;if(typeof file.base64!=='string'||file.base64.length>35000000)throw Error('Fichier Excel reçu invalide.');
-    const bytes=Uint8Array.from(atob(file.base64),c=>c.charCodeAt(0));
-    const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(b=>b.toString(16).padStart(2,'0')).join('');
-    if(bytes.length!==file.size||hash!==file.sha256)throw Error('L’empreinte du fichier Excel reçu ne correspond pas.');
-    status={state:'loading',phase:'importing',operation,region:targetRegion,message:'Lecture du fichier Excel…'};render();
-    const parsed=await ToolboxUsedExcel.read(new File([bytes],file.name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
-    result=await chrome.runtime.sendMessage({kind:'usedPowerBIImportExport',region:targetRegion,exportId:file.exportId,sha256:hash,data:parsed});
-    if(result?.error)throw Error(result.error);if(!result?.value)throw Error('L’importation Excel n’a pas été confirmée.');
-   }
-   const saved=await chrome.storage.local.get(['toolboxUsedPowerBI','toolboxUsedRegionQuantities','toolboxUsedRegionPrices','toolboxUsedPowerBIStatus']);catalogue=saved.toolboxUsedPowerBI||catalogue;regionSnapshots=saved.toolboxUsedRegionQuantities||regionSnapshots;regionPrices=saved.toolboxUsedRegionPrices||regionPrices;status=saved.toolboxUsedPowerBIStatus||{state:'done',region:region(),count:result.value.count};
-  }catch(e){status={state:'error',region:targetRegion,operation,message:e.message};}finally{requesting=false;render();}
+    const start=await chrome.runtime.sendMessage({kind:'usedPowerBIBeginCountries'});if(start?.error)throw Error(start.error);batchId=start?.value?.batchId;if(!batchId)throw Error('La préparation des trois pays n’a pas été confirmée.');
+    const exports=[];
+    for(const [index,country]of ToolboxUsedRegions.names.entries()){activeCountry=country;
+     if(batchCancelled)throw Error('Actualisation Excel arrêtée.');
+     result=await chrome.runtime.sendMessage({kind,region:country,batchId,foreground:el('used-foreground').checked});if(result?.error)throw Error(result.error);if(!result?.value)throw Error('Le fichier Excel '+country+' n’a pas été reçu.');
+     status={state:'loading',phase:'importing',operation,region:'ALL',batchIndex:index+1,country,message:'Lecture de l’export Excel '+country+' · '+(index+1)+'/3…'};render();
+     exports.push({region:country,...await parseNativeExcel(result.value)});
+    }
+    if(batchCancelled)throw Error('Actualisation Excel arrêtée.');
+    activeCountry=undefined;result=await chrome.runtime.sendMessage({kind:'usedPowerBIImportCountries',batchId,exports});
+   }else result=await chrome.runtime.sendMessage({kind,region:targetRegion,foreground:el('used-foreground').checked});
+   if(result?.error)throw Error(result.error);if(!result?.value)throw Error('La mise à jour n’a pas été confirmée.');
+   const saved=await chrome.storage.local.get(['toolboxUsedPowerBI','toolboxUsedRegionQuantities','toolboxUsedRegionPrices','toolboxUsedPowerBIStatus','toolboxUsedCountryCatalogue']);countryMeta=saved.toolboxUsedCountryCatalogue||null;countryMemo=null;catalogue=saved.toolboxUsedPowerBI||catalogue;regionSnapshots=saved.toolboxUsedRegionQuantities||regionSnapshots;regionPrices=saved.toolboxUsedRegionPrices||regionPrices;status=saved.toolboxUsedPowerBIStatus||{state:'done',region:region(),count:result.value.count};
+  }catch(e){const message=(activeCountry?activeCountry+' · ':'')+e.message;if(batchId)await chrome.runtime.sendMessage({kind:'usedPowerBIAbortCountries',batchId,message}).catch(()=>{});status={state:'error',region:targetRegion,operation,message};}finally{requesting=false;render();}
  }
  function render(){
   selectData();const root=el('used-results');root.replaceChildren();const loading=status.state==='loading'||importing||requesting,prices=status.operation==='prices',excel=status.operation==='export';const scopedStatus=status.region&&status.region!==region()&&status.state!=='loading'?{state:'idle'}:status;
   ToolboxUsedRefresh.render(prices||excel?{state:'idle'}:scopedStatus,!prices&&!excel&&(requesting||importing));ToolboxUsedRefresh.render(prices?scopedStatus:{state:'idle',region:region()},prices&&(requesting||importing),{buttonId:'used-refresh-prices',financial:true});ToolboxUsedRefresh.render(excel?scopedStatus:{state:'idle',region:region()},excel&&requesting,{buttonId:'used-export-excel',excel:true});filterUI.setBusy(loading);
-  const regionLabel=ToolboxUsedRegions.label(region());el('used-region-note').textContent=region()==='ALL'?(catalogue&&!ToolboxUsedRegions.allKnown(catalogue)?'Sous-région du dernier relevé non confirmée. Actualise les quantités pour vérifier CANADA + UK + USA.':'Quantités CANADA + UK + USA.'):(data?.quantitiesPending?'Prix et NBV '+regionLabel+' · Actualise les quantités pour cette sélection.':data?'Quantités '+regionLabel+' selon les filtres Power BI · Prix et NBV selon la sélection.':regionLabel+' · Clique sur Quantités pour charger cette sélection.');
+  el('used-excel-time').textContent=countryMeta?tr('Derniers exports Excel :')+' '+exactDate(countryMeta.at):catalogue?.lastImport?.source==='Excel'?'Dernier import Excel manuel : '+exactDate(catalogue.lastImport.at):'Exports par pays : pas encore importés.';
+  const exportTimes=el('used-country-export-times');exportTimes.replaceChildren();if(countryMeta)for(const country of ToolboxUsedRegions.names)exportTimes.append(node('p','fine-print',country+' · Export Excel : '+exactDate(countryMeta.exports[country].at)));
+  const regionLabel=ToolboxUsedRegions.label(region());el('used-region-note').textContent=data?.countryMode?'Relevés Excel par pays · Quantités, prix et NBV séparés.':region()==='ALL'?(catalogue&&!ToolboxUsedRegions.allKnown(catalogue)?'Sous-région du dernier relevé non confirmée. Actualise les quantités pour vérifier CANADA + UK + USA.':'Quantités CANADA + UK + USA.'):(data?.quantitiesPending?'Prix et NBV '+regionLabel+' · Lecture de secours : actualise les quantités de cette sélection.':data?'Quantités '+regionLabel+' selon les filtres Power BI · Prix et NBV selon la sélection.':regionLabel+' · Lecture de secours : clique sur Quantités pour cette sélection.');
   for(const id of ['used-refresh','used-refresh-prices','used-export-excel','used-import','used-force','used-clear','used-import-mode','used-foreground'])el(id).disabled=loading;
   el('used-status').textContent=importing?'Lecture du fichier Excel…':status.message||(loading?'Lecture de l’inventaire usagé…':data?'':'Chargement du catalogue Excel…');
   el('used-stop').hidden=!loading||importing;el('used-more').hidden=true;
   el('used-time').textContent=data?(data.quantitiesPending?'Quantités à actualiser pour cette sélection.':data.lastQuantityAt?'Quantités récupérées · '+time(data.lastQuantityAt):data.sourceDate?'Quantités · Excel du '+dateOnly(data.sourceDate):time(data.at)):'';
   el('used-status').dataset.state=status.state||'idle';el('used-status').hidden=!!data&&!loading&&!status.message;
-  const financialData=region()==='ALL'?catalogue:data;
+  const financialData=data?.countryMode?data:region()==='ALL'?catalogue:data;
   el('used-financial-time').textContent=financialData?(financialData.catalogueAt?'Prix et NBV · '+time(financialData.catalogueAt):region()==='ALL'&&financialData.sourceDate?'Prix et NBV · Excel du '+dateOnly(financialData.sourceDate):'Prix et NBV à actualiser pour cette sélection.'):'';
   const financial=financialData?.lastFinancialUpdate;
-  el('used-price-note').textContent=financial?(region()==='ALL'?financial.stats.updated+' articles actualisés · '+financial.stats.retained+' prix et NBV conservés.':financial.stats.updated+' articles actualisés · '+regionLabel+'.'):region()==='ALL'?'Catalogue global · Quantités conservées':'Prix et NBV à actualiser pour cette sélection.';
+  el('used-price-note').textContent=data?.countryMode?'Prix, NBV et quantités conservés séparément pour chaque pays.':financial?(region()==='ALL'?financial.stats.updated+' articles actualisés · '+financial.stats.retained+' prix et NBV conservés.':financial.stats.updated+' articles actualisés · '+regionLabel+'.'):region()==='ALL'?'Catalogue global · Quantités conservées':'Prix et NBV à actualiser pour cette sélection.';
   if(!data){if(region()!=='ALL')root.append(node('p','muted','Les quantités des autres sous-régions ne sont pas utilisées pour ce filtre.'));el('used-count').textContent='';el('used-currency').textContent='';el('used-coverage').textContent='';el('used-location-note').hidden=true;return;}
   const headers=data.headers.map(ToolboxUsedCatalogue.column),index=key=>headers.indexOf(key);
   const warehouseKey=['warehouse','warehouseid','inventlocationid','entrepot','location','emplacement','site','siteid'].find(key=>headers.includes(key));
@@ -57,6 +75,7 @@
   el('used-currency').textContent=data.currency||'Devise à vérifier';
   const stats=data.lastImportStats;
   el('used-coverage').textContent=data.quantitiesPending?'Prix et NBV · '+data.rows.length+' articles · Quantités à actualiser.':stats?stats.updated+' mis à jour · '+stats.added+' nouveaux · '+stats.retained+' conservés sans nouvelle quantité'+(stats.ambiguous?' · '+stats.ambiguous+' correspondances ambiguës ignorées':''):'Catalogue Excel · '+data.rows.length+' lignes';
+  if(data.countryMode)el('used-coverage').textContent=groups.size+(groups.size===1?' produit · ':' produits · ')+data.rows.length+' lignes par pays';
   if(data.lastImport?.source==='Power BI'&&!data.lastImport.complete)el('used-coverage').textContent+=' · total Power BI non confirmé';
   el('used-source').textContent=data.filters||'';el('used-update-source').textContent=data.lastImport?.filters||'';
   el('used-more').hidden=groups.size<=visibleLimit;
@@ -69,9 +88,20 @@
    const availability={state,quantity:rows.length===1&&quantity!==null?get(r,'available'):null,caption:unverified?'À revérifier':partial?'Quantités partielles':quantity===null?'À vérifier':quantity>0?'Dispo.':'Indisponible',place:cols.warehouse>=0?[...new Set(rows.map(r=>get(r,'warehouse')).filter(Boolean))].join(' · '):''};
    const amounts=[['price','Prix de vente'],['nbv','NBV']].map(([key,label])=>{const values=[...new Set(rows.map(r=>get(r,key)))],raw=values.length===1&&values[0]!=='';return {label,raw,currency:raw?data.currency:'',value:raw?money(values[0])+' $':values.length>1?'Plusieurs valeurs':'Non renseigné'};});
    const name=[get(r,'brand'),get(r,'item')?'D365 '+get(r,'item'):''].filter(Boolean).join(' · ');
-   const record=recordRow({key:'used:'+groupKey,code:get(r,'sku')||get(r,'item'),name,description:get(r,'description'),amounts,meta,availability});
+   const record=recordRow({key:'used:'+groupKey,code:get(r,'sku')||get(r,'item'),name,description:get(r,'description'),amounts:data.countryMode?[]:amounts,meta:data.countryMode?[]:meta,availability:data.countryMode?{state:'regional',quantity:'—',caption:'Par pays'}:availability});
+   if(data.countryMode){
+    const countries=node('span','record-countries');
+    for(const country of data.countrySelection){
+     const countryRows=rows.filter(row=>row.country===country),line=node('span','record-country');line.append(node('strong','record-country-name',country==='CANADA'?'Canada':country));
+     if(!countryRows.length)line.append(node('span','record-country-absent','Non renseigné dans cet export'));
+     else if(countryRows.length!==1)line.append(node('span','record-country-absent','Plusieurs lignes source'));
+     else{const source=countryRows[0],qty=get(source,'available');line.title='Export Excel · '+exactDate(countryMeta.exports[country].at);line.dataset.stock=numeric(qty)>0?'available':numeric(qty)===0?'empty':'unknown';const stock=node('span','record-country-stock');stock.append(node('strong','record-country-qty source-value',qty===''?'—':qty),node('span','record-label','Dispo.'));line.append(stock);for(const [key,label]of [['price','Prix de vente'],['nbv','NBV']]){const amount=node('span','record-country-money');amount.append(node('span','record-label',label),node('strong','source-value',get(source,key)===''?'Non renseigné':money(get(source,key))+' $'));line.append(amount);}}
+     countries.append(line);
+    }
+    record.querySelector('.record-summary').append(countries);
+   }
    rows.forEach((r,i)=>{
-    if(rows.length>1)record.append(node('h4','record-source-heading','Ligne source '+(i+1)));
+    if(rows.length>1||r.country)record.append(node('h4','record-source-heading',r.country||'Ligne source '+(i+1)));
     if(r.qtyAt)record.append(node('p','quantity-provenance','Quantités récupérées · '+time(r.qtyAt)+' · '+(r.qtySource||'')));
     if(r.financialAt||data.sourceDate)record.append(node('p','quantity-provenance','Prix et NBV · '+(r.financialAt?time(r.financialAt):'Excel du '+dateOnly(data.sourceDate))));
     record.append(fieldList(data.headers,r.values));if(r.href)record.append(link('Ouvrir le lien SKU ↗',r.href,'record-source-link'));
@@ -93,7 +123,7 @@
  }
  el('used-foreground').onchange=()=>chrome.storage.local.set({toolboxUsedForeground:el('used-foreground').checked}).catch(()=>{});
  el('used-export-excel').onclick=()=>refresh('usedPowerBIExportFile');el('used-refresh').onclick=()=>refresh();el('used-refresh-prices').onclick=()=>refresh('usedPowerBIReadPrices');el('used-force').onclick=()=>refresh('usedPowerBIReadForce');el('used-open').onclick=()=>action('usedPowerBIOpen');el('used-bind').onclick=()=>action('usedPowerBIBind');el('used-diagnostic').onclick=()=>action('usedPowerBIDiagnostic');
- el('used-query').oninput=()=>changeFilters(true,true);el('used-available').onchange=()=>changeFilters();el('used-more').onclick=()=>{visibleLimit+=80;render();};el('used-stop').onclick=()=>action('usedPowerBIStop');el('used-clear').onclick=async()=>{const result=await action('usedCatalogueReset');if(result){filterUI.state.subregion='ALL';shownRegion='ALL';changeFilters();}};
+ el('used-query').oninput=()=>changeFilters(true,true);el('used-available').onchange=()=>changeFilters();el('used-more').onclick=()=>{visibleLimit+=80;render();};el('used-stop').onclick=()=>{batchCancelled=true;return action('usedPowerBIStop');};el('used-clear').onclick=async()=>{const result=await action('usedCatalogueReset');if(result){filterUI.state.subregion='ALL';shownRegion='ALL';changeFilters();}};
  el('used-import').onclick=()=>el('used-file').click();
  el('used-file').onchange=async()=>{
   const file=el('used-file').files?.[0];if(!file)return;const mode=el('used-import-mode').value;importing=true;status={state:'loading',operation:mode==='prices'?'prices':'quantities',phase:'starting',region:mode==='prices'?'ALL':region()};render();
@@ -101,6 +131,6 @@
   catch(e){status={state:'error',operation:mode==='prices'?'prices':'quantities',message:e.message};}
   finally{importing=false;el('used-file').value='';render();}
  };
- chrome.storage.onChanged.addListener((c,area)=>{if(area!=='local')return;let changed=!!c.toolboxLanguage;if(c.toolboxUsedPowerBI){catalogue=c.toolboxUsedPowerBI.newValue;changed=true;}if(c.toolboxUsedRegionQuantities){regionSnapshots=c.toolboxUsedRegionQuantities.newValue||{};memoSnapshot=null;changed=true;}if(c.toolboxUsedRegionPrices){regionPrices=c.toolboxUsedRegionPrices.newValue||{};memoFinancial=null;changed=true;}if(c.toolboxUsedPowerBIStatus){status=c.toolboxUsedPowerBIStatus.newValue||{};changed=true;}if(c.toolboxUsedFilters){filtersTouched=true;const saved=ToolboxUsedFilterModel.serialize(ToolboxUsedFilterModel.state(c.toolboxUsedFilters.newValue));if(JSON.stringify(saved)!==JSON.stringify(filterUI.serialize())){clearTimeout(filterSaveTimer);filterUI.restore(saved);shownRegion=region();memoBase=null;memoSnapshot=null;visibleLimit=80;changed=true;}}if(c.toolboxUsedPowerBIDiagnostic)diagnostics('used-diagnostic-output',c.toolboxUsedPowerBIDiagnostic.newValue);if(changed)render();});
- chrome.storage.local.get(['toolboxUsedPowerBI','toolboxUsedPowerBIStatus','toolboxUsedFilters','toolboxUsedRegionQuantities','toolboxUsedRegionPrices','toolboxUsedForeground']).then(async s=>{el('used-foreground').checked=s.toolboxUsedForeground===true;catalogue=s.toolboxUsedPowerBI;regionSnapshots=s.toolboxUsedRegionQuantities||{};regionPrices=s.toolboxUsedRegionPrices||{};status=s.toolboxUsedPowerBIStatus||{};if(!filtersTouched)filterUI.restore(s.toolboxUsedFilters);shownRegion=region();render();await action('usedPowerBIInit');});
+ chrome.storage.onChanged.addListener((c,area)=>{if(area!=='local')return;let changed=!!c.toolboxLanguage;if(c.toolboxUsedCountryCatalogue){countryMeta=c.toolboxUsedCountryCatalogue.newValue||null;countryMemo=null;changed=true;}if(c.toolboxUsedPowerBI){catalogue=c.toolboxUsedPowerBI.newValue;changed=true;}if(c.toolboxUsedRegionQuantities){regionSnapshots=c.toolboxUsedRegionQuantities.newValue||{};memoSnapshot=null;changed=true;}if(c.toolboxUsedRegionPrices){regionPrices=c.toolboxUsedRegionPrices.newValue||{};memoFinancial=null;changed=true;}if(c.toolboxUsedPowerBIStatus){status=c.toolboxUsedPowerBIStatus.newValue||{};changed=true;}if(c.toolboxUsedFilters){filtersTouched=true;const saved=ToolboxUsedFilterModel.serialize(ToolboxUsedFilterModel.state(c.toolboxUsedFilters.newValue));if(JSON.stringify(saved)!==JSON.stringify(filterUI.serialize())){clearTimeout(filterSaveTimer);filterUI.restore(saved);shownRegion=region();memoBase=null;memoSnapshot=null;visibleLimit=80;changed=true;}}if(c.toolboxUsedPowerBIDiagnostic)diagnostics('used-diagnostic-output',c.toolboxUsedPowerBIDiagnostic.newValue);if(changed)render();});
+ chrome.storage.local.get(['toolboxUsedPowerBI','toolboxUsedPowerBIStatus','toolboxUsedFilters','toolboxUsedRegionQuantities','toolboxUsedRegionPrices','toolboxUsedForeground','toolboxUsedCountryCatalogue']).then(async s=>{countryMeta=s.toolboxUsedCountryCatalogue||null;el('used-foreground').checked=s.toolboxUsedForeground===true;catalogue=s.toolboxUsedPowerBI;regionSnapshots=s.toolboxUsedRegionQuantities||{};regionPrices=s.toolboxUsedRegionPrices||{};status=s.toolboxUsedPowerBIStatus||{};if(!filtersTouched)filterUI.restore(s.toolboxUsedFilters);shownRegion=region();render();await action('usedPowerBIInit');});
 })();

@@ -1,4 +1,22 @@
 globalThis.ToolboxDictionary={
+  "Non renseigné dans cet export":"Not provided in this export",
+  "Derniers exports Excel :":"Latest Excel exports:",
+  "Prix, NBV et quantités conservés séparément pour chaque pays.":"Prices, NBV and quantities are kept separately for each country.",
+
+  "Canada · UK · USA : trois exports automatiques":"Canada · UK · USA: three automatic exports",
+  "Une actualisation par jour suffit généralement : Power BI est rafraîchi quotidiennement.":"One update a day is usually enough: Power BI refreshes daily.",
+  "Par pays":"By country",
+  "Absent du relevé":"Not in this export",
+  "Plusieurs lignes source":"Multiple source rows",
+  "Exports par pays : pas encore importés.":"Country exports: not imported yet.",
+
+  "Actualisation du catalogue":"Catalogue update",
+  "Canada + USA + UK · Quantités, prix et NBV":"Canada + USA + UK · Quantities, prices and NBV",
+  "Lecture de secours dans Power BI":"Fallback reading in Power BI",
+  "Option plus lente : parcourt le tableau si l’export Excel ne fonctionne pas. Choisis les pays pour cette lecture.":"Slower option: scans the table when Excel export is unavailable. Choose the countries for this reading.",
+  "Importer un fichier Excel manuellement":"Import an Excel file manually",
+  "Mode de l’import manuel":"Manual import mode",
+
   "Actualiser par Excel":"Refresh via Excel",
   "Quantités, prix et NBV · Pays sélectionnés":"Quantities, prices and NBV · Selected countries",
   "Export Excel Power BI":"Power BI Excel export",

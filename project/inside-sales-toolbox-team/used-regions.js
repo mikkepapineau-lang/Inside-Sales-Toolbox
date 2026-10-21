@@ -68,6 +68,28 @@
    ...(!quantityView?{at:snapshot.at,lastQuantityAt:undefined,lastImportStats:undefined,lastImport:undefined}:{}),
    lastFinancialUpdate:known?{at:snapshot.at,source:snapshot.source,stats:snapshot.stats,filters:snapshot.filters}:undefined};
  }
+ function countryCatalogue(base,inputs,{at=Date.now()}={}){
+  if(!Array.isArray(inputs)||inputs.length!==3||new Set(inputs.map(x=>x.region)).size!==3||!names.every(region=>inputs.some(x=>x.region===region)))throw Error('Les trois exports CANADA, UK et USA sont requis.');
+  let catalogue=base;
+  for(const region of names){const input=inputs.find(x=>x.region===region);if(!matches(input.data.regions,region))throw Error('Un export ne correspond pas à son pays.');catalogue=ToolboxUsedCatalogue.merge(catalogue,input.data,{at,source:'Excel par pays',mode:'catalogue'});}
+  const columns=catalogue.headers.map(ToolboxUsedCatalogue.column),valuesToClear=new Set([...ToolboxUsedCatalogue.quantityKeys,'sellprice','nbv']);
+  catalogue={...catalogue,regionScope:undefined,regionVerified:false,countryIdentities:true,lastQuantityAt:undefined,catalogueAt:undefined,sourceDate:undefined,lastFinancialUpdate:undefined,lastImportStats:undefined,lastImport:undefined,
+   rows:catalogue.rows.map(row=>({...row,values:row.values.map((value,i)=>valuesToClear.has(columns[i])?'':value),qtyAt:undefined,qtyBatch:undefined,qtySource:undefined,financialAt:undefined,financialSource:undefined}))};
+  const quantities={},prices={},exports={};
+  for(const region of names){const input=inputs.find(x=>x.region===region),exportedAt=input.at||at;quantities[region]=snapshot(catalogue,input.data,region,exportedAt);prices[region]=financialSnapshot(catalogue,input.data,region,exportedAt,'Excel Power BI');exports[region]={at:exportedAt,count:input.data.rows.length,sourceName:input.data.sourceName||'Used-Gear.xlsx',exportMode:input.exportMode||'layout'};}
+  const meta={schemaVersion:1,at:Math.max(...names.map(region=>exports[region].at)),importedAt:at,baseCount:catalogue.rows.length,baseHash:signature(catalogue),exports};
+  return {catalogue,quantities,prices,meta};
+ }
+ function countryView(base,quantities,prices,meta,region='ALL'){
+  if(!meta||meta.schemaVersion!==1||meta.baseCount!==base.rows.length||meta.baseHash!==signature(base))return null;
+  const selected=selection(region),rows=[];
+  for(const country of selected){
+   const q=quantities[country],f=prices[country],at=meta.exports?.[country]?.at;
+   if(!at||!valid(base,q,country)||!valid(base,f,country)||q.at!==at||f.at!==at)return null;
+   const data=financialView(base,view(base,q,country),f,country);rows.push(...data.rows.map(row=>({...row,country,qtySource:'Excel Power BI · '+country})));
+  }
+  return {...base,rows,countryMode:true,countrySelection:selected,regionScope:normalize(region),regionVerified:true,at:meta.importedAt,lastQuantityAt:meta.at,catalogueAt:meta.at,quantityBatch:undefined,lastImportStats:undefined,sourceDate:undefined,lastImport:undefined,lastFinancialUpdate:undefined};
+ }
  function allKnown(data){if(data.regionScope==='ALL'&&data.regionVerified)return true;if(data.lastImport?.source==='Power BI')return matches(data.lastImport.regions,'ALL');const filters=data.lastImport?.filters||data.filters||'';return /SUBREGION/i.test(filters)&&names.every(n=>new RegExp('\\b'+n+'\\b','i').test(filters));}
- globalThis.ToolboxUsedRegions={names,parse,normalize,selection,label,matches,signature,valid,snapshot,view,financialSnapshot,financialView,allKnown};
+ globalThis.ToolboxUsedRegions={names,parse,normalize,selection,label,matches,signature,valid,snapshot,view,financialSnapshot,financialView,allKnown,countryCatalogue,countryView};
 })();

@@ -1,5 +1,7 @@
 # Actualisation native Excel et lignes compactes
 
+> Parcours actuel : [trois exports Excel et produits comparés par pays](used-country-excel.md). Cette page conserve le contexte des correctifs précédents.
+
 Évolution de développement de l’édition équipe, lecteur interne 1.2.6. Aucun nouveau numéro installable, ZIP ou tag.
 
 ## Utilisation

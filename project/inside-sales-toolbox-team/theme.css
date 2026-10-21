@@ -398,3 +398,15 @@ html[data-toolbox-view=panel] .module-tabs button:hover{transform:translateY(-1p
 #used-results .record-currency{grid-column:2;grid-row:1;font-size:8px;line-height:1.3;align-self:center}
 
 .used-export-excel{width:100%;margin-top:6px;position:relative;overflow:hidden;display:flex;align-items:center;gap:8px;text-align:left}.used-export-excel .used-refresh-copy{display:flex;flex-direction:column}
+
+/* The native Excel update is the primary action; scanning is an optional fallback. */
+#used-export-excel{min-height:72px;gap:12px;padding:14px 16px;margin:0;border-radius:10px;background:var(--purple);color:#fff;border:1px solid var(--purple);box-shadow:0 4px 12px #2e1b5a20}
+#used-export-excel .used-refresh-copy strong{font-size:15px;font-weight:700}#used-export-excel .used-refresh-copy small{font-size:11px}#used-export-excel .used-refresh-mark{width:22px;font-size:21px}
+#used-export-excel[data-refresh-state=busy]{opacity:1;cursor:wait}#used-export-excel[data-refresh-state=error]{background:#9c2944;border-color:#9c2944}#used-export-excel[data-refresh-state=success] .used-refresh-fill{background:#8fd5a8}
+#used-export-excel[data-refresh-state=idle] .used-refresh-rail,#used-export-excel[data-refresh-state=error] .used-refresh-rail{display:none}
+.used-export-help{margin:6px 0 0}.used-fallback{margin:8px 0 14px}.used-fallback>summary{font-size:11px;color:#796388}.used-fallback .used-refresh-actions{margin-top:10px}
+
+.used-excel-daily{margin:7px 0 0}.used-excel-time{margin:5px 0 0;font-weight:600;color:#725889}.used-export-times:empty{display:none}
+.record-countries{display:flex;flex-direction:column;gap:4px;margin-top:7px}.record-country{display:grid;grid-template-columns:48px 28px minmax(0,1fr) minmax(0,1fr);align-items:center;gap:6px;padding:5px 6px;border:1px solid #e5dced;border-radius:5px;background:#f3eef8}.record-country-name{font-size:10px;color:#5d397e}.record-country-qty{font-size:16px;text-align:center;color:#087852}.record-country-money{display:flex;flex-direction:column;min-width:0;gap:1px}.record-country-money .record-label{font-size:8px}.record-country-money strong{font-size:12px;line-height:1.2;color:#2e1b5a;overflow-wrap:anywhere}.record-country-absent{grid-column:2/-1;font-size:9px;color:#927a9e}
+.record-country-stock{display:flex;flex-direction:column;align-items:center}.record-country-stock .record-label{font-size:7px}.record-country[data-stock=empty] .record-country-qty{color:#95879f}.record-country[data-stock=unknown] .record-country-qty{color:#9a6d36}
+#used-results .record-with-stock[data-stock=regional] .stock-quantity{color:#64457d}#used-results .record-with-stock[data-stock=regional]>.record-summary::before{background:#9173aa}

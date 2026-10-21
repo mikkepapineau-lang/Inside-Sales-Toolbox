@@ -15,19 +15,19 @@ function receipt(region='CANADA',extra={}){session['usedExportReceipt:export-tes
  }
  await assert.rejects(c.readUsedPowerBI('usedPowerBIImportExport',receipt('CANADA',{at:Date.now()-121000})),/plus confirmé/);
  const bad=receipt();bad.data={...source,headers:['SKU','QTY AVAILABLE'],rows:[{values:['A','8']}]};const saved=JSON.stringify(local.toolboxUsedRegionQuantities);await assert.rejects(c.readUsedPowerBI('usedPowerBIImportExport',bad));assert.equal(JSON.stringify(local.toolboxUsedRegionQuantities),saved,'quantities not partially committed when financial validation fails');
- const all=receipt('ALL');all.data={...source,filters:'SUBREGION est CANADA UK USA'};await c.readUsedPowerBI('usedPowerBIImportExport',all);assert.equal(local.toolboxUsedPowerBI.rows[0].values[2],'7');assert.equal(local.toolboxUsedPowerBI.rows[0].values[3],'250');assert.equal(local.toolboxUsedPowerBI.rows[0].values[4],'0');
+ const all=receipt('ALL',{exportMode:'summarized'});all.data={...source,filters:'SUBREGION est CANADA UK USA'};await c.readUsedPowerBI('usedPowerBIImportExport',all);assert.equal(local.toolboxUsedPowerBI.rows[0].values[2],'7');assert.equal(local.toolboxUsedPowerBI.rows[0].values[3],'250');assert.equal(local.toolboxUsedPowerBI.rows[0].values[4],'0');assert.equal(Object.keys(local.toolboxUsedRegionQuantities).length,0);assert.equal(Object.keys(local.toolboxUsedRegionPrices).length,0);assert.equal(local.toolboxUsedPowerBIStatus.exportMode,'summarized');
  // Exercise the real export worker handshake; no row-by-row reader is invoked.
  const bytes=Uint8Array.from([80,75,3,4,1,2]),base64=Buffer.from(bytes).toString('base64'),context={filters:['Tout'],currency:'CAD'},target={tabId:2,frameIds:[0]},tab={id:2,url:'https://app.powerbi.com/groups/a/reports/458f40a9-2b3f-4518-a3cb-d699fef65baa/ReportSection'};chrome.tabs={get:async()=>tab};let changed=false;
  chrome.scripting={executeScript:async args=>{if(args.files){assert.equal(args.world,'MAIN');return [];}const code=String(args.func);if(code.includes('ToolboxUsedExportUI.run'))return [{result:{base64,size:bytes.length}}];if(code.includes('state:'))return [{result:{context:changed?{...context,currency:'USD'}:context,state:{verified:true,selected:['CANADA']}}}];return [{result:context}];}};
  const file=await c.exportUsedFile(tab,target,'CANADA',null);assert.equal(file.base64,base64);assert.equal(session['usedExportReceipt:'+file.exportId].sha256,file.sha256);changed=true;await assert.rejects(c.exportUsedFile(tab,target,'CANADA',null),/filtres ou la devise/);
- const nativeDetail={version:'native-export-4',menu:{candidates:0},tableAncestors:[{tag:'DIV',classes:'visualContainerHost'}]};
+ const nativeDetail={version:'native-export-5',menu:{candidates:0},tableAncestors:[{tag:'DIV',classes:'visualContainerHost'}]};
  session.usedPowerBITab=2;chrome.permissions.contains=async()=>true;chrome.tabs.get=async()=>({...tab,status:'complete'});
  chrome.scripting.executeScript=async args=>{
   if(args.files)return [];
   const code=String(args.func);
   if(code.includes('ToolboxUsedExportUI.run'))return [{frameId:0,result:{error:'EXPORT_MENU: no control',diagnostic:nativeDetail}}];
-  if(code.includes('exportReady'))return [{frameId:0,result:{exportReady:true,regions:['CANADA'],diagnostic:{tables:[{}]}}}];
-  if(typeof args.args?.[0]==='string')return [{frameId:0,result:{regionReady:true,regions:['CANADA']}}];
+  if(code.includes('exportReady'))return [{frameId:0,result:{exportReady:true,regions:['CANADA','UK','USA'],diagnostic:{tables:[{}]}}}];
+  if(typeof args.args?.[0]==='string'){assert.equal(args.args[0],'ALL','native button always prepares all three regions');return [{frameId:0,result:{regionReady:true,regions:['CANADA','UK','USA']}}];}
   return [{frameId:0,result:context}];
  };
  await assert.rejects(c.readUsedPowerBI('usedPowerBIExportFile',{region:'CANADA'}),/EXPORT_MENU/);

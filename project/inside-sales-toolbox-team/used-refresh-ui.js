@@ -15,7 +15,8 @@
   let detail=busy?t(phases[status.phase]||'Lecture en cours…'):error?t('Réessayer'):done?t(status.state==='cached'?'Déjà à jour':'À jour'):t('Sélection actuelle');
   if(busy&&count!==null)detail=format(count)+(expected!==null?' / '+format(expected):'')+' '+t('lignes')+(percent!==null?' · '+percent+' %':'');
   else if(done&&count!==null)detail+=' · '+(financial&&Number.isFinite(status.updated)?format(status.updated)+' '+t('articles actualisés'):format(count)+' '+t('lignes'));
-  if(status.region&&status.region!=='ALL'&&(!busy||count===null))detail=[detail,ToolboxUsedRegions.label(status.region)].filter(Boolean).join(' · ');
+  if(busy&&status.batchIndex&&status.country)detail+=' · '+status.country+' '+status.batchIndex+'/3';
+  if(!status.batchIndex&&status.region&&status.region!=='ALL'&&(!busy||count===null))detail=[detail,ToolboxUsedRegions.label(status.region)].filter(Boolean).join(' · ');
   copy.append(title);if(detail)copy.append(node('small','',detail));const rail=node('span','used-refresh-rail');rail.setAttribute('aria-hidden','true');const fill=node('span','used-refresh-fill');rail.append(fill);
   if(percent===null)rail.className+=' is-indeterminate';else fill.style.width=percent+'%';
   b.replaceChildren(mark,copy,rail);b.setAttribute('aria-label',[t(excel?'Actualiser par Excel':financial?'Actualiser les prix de vente et le NBV de la sélection depuis Power BI.':'Actualiser les quantités de la sélection.'),detail].filter(Boolean).join(' · '));
