@@ -23,7 +23,7 @@ def verify_files(commit, expected, root):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--archives-only',action='store_true',help='Skip Git reference comparisons')
+    parser.add_argument('--archives-only',action='store_true',help='Verify stored archives only, without Git or working-source comparisons')
     args=parser.parse_args()
     inventory=json.loads((ROOT/'docs/version-inventory.json').read_text())
     files_checked=0
@@ -72,21 +72,21 @@ def main():
             assert len(manifests)==1,'Ambiguous manifest'
             assert json.loads(z.read(manifests[0]))['version']==entry['version'],'Manifest version differs'
         print('OK imported original',entry['source_path'])
-    # Keep all historical comparisons above; follow main's actual manifest version.
-    current_root='project/inside-sales-toolbox-team'
-    commit=resolve('main') if not args.archives_only else 'HEAD'
-    version=json.loads(git('show',commit+':'+current_root+'/manifest.json'))['version']
-    candidates=[e for e in inventory['snapshots']+imported if e['edition']=='equipe' and e['version']==version and e['kind'] in ('release-archive','imported-original-archive')]
-    assert len(candidates)==1,'Current version has no unique original archive'
-    entry=candidates[0]
-    with zipfile.ZipFile(ROOT/entry['source_path']) as z:
-        prefix=entry.get('source_prefix','')
-        expected={current_root+'/'+n[len(prefix):]:z.read(n) for n in z.namelist() if not n.endswith('/')}
     if not args.archives_only:
+        # Keep all historical comparisons above; follow main's actual manifest version.
+        current_root='project/inside-sales-toolbox-team'
+        commit=resolve('main')
+        version=json.loads(git('show',commit+':'+current_root+'/manifest.json'))['version']
+        candidates=[e for e in inventory['snapshots']+imported if e['edition']=='equipe' and e['version']==version and e['kind'] in ('release-archive','imported-original-archive')]
+        assert len(candidates)==1,'Current version has no unique original archive'
+        entry=candidates[0]
+        with zipfile.ZipFile(ROOT/entry['source_path']) as z:
+            prefix=entry.get('source_prefix','')
+            expected={current_root+'/'+n[len(prefix):]:z.read(n) for n in z.namelist() if not n.endswith('/')}
         verify_files(commit,expected,current_root)
-    actual={p.relative_to(ROOT).as_posix():p.read_bytes() for p in (ROOT/current_root).rglob('*') if p.is_file()}
-    assert actual==expected,'Current working sources differ from original ZIP'
-    print('OK current production source against original ZIP:',version,len(expected),'files')
+        actual={p.relative_to(ROOT).as_posix():p.read_bytes() for p in (ROOT/current_root).rglob('*') if p.is_file()}
+        assert actual==expected,'Current working sources differ from original ZIP'
+        print('OK current production source against original ZIP:',version,len(expected),'files')
     print('OK imported originals:',len(imported))
     print('PASS:',len(inventory['snapshots']),'snapshots;',files_checked,'source files compared')
 
