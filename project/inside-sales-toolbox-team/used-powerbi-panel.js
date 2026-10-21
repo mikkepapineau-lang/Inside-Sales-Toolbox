@@ -1,7 +1,7 @@
 (()=>{
  const el=id=>document.getElementById(id),tr=value=>globalThis.ToolboxI18n?.t(value)||value;let data=null,catalogue=null,countryMeta=null,countryMemo=null,batchCancelled=false,regionSnapshots={},regionPrices={},memoFinancial=null,shownRegion='ALL',memoBase=null,memoSnapshot=null,requesting=false,status={},visibleLimit=80,importing=false,indexedData=null,filterIndex=null,filterSaveTimer,filtersTouched=false;
  const filterUI=ToolboxUsedFilters.mount(changeFilters);
- const {node,row:recordRow,fieldList,diagnostics,time,link}=ToolboxList;
+ const {node,diagnostics,time,link}=ToolboxList,opened=new Set();
  const numeric=ToolboxUsedCatalogue.number;
  const dateOnly=s=>new Date(s+'T12:00:00Z').toLocaleDateString(document.documentElement.lang==='en-CA'?'en-CA':'fr-CA',{year:'numeric',month:'short',day:'numeric'});
  function money(value){const n=numeric(value);return n===null?value:new Intl.NumberFormat(document.documentElement.lang==='en-CA'?'en-CA':'fr-CA',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
@@ -46,7 +46,7 @@
   }catch(e){const message=(activeCountry?activeCountry+' · ':'')+e.message;if(batchId)await chrome.runtime.sendMessage({kind:'usedPowerBIAbortCountries',batchId,message}).catch(()=>{});status={state:'error',region:targetRegion,operation,message};}finally{requesting=false;render();}
  }
  function render(){
-  selectData();const root=el('used-results');root.replaceChildren();const loading=status.state==='loading'||importing||requesting,prices=status.operation==='prices',excel=status.operation==='export';const scopedStatus=status.region&&status.region!==region()&&status.state!=='loading'?{state:'idle'}:status;
+  selectData();const root=el('used-results');root.className='product-card-list';root.replaceChildren();const loading=status.state==='loading'||importing||requesting,prices=status.operation==='prices',excel=status.operation==='export';const scopedStatus=status.region&&status.region!==region()&&status.state!=='loading'?{state:'idle'}:status;
   ToolboxUsedRefresh.render(prices||excel?{state:'idle'}:scopedStatus,!prices&&!excel&&(requesting||importing));ToolboxUsedRefresh.render(prices?scopedStatus:{state:'idle',region:region()},prices&&(requesting||importing),{buttonId:'used-refresh-prices',financial:true});ToolboxUsedRefresh.render(excel?scopedStatus:{state:'idle',region:region()},excel&&requesting,{buttonId:'used-export-excel',excel:true});filterUI.setBusy(loading);
   el('used-excel-time').textContent=countryMeta?tr('Derniers exports Excel :')+' '+exactDate(countryMeta.at):catalogue?.lastImport?.source==='Excel'?'Dernier import Excel manuel : '+exactDate(catalogue.lastImport.at):'Exports par pays : pas encore importés.';
   const exportTimes=el('used-country-export-times');exportTimes.replaceChildren();if(countryMeta)for(const country of ToolboxUsedRegions.names)exportTimes.append(node('p','fine-print',country+' · Export Excel : '+exactDate(countryMeta.exports[country].at)));
@@ -79,33 +79,42 @@
   if(data.lastImport?.source==='Power BI'&&!data.lastImport.complete)el('used-coverage').textContent+=' · total Power BI non confirmé';
   el('used-source').textContent=data.filters||'';el('used-update-source').textContent=data.lastImport?.filters||'';
   el('used-more').hidden=groups.size<=visibleLimit;
+  // countryView already validates each country's own batch; it has no shared quantityBatch.
+  const stockState=source=>{const quantity=numeric(get(source,'available')),stale=!data.countryMode&&source.qtyBatch&&source.qtyBatch!==data.quantityBatch,partial=!data.countryMode&&source.qtyPartial;return {quantity,state:stale||partial||quantity===null?'unverified':quantity>0?'available':'empty',caption:stale?'À revérifier':partial?'Quantités partielles':quantity===null?'À vérifier':'Dispo.'};};
+  function stockQuantity(source){const stock=stockState(source),box=node('div','stock-quantity is-'+stock.state);box.append(node('strong','source-value',stock.quantity===null?'?':get(source,'available')),node('span','stock-quantity-label',stock.caption));return box;}
   for(const [groupKey,rows] of [...groups.entries()].slice(0,visibleLimit)){
-   const r=rows[0],meta=[];
-   if(rows.length===1){for(const [key,label] of [['owned','Possédé'],['sellable','Max.']])if(get(r,key)!=='')meta.push({label,value:get(r,key)});}
-   else meta.push({value:rows.length+' lignes source',raw:false});
-   const unverified=rows.some(r=>r.qtyBatch&&r.qtyBatch!==data.quantityBatch),partial=rows.some(r=>r.qtyPartial);
-   const quantity=rows.length===1?numeric(get(r,'available')):null,state=unverified||partial||quantity===null?'unverified':quantity>0?'available':'empty';
-   const availability={state,quantity:rows.length===1&&quantity!==null?get(r,'available'):null,caption:unverified?'À revérifier':partial?'Quantités partielles':quantity===null?'À vérifier':quantity>0?'Dispo.':'Indisponible',place:cols.warehouse>=0?[...new Set(rows.map(r=>get(r,'warehouse')).filter(Boolean))].join(' · '):''};
-   const amounts=[['price','Prix de vente'],['nbv','NBV']].map(([key,label])=>{const values=[...new Set(rows.map(r=>get(r,key)))],raw=values.length===1&&values[0]!=='';return {label,raw,currency:raw?data.currency:'',value:raw?money(values[0])+' $':values.length>1?'Plusieurs valeurs':'Non renseigné'};});
-   const name=[get(r,'brand'),get(r,'item')?'D365 '+get(r,'item'):''].filter(Boolean).join(' · ');
-   const record=recordRow({key:'used:'+groupKey,code:get(r,'sku')||get(r,'item'),name,description:get(r,'description'),amounts:data.countryMode?[]:amounts,meta:data.countryMode?[]:meta,availability:data.countryMode?{state:'regional',quantity:'—',caption:'Par pays'}:availability});
-   if(data.countryMode){
-    const countries=node('span','record-countries');
-    for(const country of data.countrySelection){
-     const countryRows=rows.filter(row=>row.country===country),line=node('span','record-country');line.append(node('strong','record-country-name',country==='CANADA'?'Canada':country));
-     if(!countryRows.length)line.append(node('span','record-country-absent','Non renseigné dans cet export'));
-     else if(countryRows.length!==1)line.append(node('span','record-country-absent','Plusieurs lignes source'));
-     else{const source=countryRows[0],qty=get(source,'available');line.title='Export Excel · '+exactDate(countryMeta.exports[country].at);line.dataset.stock=numeric(qty)>0?'available':numeric(qty)===0?'empty':'unknown';const stock=node('span','record-country-stock');stock.append(node('strong','record-country-qty source-value',qty===''?'—':qty),node('span','record-label','Dispo.'));line.append(stock);for(const [key,label]of [['price','Prix de vente'],['nbv','NBV']]){const amount=node('span','record-country-money');amount.append(node('span','record-label',label),node('strong','source-value',get(source,key)===''?'Non renseigné':money(get(source,key))+' $'));line.append(amount);}}
-     countries.append(line);
-    }
-    record.querySelector('.record-summary').append(countries);
-   }
-   rows.forEach((r,i)=>{
-    if(rows.length>1||r.country)record.append(node('h4','record-source-heading',r.country||'Ligne source '+(i+1)));
-    if(r.qtyAt)record.append(node('p','quantity-provenance','Quantités récupérées · '+time(r.qtyAt)+' · '+(r.qtySource||'')));
-    if(r.financialAt||data.sourceDate)record.append(node('p','quantity-provenance','Prix et NBV · '+(r.financialAt?time(r.financialAt):'Excel du '+dateOnly(data.sourceDate))));
-    record.append(fieldList(data.headers,r.values));if(r.href)record.append(link('Ouvrir le lien SKU ↗',r.href,'record-source-link'));
-   });root.append(record);
+   const source=rows[0],card=node('article','product-card'),states=rows.map(stockState),positive=states.some(s=>s.state==='available');
+   const uncertain=states.some(s=>s.state==='unverified')||data.countryMode&&data.countrySelection.some(country=>!rows.some(row=>row.country===country));
+   card.dataset.stock=positive?'available':uncertain?'unverified':'empty';
+   const heading=node('div','product-card-heading');heading.append(node('h3','product-sku source-value',get(source,'sku')||get(source,'item')||'Article D365'),node('span','product-stock-badge'+(positive?' product-stock-positive':''),positive?'En stock':uncertain?'À vérifier':'Indisponible'));card.append(heading);
+   card.append(node('p','product-meta source-value',[get(source,'brand'),get(source,'item')?'D365 '+get(source,'item'):'Numéro D365 non renseigné'].filter(Boolean).join(' · ')));
+   if(get(source,'description'))card.append(node('p','product-description source-value',get(source,'description')));
+   // Reuse the New/D365 card structure. A country occupies the warehouse position;
+   // multiple source lines stay separate, and an absent country never becomes zero.
+   const stocks=node('div','product-warehouses'),places=new Map();
+   if(data.countryMode)for(const country of data.countrySelection)places.set(country,rows.filter(row=>row.country===country));
+   else for(const row of rows){const place=get(row,'warehouse').trim()||ToolboxUsedRegions.label(region());if(!places.has(place))places.set(place,[]);places.get(place).push(row);}
+   for(const [place,placeRows]of places){
+    const block=node('section','product-warehouse'),placeHeading=node('div','product-warehouse-heading');placeHeading.append(node('h4','source-value',place==='CANADA'?'Canada':place));
+    if(data.countryMode)block.title='Export Excel · '+exactDate(countryMeta.exports[place].at);
+    if(placeRows.length===1)placeHeading.append(stockQuantity(placeRows[0]));block.append(placeHeading);
+    if(!placeRows.length)block.append(node('p','product-no-stock','Non renseigné dans cet export'));
+    placeRows.forEach((row,i)=>{
+     const line=node('div','product-warehouse-line');
+     if(placeRows.length>1){const lineHeading=node('div','product-location-heading');lineHeading.append(node('p','product-location','Ligne source '+(i+1)),stockQuantity(row));line.append(lineHeading);}
+     const metrics=node('dl','product-metrics product-warehouse-metrics');
+     for(const [key,label]of [['owned','Possédé'],['sellable','Max.']])if(get(row,key)!==''){const pair=node('div','');pair.append(node('dt','',label),node('dd','source-value',get(row,key)));metrics.append(pair);}if(metrics.children.length)line.append(metrics);
+     const amounts=node('dl','product-metrics product-financial-metrics');
+     for(const [key,label]of [['price','Prix de vente'],['nbv','NBV']]){const value=get(row,key),pair=node('div',''),caption=node('dt','');caption.append(node('span','',label));if(value!==''&&data.currency)caption.append(node('span','product-currency source-value',data.currency));pair.append(caption,node('dd',value===''?'product-missing':'source-value',value===''?'Non renseigné':money(value)+' $'));amounts.append(pair);}line.append(amounts);block.append(line);
+    });stocks.append(block);
+   }card.append(stocks);
+   const details=node('details','product-details');details.open=opened.has(groupKey);details.addEventListener('toggle',()=>{if(details.isConnected){if(details.open)opened.add(groupKey);else opened.delete(groupKey);}});details.append(node('summary','','Toutes les informations · '+rows.length+' ligne(s)'));
+   const values=node('div','product-source-lines');rows.forEach((row,i)=>{
+    const section=node('section','product-source-line');section.append(node('h4','source-value',row.country||get(row,'warehouse')||'Ligne source '+(i+1)));
+    if(row.qtyAt)section.append(node('p','quantity-provenance','Quantités récupérées · '+time(row.qtyAt)+' · '+(row.qtySource||'')));
+    if(row.financialAt||data.sourceDate)section.append(node('p','quantity-provenance','Prix et NBV · '+(row.financialAt?time(row.financialAt):'Excel du '+dateOnly(data.sourceDate))));
+    const fields=node('dl','product-all-values');data.headers.forEach((label,j)=>{const value=String(row.values[j]??''),pair=node('div','');pair.append(node('dt','',label),node('dd',value===''?'product-missing':'source-value',value===''?'Non renseigné':value));fields.append(pair);});section.append(fields);if(row.href)section.append(link('Ouvrir le lien SKU ↗',row.href,'record-source-link'));values.append(section);
+   });details.append(values);card.append(details);root.append(card);
   }
   if(!records.length)root.append(node('p','muted','Aucun article ne correspond aux filtres locaux.'));
  }
