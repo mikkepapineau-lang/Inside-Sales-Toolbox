@@ -8,7 +8,16 @@ Sur demande explicite d’export du 22 octobre 2026, les changements vérifiés 
 
 Le ZIP `downloads/Inside-Sales-Toolbox-Equipe-v3.5.13.zip` contient 76 fichiers, pèse 1215516 octets et porte le SHA256 `325b9238aca937fa3c6d8edf2ebd6d7be2dc60945217d8c2c7a573c732f568bf`. `.release/equipe.json` déclenche sa publication avec le tag `equipe-v3.5.13`. Ce nouvel export est inventorié dans `exported_archives`, distinct des archives originales importées.
 
-Fonctionnalités et limites : [notes 3.5.13](releases/equipe-3.5.13.md). Vérifications locales : 54 scripts, 19 suites du noyau, interface et fichiers XLSX dans Chromium, CRC et égalité exacte du ZIP avec les sources. Le parcours complet des trois pays dans la session Power BI connectée et le sens de InternalReference restent à confirmer. Les preuves distantes de cette livraison sont consignées après publication.
+Fonctionnalités et limites : [notes 3.5.13](releases/equipe-3.5.13.md). Vérifications locales : 54 scripts, 19 suites du noyau, interface et fichiers XLSX dans Chromium, CRC et égalité exacte du ZIP avec les sources. Le parcours complet des trois pays dans la session Power BI connectée et le sens de InternalReference restent à confirmer. Résultats distants vérifiés :
+
+- Intégration sur `main`, sans squash ni push forcé : [`9aa968191d50d91419e04a621396a0d86312326a`](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/commit/9aa968191d50d91419e04a621396a0d86312326a). Les commits de développement sont conservés.
+- Vérifications du commit d’export sur sa branche : [run 39786915472](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/actions/runs/39786915472), **Success**. Le contrôle sur main est [39786936098](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/actions/runs/39786936098).
+- Publication automatique : [run 39786936314](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/actions/runs/39786936314), **Success**.
+- [Publication équipe 3.5.13](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/releases/tag/equipe-v3.5.13) : tag vérifié sur le commit de livraison ci-dessus, sans modification du tag 3.5.12.
+- Le [ZIP publié](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/releases/download/equipe-v3.5.13/Inside-Sales-Toolbox-Equipe-v3.5.13.zip) a été téléchargé puis comparé octet pour octet à l’export local : 1 215 516 octets, 76 fichiers, CRC valide, SHA256 `325b9238aca937fa3c6d8edf2ebd6d7be2dc60945217d8c2c7a573c732f568bf`. Le [fichier SHA256 publié](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/releases/download/equipe-v3.5.13/Inside-Sales-Toolbox-Equipe-v3.5.13.zip.sha256) a été téléchargé et vérifié.
+- Le vérificateur complet passe après récupération du tag : 11 snapshots historiques, 44 archives originales importées, 1 nouvel export, 821 fichiers sources comparés et 76 fichiers courants identiques au ZIP. `--archives-only` passe aussi dans une copie sans Git avec des sources de travail non exportées; il ne compare aucune source courante.
+
+La création de PR par l’API reste indisponible dans cet environnement; l’intégration autorisée a utilisé un push Git en avance rapide. Aucune validation Power BI/D365 connectée n’est incluse dans ces résultats.
 
 ## Transfert des archives originales
 
