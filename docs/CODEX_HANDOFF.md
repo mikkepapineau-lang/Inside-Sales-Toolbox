@@ -1,6 +1,14 @@
 # Reprise du projet dans Codex
 
-État du 21 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
+État du 22 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
+
+## Export équipe 3.5.13
+
+Sur demande explicite d’export du 22 octobre 2026, les changements vérifiés de la branche `fix/subregion-visual-diagnostic` sont regroupés dans la livraison **3.5.13**. Le manifest, les mentions embarquées et LIRE-MOI sont actualisés; l’édition personnelle et le guide séparé sont conservés.
+
+Le ZIP `downloads/Inside-Sales-Toolbox-Equipe-v3.5.13.zip` contient 76 fichiers, pèse 1215516 octets et porte le SHA256 `325b9238aca937fa3c6d8edf2ebd6d7be2dc60945217d8c2c7a573c732f568bf`. `.release/equipe.json` déclenche sa publication avec le tag `equipe-v3.5.13`. Ce nouvel export est inventorié dans `exported_archives`, distinct des archives originales importées.
+
+Fonctionnalités et limites : [notes 3.5.13](releases/equipe-3.5.13.md). Vérifications locales : 54 scripts, 19 suites du noyau, interface et fichiers XLSX dans Chromium, CRC et égalité exacte du ZIP avec les sources. Le parcours complet des trois pays dans la session Power BI connectée et le sens de InternalReference restent à confirmer. Les preuves distantes de cette livraison sont consignées après publication.
 
 ## Transfert des archives originales
 
@@ -10,7 +18,7 @@ Le catalogue `docs/ARCHIVES.md`, les empreintes et l’inventaire distinguent le
 
 Le transport provisoire a été supprimé dans un commit séparé; son historique reste accessible. `.release/equipe.json` est copié du transport original et accompagne le ZIP 3.5.12 dans le même envoi. La création de PR via l’API GitHub est bloquée par une réponse `Forbidden`; l’intégration sur main est explicitement autorisée par Michaël. Les résultats distants sont confirmés ci-dessous.
 
-## Point de départ
+## Point de départ du transfert (3.5.12)
 
 - Dépôt officiel : https://github.com/mikkepapineau-lang/TOOLBOX-INSIDE-SALES, branche `main`.
 - Édition active : `project/inside-sales-toolbox-team/`, export **3.5.12**.
@@ -26,7 +34,7 @@ Le transport provisoire a été supprimé dans un commit séparé; son historiqu
 - Liens présentés comme boutons; titres des champs du calculateur plus visibles.
 - Signe `$` près des champs monétaires et conversions, en conservant CAD/USD et le format local.
 
-## Vérifications et limites
+## Vérifications du transfert 3.5.12 et limites initiales
 
 Les 53 scripts de production ont passé le contrôle de syntaxe et les 12 suites du noyau passent. Le test SUBREGION attend maintenant la version réelle 1.2.1 du lecteur, au lieu de l'ancienne 1.2.0. Le ZIP 3.5.12 est inchangé et correspond octet pour octet aux 75 fichiers de production.
 

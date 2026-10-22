@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Solotech · Inside Sales Toolbox",
-  "version": "3.5.12",
+  "version": "3.5.13",
   "description": "Outils ventes internes : Salesforce, coordonnées D365, produits neufs et usagés, calculateur de marge et devises, commandes et codes HS.",
   "permissions": [
     "activeTab",

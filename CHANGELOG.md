@@ -4,6 +4,14 @@
 
 Les changements en cours restent suivis par des commits jusqu'à la prochaine demande d'export.
 
+## Équipe 3.5.13 (2026-10-22)
+
+- Usagé : actualisation principale par trois exports Excel natifs successifs Canada, UK et USA, importés ensemble avec conservation du relevé précédent en cas d’échec ou d’annulation.
+- Produits regroupés dans les mêmes fiches que Neuf / Stock D365 : prix de vente commun en évidence, quantités et NBV distincts par pays, détails sources conservés.
+- Actualisation du catalogue sous les filtres, dans un groupe replié par défaut. La date du dernier export utilisé reste visible; rappel de la cadence quotidienne et dates détaillées par pays.
+- Préparation du menu natif avec reprise automatique, prise en charge des menus visibles au survol et récupération du XLSX avant l’invite de téléchargement Edge. Lecture du tableau avec défilement horizontal/vertical conservée en secours.
+- Contrôles locaux du noyau, de l’import groupé et de l’interface réussis. Le parcours complet des trois pays dans la session Power BI connectée et le sens de InternalReference restent à confirmer.
+
 ## Équipe 3.5.12 (2026-10-20)
 
 - Calculateur : titres des champs plus grands et plus contrastés; actions Effacer, Actualiser et Inverser affichées comme boutons.

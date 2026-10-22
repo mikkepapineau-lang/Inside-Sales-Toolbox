@@ -1011,5 +1011,21 @@
       "imported_at": "2026-10-21",
       "date_meaning": "Date d’importation; aucune date originale ni référence de sources reconstruite n’est affirmée."
     }
+  ],
+  "exported_archives": [
+    {
+      "edition": "equipe",
+      "version": "3.5.13",
+      "kind": "exported-release-archive",
+      "git_ref": "equipe-v3.5.13",
+      "source_path": "downloads/Inside-Sales-Toolbox-Equipe-v3.5.13.zip",
+      "source_bytes": 1215516,
+      "source_sha256": "325b9238aca937fa3c6d8edf2ebd6d7be2dc60945217d8c2c7a573c732f568bf",
+      "source_prefix": "",
+      "source_root": "project/inside-sales-toolbox-team",
+      "source_file_count": 76,
+      "exported_at": "2026-10-22",
+      "date_meaning": "Date de préparation de cet export depuis les sources Codex; distinct des archives originales importées et des snapshots reconstruits."
+    }
   ]
 }

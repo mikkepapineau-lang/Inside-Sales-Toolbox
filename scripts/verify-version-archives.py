@@ -59,7 +59,8 @@ def main():
             files_checked+=len(expected)
         print('OK',s['git_ref'],len(expected),'files')
     imported=inventory.get('imported_archives',[])
-    for entry in imported:
+    exported=inventory.get('exported_archives',[])
+    for entry in imported+exported:
         path=ROOT/entry['source_path']; data=path.read_bytes()
         assert len(data)==entry['source_bytes'] and sha256(data)==entry['source_sha256'],str(path)+': size/hash differs'
         with zipfile.ZipFile(path) as z:
@@ -71,23 +72,32 @@ def main():
             manifests=[n for n in names if n=='manifest.json' or n.endswith('/manifest.json')]
             assert len(manifests)==1,'Ambiguous manifest'
             assert json.loads(z.read(manifests[0]))['version']==entry['version'],'Manifest version differs'
-        print('OK imported original',entry['source_path'])
+            if entry['kind']=='exported-release-archive':
+                prefix=entry.get('source_prefix','')
+                assert all(name.startswith(prefix) for name in names),'Unexpected export prefix'
+                expected={entry['source_root']+'/'+name[len(prefix):]:z.read(name) for name in names if not name.endswith('/')}
+                assert len(expected)==entry['source_file_count'],'Export file count differs'
+                if not args.archives_only:
+                    verify_files(resolve(entry['git_ref']),expected,entry['source_root'])
+                    files_checked+=len(expected)
+        print('OK exported release' if entry['kind']=='exported-release-archive' else 'OK imported original',entry['source_path'])
     if not args.archives_only:
         # Keep all historical comparisons above; follow main's actual manifest version.
         current_root='project/inside-sales-toolbox-team'
         commit=resolve('main')
         version=json.loads(git('show',commit+':'+current_root+'/manifest.json'))['version']
-        candidates=[e for e in inventory['snapshots']+imported if e['edition']=='equipe' and e['version']==version and e['kind'] in ('release-archive','imported-original-archive')]
-        assert len(candidates)==1,'Current version has no unique original archive'
+        candidates=[e for e in inventory['snapshots']+imported+exported if e['edition']=='equipe' and e['version']==version and e['kind'] in ('release-archive','imported-original-archive','exported-release-archive')]
+        assert len(candidates)==1,'Current version has no unique release archive'
         entry=candidates[0]
         with zipfile.ZipFile(ROOT/entry['source_path']) as z:
             prefix=entry.get('source_prefix','')
             expected={current_root+'/'+n[len(prefix):]:z.read(n) for n in z.namelist() if not n.endswith('/')}
         verify_files(commit,expected,current_root)
         actual={p.relative_to(ROOT).as_posix():p.read_bytes() for p in (ROOT/current_root).rglob('*') if p.is_file()}
-        assert actual==expected,'Current working sources differ from original ZIP'
-        print('OK current production source against original ZIP:',version,len(expected),'files')
+        assert actual==expected,'Current working sources differ from release ZIP'
+        print('OK current production source against release ZIP:',version,len(expected),'files')
     print('OK imported originals:',len(imported))
+    print('OK exported releases:',len(exported))
     print('PASS:',len(inventory['snapshots']),'snapshots;',files_checked,'source files compared')
 
 if __name__=='__main__':
