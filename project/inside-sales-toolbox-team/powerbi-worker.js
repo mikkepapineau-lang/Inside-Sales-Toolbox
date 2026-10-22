@@ -3,7 +3,7 @@ let powerBIBusy=false;
 const isPowerBI=tab=>{try{return new URL(tab.url).origin==='https://app.powerbi.com';}catch{return false;}};
 function readyPowerBIId(value){try{const u=new URL(value);if(u.origin!=='https://app.powerbi.com'||u.username||u.password)return '';const ids=/^\/reportEmbed\/?$/i.test(u.pathname)?u.searchParams.getAll('reportId'):[u.pathname.match(/\/reports\/([\da-f-]{36})(?:\/|$)/i)?.[1]||''];return ids.length===1&&/^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(ids[0])?ids[0].toLowerCase():'';}catch{return '';}}
 function isReadyPowerBI(tab,known=''){
- try{const value=tab?.pendingUrl||tab?.url,u=new URL(value),id=readyPowerBIId(value),knownId=readyPowerBIId(known);return u.origin==='https://app.powerbi.com'&&!u.username&&!u.password&&!/singleSignOn|signin|login/i.test(u.pathname)&&id!=='458f40a9-2b3f-4518-a3cb-d699fef65baa'&&(id==='37ddaf7f-5526-4fd7-b85e-bc6630d5ae33'||/^\/links\/lNdArEWzXE\/?$/.test(u.pathname)||!!known&&(value===known||!!id&&id===knownId));}catch{return false;}
+ try{const value=tab?.pendingUrl||tab?.url,u=new URL(value),id=readyPowerBIId(value),knownId=readyPowerBIId(known);return u.origin==='https://app.powerbi.com'&&!u.username&&!u.password&&!/singleSignOn|signin|login/i.test(u.pathname)&&!['458f40a9-2b3f-4518-a3cb-d699fef65baa','d8c07521-770e-41bd-be72-a23a1dbf41ff'].includes(id)&&(id==='37ddaf7f-5526-4fd7-b85e-bc6630d5ae33'||/^\/links\/lNdArEWzXE\/?$/.test(u.pathname)||!!known&&(value===known||!!id&&id===knownId));}catch{return false;}
 }
 async function powerBITab(){
  const [saved,local]=await Promise.all([chrome.storage.session.get(['powerBITab','powerBIResolvedURL']),chrome.storage.local.get('toolboxPowerBIResolvedURL')]);

@@ -9,23 +9,23 @@ function persist(){
 }
 function module(name,remember=true){
  name=ToolboxNavigation.normalize(name);const previousModule=document.body.dataset.module,previousKind=productKind;
- const isProducts=name==='products'||name==='used',visible=isProducts?'products':name;if(isProducts)productKind=name==='used'?'used':'new';activeModule=name;
+ const isProducts=['products','used','nonreserved'].includes(name),visible=isProducts?'products':name;if(isProducts)productKind=name==='products'?'new':name;activeModule=name;
  const changed=previousModule!==visible||isProducts&&previousKind!==productKind;document.body.dataset.module=visible;document.body.dataset.productKind=productKind;
  if(remember){selectedDuringRestore=true;ToolboxNavigation.remember(name).catch(()=>{});lastActivity=Date.now();}
  if(name==='hs'&&!el('hs-frame').src)el('hs-frame').src='hs/popup.html';
  el('tool-home-panel').hidden=name!=='home';
  for(const b of document.querySelectorAll('.module-tabs [data-module]')){const selected=b.dataset.module===visible;b.classList.toggle('is-active',selected);b.setAttribute('aria-current',selected?'page':'false');}
  for(const n of ['bridge','contacts','hs','products','powerbi','calculator'])el('tool-'+n).hidden=n!==visible;
- el('products-new-panel').hidden=productKind!=='new';el('tool-used').hidden=productKind!=='used';
- for(const kind of ['new','used']){el('products-tab-'+kind).setAttribute('aria-selected',String(kind===productKind));el('products-tab-'+kind).tabIndex=kind===productKind?0:-1;}
+ el('products-new-panel').hidden=productKind!=='new';el('tool-used').hidden=productKind!=='used';el('tool-nonreserved').hidden=productKind!=='nonreserved';
+ for(const kind of ['new','used','nonreserved']){el('products-tab-'+kind).setAttribute('aria-selected',String(kind===productKind));el('products-tab-'+kind).tabIndex=kind===productKind?0:-1;}
  el('tool-home').hidden=name==='home';
- if(changed&&!restoring){globalThis.ToolboxMotion?.enter(el(isProducts?(productKind==='used'?'tool-used':'products-new-panel'):name==='home'?'tool-home-panel':'tool-'+name));globalThis.ToolboxMotion?.navigation(document.querySelector('.module-tabs [data-module="'+visible+'"]'));}
+ if(changed&&!restoring){globalThis.ToolboxMotion?.enter(el(isProducts?(productKind==='new'?'products-new-panel':'tool-'+productKind):name==='home'?'tool-home-panel':'tool-'+name));globalThis.ToolboxMotion?.navigation(document.querySelector('.module-tabs [data-module="'+visible+'"]'));}
  el('tool-label').textContent={home:'Ton espace de travail',bridge:'Salesforce vers Dynamics',contacts:'Coordonnées client',hs:'Vérificateur HS',products:'Recherche de produits',powerbi:'Commandes prêtes',calculator:'Marge et devises'}[visible];
  if(name==='calculator')globalThis.ToolboxCalculator?.activate();
 }
-for(const kind of ['new','used']){
- const button=el('products-tab-'+kind),select=next=>module(next==='used'?'used':'products');button.onclick=()=>select(kind);
- button.addEventListener('keydown',e=>{let next;if(['ArrowLeft','ArrowRight'].includes(e.key))next=kind==='new'?'used':'new';if(e.key==='Home')next='new';if(e.key==='End')next='used';if(next){e.preventDefault();select(next);el('products-tab-'+next).focus();}});
+for(const kind of ['new','used','nonreserved']){
+ const button=el('products-tab-'+kind),select=next=>module(next==='new'?'products':next);button.onclick=()=>select(kind);
+ button.addEventListener('keydown',e=>{let next;if(['ArrowLeft','ArrowRight'].includes(e.key))next=['new','used','nonreserved'][(['new','used','nonreserved'].indexOf(kind)+(e.key==='ArrowRight'?1:2))%3];if(e.key==='Home')next='new';if(e.key==='End')next='nonreserved';if(next){e.preventDefault();select(next);el('products-tab-'+next).focus();}});
 }
 el('tool-home').onclick=()=>module('home');
 for(const b of document.querySelectorAll('[data-module]'))b.onclick=async()=>{
@@ -33,7 +33,7 @@ for(const b of document.querySelectorAll('[data-module]'))b.onclick=async()=>{
  const ok=await chrome.permissions.contains({origins:['https://www.canada.ca/*']});
  module('hs');if(!el('hs-frame').src)el('hs-frame').src='hs/popup.html';
  if(!ok)el('tool-label').textContent='Vérificateur HS · actualisation non autorisée';
- }else module(b.dataset.module==='products'&&productKind==='used'?'used':b.dataset.module);
+ }else module(b.dataset.module==='products'&&productKind!=='new'?productKind:b.dataset.module);
 };
 function draft(){return {name:el('contact-name').value,phone:el('contact-phone').value,email:el('contact-email').value};}
 function preview(){try{el('contact-preview').value=M.values(draft()).notes;}catch{el('contact-preview').value='';}}

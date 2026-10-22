@@ -2,6 +2,14 @@
 
 État du 22 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
+## Développement après 3.5.13
+
+L’actualisation Usagé, ses messages et son bouton d’arrêt sont placés tout en bas, après les produits, la pagination et Options du catalogue (commit `ba0a620`).
+
+Le troisième onglet Recherche de produits, **Non réservé**, utilise le rapport Non-Reserved Item List et la page Non-Reserved List to Sell fournis par Michaël. Il automatise les trois points du tableau, l’export XLSX et l’import d’un catalogue indépendant en IndexedDB. Quantités non réservées et coûts unitaires moyens restent propres aux lignes société/site/entrepôt; ils ne sont pas assimilés aux prix ou NBV de l’usagé. Voir [le parcours, les tests et les limites](diagnostics/nonreserved-excel.md). Les 59 scripts et 21 suites passent avec les essais Chromium sur données fictives. La validation Power BI connectée reste à faire.
+
+Ces changements sont des commits de développement. La publication 3.5.13 ci-dessous, son ZIP original et son tag restent conservés. Un nouvel export installable attend une demande explicite.
+
 ## Export équipe 3.5.13
 
 Sur demande explicite d’export du 22 octobre 2026, les changements vérifiés de la branche `fix/subregion-visual-diagnostic` sont regroupés dans la livraison **3.5.13**. Le manifest, les mentions embarquées et LIRE-MOI sont actualisés; l’édition personnelle et le guide séparé sont conservés.

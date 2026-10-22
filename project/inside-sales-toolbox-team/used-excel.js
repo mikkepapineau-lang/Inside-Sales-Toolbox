@@ -42,10 +42,10 @@
    const value=decode(output);cache.set(name,value);return value;
   };
  }
- function grid(doc,strings){
+ function grid(doc,strings,maxRows=60010){
   const rows=[];
   for(const row of elements(doc,'row')){
-   if(rows.length>60010)throw Error('Le fichier contient trop de lignes.');
+   if(rows.length>maxRows)throw Error('Le fichier contient trop de lignes.');
    const values=[];let nextCol=0;
    for(const cell of elements(row,'c')){
     const ref=cell.getAttribute('r')||'',letters=ref.match(/^[A-Z]+/i)?.[0];if(ref&&!letters)throw Error('Référence de cellule Excel invalide.');
@@ -63,7 +63,9 @@
   }
   return rows;
  }
- async function read(file){
+ async function read(file,profile='used'){
+  if(!['used','nonreserved'].includes(profile))throw Error('Type de catalogue Excel invalide.');
+  const nonreserved=profile==='nonreserved';
   if(!/\.xlsx$/i.test(file.name||''))throw Error('Choisis un export Excel au format .xlsx.');
   const entry=await zip(file),workbook=await entry('xl/workbook.xml'),relations=await entry('xl/_rels/workbook.xml.rels');
   if(!workbook||!relations)throw Error('Classeur Excel introuvable.');
@@ -73,16 +75,16 @@
   for(const sheet of sheets){
    const id=sheet.getAttribute('r:id')||sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id'),target=rels.get(id);if(!target)continue;
    const value=await entry(safePath('xl/workbook.xml',target));if(!value)continue;
-   const rows=grid(xml(value),strings),headerRow=rows.findIndex((r,i)=>i<20&&r.some(v=>ToolboxUsedCatalogue.column(v)==='sku')&&r.some(v=>ToolboxUsedCatalogue.column(v)==='qtyavailable'));
+   const rows=grid(xml(value),strings,nonreserved?150010:60010),headerRow=rows.findIndex((r,i)=>i<20&&(nonreserved?['itemid','productname','qtynotreserved','avgunitcost'].every(key=>r.some(v=>ToolboxUsedCatalogue.column(v)===key)):r.some(v=>ToolboxUsedCatalogue.column(v)==='sku')&&r.some(v=>ToolboxUsedCatalogue.column(v)==='qtyavailable')));
    if(headerRow<0)continue;
-   if(selected)throw Error('Plusieurs feuilles de catalogue détectées. Exporte uniquement la feuille Used Gear.');
-   const headers=rows[headerRow],sku=headers.findIndex(h=>ToolboxUsedCatalogue.column(h)==='sku'),link=headers.findIndex(h=>ToolboxUsedCatalogue.column(h)==='productweblink');
+   if(selected)throw Error('Plusieurs feuilles de catalogue détectées. Exporte uniquement le tableau voulu.');
+   const headers=rows[headerRow],sku=headers.findIndex(h=>ToolboxUsedCatalogue.column(h)===(nonreserved?'itemid':'sku')),link=headers.findIndex(h=>ToolboxUsedCatalogue.column(h)==='productweblink');
    const footer=rows.slice(headerRow+1).filter(r=>!r[sku]).map(r=>r.join('\n')).join('\n');
    const currency=(footer.match(/(?:Currency|Devise)\s+(?:est|is|=)\s+(CAD|USD|EUR|GBP)\b/i)||[])[1]||'';
    selected={headers,rows:rows.slice(headerRow+1).filter(r=>r[sku]&&!/^(total|totals|totaux)$/i.test(r[sku])).map(r=>({values:headers.map((_,i)=>r[i]??''),href:link>=0?r[link]||'':''})),currency,filters:footer,sourceName:file.name,sourceSheet:sheet.getAttribute('name'),complete:true};
   }
-  if(!selected)throw Error('Aucune feuille avec SKU et QTY AVAILABLE. Choisis l’export Used Gear.');
-  return ToolboxUsedCatalogue.validate(selected);
+  if(!selected)throw Error(nonreserved?'Aucune feuille avec ITEMID, PRODUCTNAME, QtyNotReserved et AvgUnitCost. Choisis l’export Non-Reserved.':'Aucune feuille avec SKU et QTY AVAILABLE. Choisis l’export Used Gear.');
+  return nonreserved?ToolboxNonReserved.validate(selected):ToolboxUsedCatalogue.validate(selected);
  }
  globalThis.ToolboxUsedExcel={read};
 })();

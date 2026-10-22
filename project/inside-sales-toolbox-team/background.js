@@ -43,3 +43,5 @@ importScripts('used-catalogue.js','used-regions.js','used-powerbi-worker.js');
 importScripts('workspace-worker.js');
 
 importScripts('pricing-rate.js');
+
+importScripts('nonreserved-model.js','nonreserved-store.js','nonreserved-worker.js');

@@ -1,6 +1,6 @@
 // Navigation belongs to this browser session; business data remains persistent.
 (()=>{
- const key='toolboxNavigation',idle=30*60*1000,names=new Set(['home','bridge','contacts','products','powerbi','used','hs','calculator']);
+ const key='toolboxNavigation',idle=30*60*1000,names=new Set(['home','bridge','contacts','products','powerbi','used','nonreserved','hs','calculator']);
  const normalize=name=>names.has(name)?name:'home';
  function resolve(value,now=Date.now()){
   const age=now-value?.at;

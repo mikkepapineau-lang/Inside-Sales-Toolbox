@@ -11,7 +11,7 @@
  const urlOf=tab=>tab?.pendingUrl||tab?.url||'';
  function bi(url){try{return new URL(url).origin==='https://app.powerbi.com'&&!/singleSignOn|signin|login/i.test(new URL(url).pathname);}catch{return false;}}
  function ready(url,known){
-  if(!bi(url)||reportId(url)===usedId)return false;
+  if(!bi(url)||[usedId,'d8c07521-770e-41bd-be72-a23a1dbf41ff'].includes(reportId(url)))return false;
   const u=new URL(url),id=reportId(url),knownId=reportId(known);
   return id==='37ddaf7f-5526-4fd7-b85e-bc6630d5ae33'||u.pathname.includes('/links/lNdArEWzXE')||u.searchParams.get('bookmarkGuid')==='ff596301-8009-4b69-be11-40ae01525ce3'||!!known&&(url===known||!!knownId&&id===knownId);
  }
@@ -26,7 +26,7 @@
   const definitions=[
    {slot:'prospects',key:'d365TargetId',url:D365_URL,matches:t=>ToolboxTabs.matches({...t,url:urlOf(t)},['smmBusinessRelationsListPage'])},
    {slot:'products',key:'productSearchTab',url:PRODUCT_SEARCH_URL,matches:t=>ToolboxTabs.matches({...t,url:urlOf(t)},['SOLMCRProductQuickQuote'])},
-   {slot:'ready',key:'powerBITab',url:POWERBI_REPORT_URL,matches:t=>ready(urlOf(t),knownReady)||!knownReady&&bi(urlOf(t))&&reportId(urlOf(t))!==usedId&&t.id===local.toolboxPowerBI?.tabId&&groupIds.has(t.groupId)},
+   {slot:'ready',key:'powerBITab',url:POWERBI_REPORT_URL,matches:t=>ready(urlOf(t),knownReady)||!knownReady&&bi(urlOf(t))&&![usedId,'d8c07521-770e-41bd-be72-a23a1dbf41ff'].includes(reportId(urlOf(t)))&&t.id===local.toolboxPowerBI?.tabId&&groupIds.has(t.groupId)},
    {slot:'used',key:'usedPowerBITab',url:USED_POWERBI_REPORT_URL,matches:t=>bi(urlOf(t))&&reportId(urlOf(t))===usedId}
   ];
   const results=await Promise.allSettled(definitions.map(async d=>{
@@ -49,7 +49,7 @@
  // Capture the Ready report's first redirect so browser restarts can recover it.
  chrome.tabs.onUpdated?.addListener((id,change)=>{
   if(!change.url||!bi(change.url))return;
-  updateRegistry(saved=>{const r=saved.ready;if(!r||r.id!==id||reportId(change.url)===usedId)return null;const old=reportId(r.url),fresh=reportId(change.url);if(!fresh||old&&old!==fresh)return null;r.url=change.url;return saved;}).catch(()=>{});
+  updateRegistry(saved=>{const r=saved.ready;if(!r||r.id!==id||[usedId,'d8c07521-770e-41bd-be72-a23a1dbf41ff'].includes(reportId(change.url)))return null;const old=reportId(r.url),fresh=reportId(change.url);if(!fresh||old&&old!==fresh)return null;r.url=change.url;return saved;}).catch(()=>{});
  });
  globalThis.ToolboxWorkspace={prepare};
 })();

@@ -280,7 +280,7 @@ legend,.source,.report-card summary{font-size:10px}.action-title p{font-size:11p
 @keyframes action-sweep{0%{transform:translateX(-110%)}100%{transform:translateX(350%)}}
 /* One product family, two sources. */
 .products-family-heading{padding:20px 18px 12px;flex-shrink:0}.products-family-heading h2{font-size:23px}
-.product-family-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 18px 14px;flex-shrink:0;border-bottom:1px solid var(--line);background:var(--canvas)}
+.product-family-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 18px 14px;flex-shrink:0;border-bottom:1px solid var(--line);background:var(--canvas)}
 .product-family-tabs button{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-height:68px;padding:12px 15px;border:1px solid #ded5e9;border-radius:10px;background:#fff;color:#756583;text-align:left;min-width:0;transition:background .2s,color .2s,box-shadow .2s,transform .2s}
 .product-family-tabs button strong{font-size:17px;font-weight:650;line-height:1.2}.product-family-tabs button span{font-size:11px;line-height:1.3;opacity:.8}.product-family-tabs button[aria-selected=true]{background:var(--purple);color:#fff;border-color:var(--purple);box-shadow:0 5px 12px #2e1b5a1c}.product-family-tabs button:hover{transform:translateY(-2px)}
 .products-family>.tool-panel{padding-top:16px}.products-source-label{display:block;color:#8a789b;font-size:10px;letter-spacing:.3px;margin:0 0 12px}.products-family .module-heading{align-items:flex-end}.products-family .module-heading .products-source-label{margin-bottom:5px}.products-family .module-heading h3{font-size:17px;font-weight:650;letter-spacing:-.4px}.products-family .module-description{margin-bottom:14px}
@@ -390,3 +390,5 @@ html[data-toolbox-view=panel] .module-tabs button:hover{transform:translateY(-1p
 
 .used-excel-daily{margin:7px 0 0}.used-excel-time{margin:5px 0 0;font-weight:600;color:#725889}.used-export-times:empty{display:none}
 .used-updates.module-tools{margin:15px 0 12px;padding-top:12px}.used-updates>summary>span{min-width:0}.used-updates>summary #used-updates-title{font-size:11px;font-weight:650;color:#64457d}.used-updates>summary .used-excel-time{display:block;font-size:10px;font-weight:400;line-height:1.45}.used-updates .used-fallback{margin:12px 0 0}
+
+.product-family-tabs button{padding:10px 8px}.product-family-tabs button strong{font-size:14px;overflow-wrap:anywhere}.product-family-tabs button span{font-size:10px;overflow-wrap:anywhere}#nonreserved-refresh{width:100%;min-height:52px;text-align:center}#nonreserved-updates .used-excel-time{display:block;font-size:10px;line-height:1.45}

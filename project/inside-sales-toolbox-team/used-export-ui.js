@@ -14,11 +14,11 @@
  const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
  async function wait(find,job,message,ms=12000){const end=Date.now()+ms;do{if(job.cancelled)throw Error('Export Excel arrêté.');const value=find();if(value)return value;await delay(80);}while(Date.now()<end);const error=Error(message);error.exportPreparationTimeout=true;throw error;}
  function single(nodes,message){const choices=unique(nodes.filter(visible).filter(enabled));if(choices.length!==1)throw Error(message+' ('+choices.length+' cible).');return choices[0];}
- function reportTable(){
+ function reportTable(profile='used'){
   const found=[...document.querySelectorAll('[role="grid"],[role="table"],table,.tableEx')].filter(visible).filter(root=>{
    const headers=[...root.querySelectorAll('[role="columnheader"],thead th,.columnHeader')].map(e=>norm(label(e)));
-   return headers.filter(h=>['sku','description','d365itemid','d365itemnumber','qtyavailable','sellprice','nbv'].includes(h)).length>=2;
-  });return single(found,'Tableau Used Gear absent ou ambigu');
+   return profile==='nonreserved'?headers.includes('itemid')&&headers.includes('qtynotreserved')&&headers.some(h=>['avgunitcost','productname'].includes(h)):headers.filter(h=>['sku','description','d365itemid','d365itemnumber','qtyavailable','sellprice','nbv'].includes(h)).length>=2;
+  });return single(found,profile==='nonreserved'?'Tableau Non-Reserved absent ou ambigu':'Tableau Used Gear absent ou ambigu');
  }
  const controlSelector='button,[role="button"],[role="menuitem"],[aria-haspopup],.vcMenu,.visualHeaderItem';
  const visualSelector='.visualContainer,visual-container,.visual-container,.visual-container-component,.visualContainerHost,.visualContainerParent,.tableEx';
@@ -86,7 +86,7 @@
   for(let attempt=1;attempt<=2;attempt++){
    job.preparationAttempts=attempt;
    try{
-    const table=reportTable(),more=await revealMenu(table,menuScope(table),job);job.menuButton=more;
+    const table=reportTable(job.profile),more=await revealMenu(table,menuScope(table),job);job.menuButton=more;
     // A prior click may have opened the native menu without the first lookup
     // seeing it. Do not toggle an already open menu closed on preparation retry.
     if(!(job.openedMenu&&menuItems())){more.click();job.openedMenu=true;}
@@ -118,16 +118,17 @@
  function diagnostic(){return {dialogs:[...document.querySelectorAll('[role="dialog"]')].filter(visible).slice(0,3).map(e=>({buttons:[...e.querySelectorAll('button,[role="button"]')].filter(visible).map(label).slice(0,12),options:[...e.querySelectorAll('label,[role="radio"],[role="combobox"],select')].filter(visible).map(label).slice(0,12)}))};}
  function exportDiagnostic(job){
   const info=e=>({tag:e.tagName,role:e.getAttribute('role')||'',ariaLabel:(e.getAttribute('aria-label')||'').slice(0,120),title:(e.getAttribute('title')||'').slice(0,120),classes:String(e.className||'').slice(0,180),popup:e.getAttribute('aria-haspopup')||'',disabled:!enabled(e),visible:visible(e)});
-  let table;try{table=reportTable();}catch{}
+  let table;try{table=reportTable(job?.profile);}catch{}
   const ancestors=[];for(let node=table;node&&ancestors.length<12;node=node.parentElement){
    ancestors.push({...info(node),controls:[...node.querySelectorAll(controlSelector)].slice(0,24).map(info)});
    if(node.matches?.('body'))break;
   }
   return {version:'native-export-5',preparationAttempts:job?.preparationAttempts,exportMode:job?.exportMode,menu:job?.menuState,tableAncestors:ancestors,headers:[...document.querySelectorAll('.visualHeader,.visual-header,.visualHeaderItemContainer,.visualHeaderItem,.vcMenu')].slice(0,32).map(info),...diagnostic()};
  }
- async function run(){
+ async function run({profile='used'}={}){
+  if(!['used','nonreserved'].includes(profile))throw Error('Type d’export invalide.');
   if(active)throw Error('Un export Excel est déjà en cours.');
-  const job={cancelled:false,armed:false,candidates:[],problem:null,urls:new Set(),controllers:new Set()},original=URL.createObjectURL,originalClick=HTMLAnchorElement.prototype.click,originalDispatch=EventTarget.prototype.dispatchEvent,originalOpen=window.open;active=job;
+  const job={profile,cancelled:false,armed:false,candidates:[],problem:null,urls:new Set(),controllers:new Set()},original=URL.createObjectURL,originalClick=HTMLAnchorElement.prototype.click,originalDispatch=EventTarget.prototype.dispatchEvent,originalOpen=window.open;active=job;
   const capture=(blob,key)=>{
    if(!job.armed||!(blob instanceof Blob)||blob.size<4||blob.size>25*1024*1024||!/^(?:application\/(?:vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet|octet-stream|zip))?$/.test(blob.type||''))return;
    if(key&&job.urls.has(key))return;if(key)job.urls.add(key);

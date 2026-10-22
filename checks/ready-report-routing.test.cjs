@@ -9,6 +9,7 @@ function fixture(tabs,session={},local={}){
 (async()=>{
  let f=fixture([]);for(const url of [direct,embed,legacy])assert.equal(f.c.isReadyPowerBI({url}),true,url);
  for(const url of ['https://app.powerbi.com/reportEmbed?reportId='+used,'https://app.powerbi.com/groups/me/reports/'+used,'https://app.powerbi.com/reportEmbed?reportId='+id+'&reportId='+used,'https://app.powerbi.com.evil.test/groups/me/reports/'+id,'https://user:pass@app.powerbi.com/groups/me/reports/'+id])assert.equal(f.c.isReadyPowerBI({url}),false,url);
+ const nonreserved='https://app.powerbi.com/groups/me/reports/d8c07521-770e-41bd-be72-a23a1dbf41ff/page';assert.equal(f.c.isReadyPowerBI({url:nonreserved},nonreserved),false,'Non-Reserved must never become the Ready report, even from an old binding');
  for(const url of [direct,embed,legacy]){f=fixture([{id:3,url},{id:4,url:'https://app.powerbi.com/reportEmbed?reportId='+used}],{powerBITab:4});assert.equal((await f.c.powerBITab()).id,3);assert.equal(f.created.length,0);assert.equal(f.session.powerBITab,3);}
  f=fixture([{id:3,url:embed,active:true},{id:4,url:direct}]);assert.equal((await f.c.powerBITab()).id,4);assert.equal(f.created.length,0);
  f=fixture([{id:3,url:'https://app.powerbi.com/',pendingUrl:embed}]);assert.equal((await f.c.powerBITab()).id,3);
