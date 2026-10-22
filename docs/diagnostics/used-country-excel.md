@@ -19,7 +19,7 @@ La capture du fichier et du lien natif conserve les correctifs précédents du t
 ## Présentation et dates
 
 - Les produits usagés utilisent les mêmes fiches que **Neuf / Stock D365** : SKU, badge de disponibilité, fabricant, numéro D365, description et détails sources dépliables. Les pays prennent la place des blocs entrepôts, avec leur quantité disponible en grand, leurs quantités possédée/maximale et leur NBV mis en évidence. Le prix de vente figure une seule fois au-dessus des pays, avec la même mise en évidence. Une ligne source distincte reste affichée quand plusieurs lignes existent pour un même emplacement. Les valeurs ne sont pas additionnées.
-- **Actualisation du catalogue** se trouve sous les filtres de recherche et se replie/se déplie. Le groupe est fermé par défaut; le gros bouton Excel reste l’action principale à son ouverture. La lecture de secours est rangée dans ce même groupe.
+- **Actualisation du catalogue** se trouve tout en bas du module Usagé, après les résultats, la pagination et Options du catalogue et se replie/se déplie. Le groupe est fermé par défaut; le gros bouton Excel reste l’action principale à son ouverture. La lecture de secours est rangée dans ce même groupe.
 - **Lecture de secours dans Power BI**, repliée au premier affichage, contient les anciennes lectures Quantités et Prix + NBV et la sélection des pays. Elles défilent dans le tableau et restent plus lentes.
 - L’import d’un fichier choisi manuellement reste dans **Options du catalogue**.
 - Une mention rappelle qu’une actualisation quotidienne suffit généralement, selon la cadence quotidienne du rapport indiquée par l’utilisateur. Aucun blocage n’empêche une actualisation supplémentaire.
@@ -42,21 +42,17 @@ Aucune nouvelle version installable, archive ou tag n’est créé. Édition éq
 
 ## Mettre à jour le poste d’essai
 
-**Si les trois exports par pays ou les premières fiches communes avec Neuf sont déjà installés**, remplacer ensemble **used-powerbi-panel.js**, **theme.css**, **popup.html**, **sidepanel.html** et **i18n-dictionary.js** pour obtenir le prix de vente commun et le groupe d’actualisation repliable sous les filtres. Utiliser leurs liens ci-dessous.
+Le [ZIP équipe 3.5.13](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/releases/tag/equipe-v3.5.13) contient les trois exports par pays et les fiches communes avec Neuf. Le placement de l’actualisation tout en dernier est une correction postérieure à cet export.
 
-Pour passer des correctifs antérieurs d’export Excel à l’ensemble des trois exports par pays et à ces fiches communes, remplacer **les dix fichiers suivants ensemble** dans le dossier permanent de l’édition équipe. Les liens sont figés au commit de code vérifié `e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd`.
+Sur une installation 3.5.13, remplacer les deux fichiers d’interface ci-dessous dans le dossier permanent de l’extension :
 
-- [used-export-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-export-ui.js)
-- [used-powerbi-worker.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-powerbi-worker.js)
-- [used-powerbi-panel.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-powerbi-panel.js)
-- [used-regions.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-regions.js)
-- [used-filter-model.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-filter-model.js)
-- [used-refresh-ui.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/used-refresh-ui.js)
-- [popup.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/popup.html)
-- [sidepanel.html](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/sidepanel.html)
-- [theme.css](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/theme.css)
-- [i18n-dictionary.js](https://raw.githubusercontent.com/mikkepapineau-lang/Inside-Sales-Toolbox/e1c653b794dac22a7bcbe744eaa5c76aaacd8cdd/project/inside-sales-toolbox-team/i18n-dictionary.js)
+- [popup.html](../../project/inside-sales-toolbox-team/popup.html)
+- [sidepanel.html](../../project/inside-sales-toolbox-team/sidepanel.html)
 
-Enregistrer chaque fichier brut sous son nom exact, sans `.txt`. Les moteurs `powerbi-reader.js`, `used-powerbi-reader.js`, le parseur `used-excel.js` et les autres fichiers des corrections précédentes restent nécessaires. Recharger l’extension dans `edge://extensions` ou `chrome://extensions`, actualiser le rapport Power BI puis rouvrir le panneau.
+Enregistrer leur contenu brut sous leur nom exact, sans `.txt`. [LIRE-MOI.html](../../project/inside-sales-toolbox-team/LIRE-MOI.html) contient aussi les instructions de positionnement actualisées. Pour une installation antérieure, installer d’abord le ZIP 3.5.13, puis appliquer ces fichiers.
 
-Déplier Actualisation du catalogue sous les filtres, puis cliquer une seule fois Actualiser par Excel. Vérifier la succession Canada, UK et USA et attendre la réussite des trois fichiers avant de comparer un produit connu. Contrôler le prix de vente commun, les trois quantités/NBV et les dates sous Options du catalogue. Replier Actualisation du catalogue et vérifier que la date du dernier export reste visible. Vérifier aussi un produit absent d’un relevé et un NBV zéro. L’option Données résumées et l’effet réel de la reprise d’initialisation restent à confirmer dans ce rapport connecté.
+Recharger l’extension dans `edge://extensions` ou `chrome://extensions`, puis rouvrir le panneau. Les archives et le tag 3.5.13 sont conservés; cette correction reste un commit en attendant une nouvelle demande d’export.
+
+Vérifier que les résultats, la pagination et Options du catalogue précèdent Actualisation du catalogue. Déplier ce dernier groupe, puis cliquer une seule fois Actualiser par Excel. Contrôler le prix commun, les quantités/NBV par pays et les dates sous Options du catalogue. La date du dernier export reste visible quand le groupe est replié; les messages de chargement et le bouton d’arrêt restent à côté de l’actualisation.
+
+Le parcours complet des trois exports dans la session Power BI connectée reste à confirmer.
