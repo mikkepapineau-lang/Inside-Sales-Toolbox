@@ -404,6 +404,7 @@ Object.assign(globalThis.ToolboxDictionary,{
   "ventes internes.": "inside sales.",
   "LES OUTILS": "THE TOOLS",
   "ÉQUIPE · 3.5": "TEAM · 3.5",
+  "ÉQUIPE · 3.5.14 TE": "TEAM · 3.5.14 TE",
   "Salesforce → D365": "Salesforce → D365",
   "Prospects et soumissions.": "Prospects and quotations.",
   "Le bon format, partout.": "Consistent contact details.",

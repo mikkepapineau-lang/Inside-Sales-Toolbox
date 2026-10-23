@@ -4,6 +4,13 @@
 
 Les changements en cours restent suivis par des commits jusqu'à la prochaine demande d'export.
 
+## Équipe 3.5.14 — Teenage Engineering, essai de branche (2026-10-23)
+
+- Export installable de `preview/teenage-engineering`, sur demande explicite : surfaces mates gris/orange, commandes rectangulaires, légendes techniques et afficheurs numériques, avec modes clair et sombre.
+- Icônes seules dans la navigation, noms au survol et libellés accessibles FR/EN.
+- Comprend les changements de développement depuis 3.5.13 : catalogue Non réservé, sessions indépendantes, périmètre Sales Responsible et interface compacte.
+- Publication en préversion depuis la branche d’essai; le design de `main` reste séparé. Tests locaux et comparaison du ZIP; essais Power BI/D365 connectés toujours à faire.
+
 ## Équipe 3.5.13 (2026-10-22)
 
 - Usagé : actualisation principale par trois exports Excel natifs successifs Canada, UK et USA, importés ensemble avec conservation du relevé précédent en cas d’échec ou d’annulation.

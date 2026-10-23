@@ -2,6 +2,12 @@
 
 État du 23 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
+## Essai Teenage Engineering — export 3.5.14 sur branche
+
+Michaël demande explicitement un ZIP installable de `preview/teenage-engineering`, après l’aperçu `e6f4250`. Le matériau industriel de la maquette est chargé dans l’extension réelle, avec clair/sombre et icônes sans texte. Le manifest et les mentions embarquées portent 3.5.14 et TE (test). Le workflow de publication est adapté sur cette branche pour publier uniquement une préversion équipe; aucune intégration de ce style sur `main` n’est demandée. Voir [les notes et l’installation](releases/equipe-3.5.14.md).
+
+Archive préparée : downloads/Inside-Sales-Toolbox-Equipe-v3.5.14.zip, 1244951 octets, 89 fichiers, SHA256 `0c61512edb79ee27134795e5820367bdc1bb2d1ce254ca40e9829f9f0d6bfdc5`. Les 64 scripts, 24 suites, douze vues Chromium et tests d’instances sont vérifiés localement; les essais connectés restent distincts. Le ZIP est contrôlé par CRC et comparaison exacte aux sources. Le tag de prépublication attendu est `equipe-v3.5.14`.
+
 ## Développement après 3.5.13
 
 La direction visuelle est reprise à la demande de Michaël dans un style inspiré du Liquid Glass : navigation en capsule, surfaces translucides et reflets doux. Un bouton lune/soleil propose **clair et sombre**, avec préférence de l’appareil par défaut et choix mémorisé par instance. Le module HS suit son Toolbox, les autres onglets restent indépendants. La navigation affiche uniquement les icônes; les noms restent dans les infobulles au survol et les libellés accessibles FR/EN. Les douze vues et la densité des listes sont conservées. Vérifications : 64 scripts, 24 suites, parcours Chromium dans les deux modes et persistance/isolation du stockage réel. Voir [le fonctionnement, l’aperçu et les limites](diagnostics/liquid-glass-modes.md). Aucun nouvel export installable n’est créé.

@@ -59,3 +59,4 @@ e18de18a0b1ef542888b14e99352bfe1fa1523ca91bc44c60ee5e4860aa0b54b  downloads/Solo
 d48e314df41daeacc93661085b9e7032b2e0e716793726a44a6e6477f9998a17  downloads/Solotech-Lead-vers-D365-Edge-v1.7.2.zip
 9402920aca8972c5d16c1b1a31c9ff99dbd5adb2ad930bd5c4b12bca1c166d18  downloads/price-list-finder-lab-v07.zip
 325b9238aca937fa3c6d8edf2ebd6d7be2dc60945217d8c2c7a573c732f568bf  downloads/Inside-Sales-Toolbox-Equipe-v3.5.13.zip
+0c61512edb79ee27134795e5820367bdc1bb2d1ce254ca40e9829f9f0d6bfdc5  downloads/Inside-Sales-Toolbox-Equipe-v3.5.14.zip

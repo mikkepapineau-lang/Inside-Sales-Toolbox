@@ -1,6 +1,6 @@
 # Catalogue des archives
 
-53 archives d’extension originales et 2 checkpoints sont conservés. Un nouvel export équipe 3.5.13 du 22 octobre 2026 est ajouté depuis les sources Codex, séparément des imports historiques. Le laboratoire indépendant reste distinct. Les 44 ajouts du 21 octobre 2026 sont des imports de ZIP originaux, sans reconstruction de sources Git ni datation originale inventée. Les 11 snapshots historiques et leurs références restent inchangés.
+53 archives d’extension originales et 2 checkpoints sont conservés. Les exports Codex équipe 3.5.13 du 22 octobre 2026 et 3.5.14 du 23 octobre 2026 sont ajoutés séparément des imports historiques. La version 3.5.14 est un essai Teenage Engineering publié depuis sa branche dédiée. Le laboratoire indépendant reste distinct. Les 44 ajouts du 21 octobre 2026 sont des imports de ZIP originaux, sans reconstruction de sources Git ni datation originale inventée. Les 11 snapshots historiques et leurs références restent inchangés.
 
 | Édition | Version | Archive | Statut |
 | --- | --- | --- | --- |
@@ -29,6 +29,7 @@
 | equipe | 3.5.11 | [Inside-Sales-Toolbox-Equipe-v3.5.11.zip](../downloads/Inside-Sales-Toolbox-Equipe-v3.5.11.zip) | Snapshot historique : `versions/equipe-v3.5.11` |
 | equipe | 3.5.12 | [Inside-Sales-Toolbox-Equipe-v3.5.12.zip](../downloads/Inside-Sales-Toolbox-Equipe-v3.5.12.zip) | ZIP original importé le 21 octobre 2026 |
 | equipe | 3.5.13 | [Inside-Sales-Toolbox-Equipe-v3.5.13.zip](../downloads/Inside-Sales-Toolbox-Equipe-v3.5.13.zip) | Export Codex du 22 octobre 2026 · `equipe-v3.5.13` |
+| equipe | 3.5.14 | [Inside-Sales-Toolbox-Equipe-v3.5.14.zip](../downloads/Inside-Sales-Toolbox-Equipe-v3.5.14.zip) | Préversion Teenage Engineering de branche · `equipe-v3.5.14` |
 | equipe | 3.5.2 | [Inside-Sales-Toolbox-Equipe-v3.5.2.zip](../downloads/Inside-Sales-Toolbox-Equipe-v3.5.2.zip) | ZIP original importé le 21 octobre 2026 |
 | equipe | 3.5.3 | [Inside-Sales-Toolbox-Equipe-v3.5.3.zip](../downloads/Inside-Sales-Toolbox-Equipe-v3.5.3.zip) | ZIP original importé le 21 octobre 2026 |
 | equipe | 3.5.4 | [Inside-Sales-Toolbox-Equipe-v3.5.4.zip](../downloads/Inside-Sales-Toolbox-Equipe-v3.5.4.zip) | ZIP original importé le 21 octobre 2026 |
@@ -59,6 +60,6 @@
 | michael | 1.8.8 | [Inside-Sales-Toolbox-Michael-v1.8.8.zip](../downloads/Inside-Sales-Toolbox-Michael-v1.8.8.zip) | ZIP original importé le 21 octobre 2026 |
 | michael | 1.8.9 | [Inside-Sales-Toolbox-Michael-v1.8.9.zip](../downloads/Inside-Sales-Toolbox-Michael-v1.8.9.zip) | ZIP original importé le 21 octobre 2026 |
 
-Les empreintes et tailles figurent dans `version-inventory.json`; `SHA256SUMS.txt` conserve aussi les PDF et checkpoints. Le ZIP actuel équipe 3.5.13 est comparé octet pour octet aux sources. Les nouveaux exports figurent dans `exported_archives`, distincts des 44 archives originales importées. Les versions anciennes importées sont contrôlées par SHA256, CRC et manifest, sans inventer de branche de sources.
+Les empreintes et tailles figurent dans `version-inventory.json`; `SHA256SUMS.txt` conserve aussi les PDF et checkpoints. Le ZIP de l’essai équipe 3.5.14 est comparé octet pour octet aux sources de sa branche avec release.py --check. La publication principale 3.5.13 reste conservée. Les nouveaux exports figurent dans `exported_archives`, distincts des 44 archives originales importées. Les versions anciennes importées sont contrôlées par SHA256, CRC et manifest, sans inventer de branche de sources.
 
 Laboratoire conservé : [Price List Finder LAB 0.7](../downloads/price-list-finder-lab-v07.zip).
