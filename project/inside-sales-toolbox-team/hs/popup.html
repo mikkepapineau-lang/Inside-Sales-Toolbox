@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="fr-CA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vérificateur HS</title><link rel="stylesheet" href="../theme.css"><link rel="stylesheet" href="popup.css"></head>
-<body class="hs-app"><header class="module-header hs-module-header"><div class="module-header-copy"><h1>Vérificateur de surtaxes</h1><p class="scope module-description">Vérifie les surtaxes canadiennes par code HS pour les produits américains.</p></div></header>
+<body class="hs-app"><header class="module-header hs-module-header"><div class="module-header-copy sr-only"><h1>Vérificateur de surtaxes</h1><p class="scope module-description">Vérifie les surtaxes canadiennes par code HS pour les produits américains.</p></div></header>
 <main>
-<label for="origin">Origine du produit</label><select id="origin"><option value="unknown">À confirmer</option><option value="us">États-Unis</option><option value="other">Autre pays</option></select>
-<label for="code">Code HS / SH</label><input id="code" inputmode="decimal" placeholder="Ex. : 9405.42.10" autocomplete="off" spellcheck="false" autofocus><p class="hint">4 ou 6 chiffres : explorer · 8 ou 10 chiffres : article précis</p>
+<div class="hs-search-grid"><div><label for="origin">Origine du produit</label><select id="origin"><option value="unknown">À confirmer</option><option value="us">États-Unis</option><option value="other">Autre pays</option></select></div>
+<div><label for="code">Code HS / SH</label><input id="code" inputmode="decimal" placeholder="Ex. : 9405.42.10" autocomplete="off" spellcheck="false" autofocus></div></div><p class="hint">4 ou 6 chiffres : explorer · 8 ou 10 chiffres : article précis</p>
 <div id="status" role="status"></div><section id="result" aria-live="polite"></section><div id="rows"></div>
 <details class="source"><summary>Source et actualisation</summary><p id="metadata"></p><p id="period"></p><a id="source" target="_blank" rel="noreferrer">Consulter le tableau sur Canada.ca ↗</a><button id="refresh" class="primary" type="button">Actualiser maintenant</button></details>
 <footer>Un code absent de cette liste ne signifie pas 0 % de droits. Les autres droits, exemptions, remises et conditions d’application ne sont pas calculés ici. L’origine ne correspond pas nécessairement au pays d’expédition.</footer></main>

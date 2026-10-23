@@ -2,7 +2,7 @@
 (()=>{
  if(globalThis.__demoNonReserved)globalThis.ToolboxInstances={current:globalThis.__demoInstance||'preview-products',prefix:async id=>'preview:'+id+':'};
  const empty={addListener(){}},listeners=[],refreshedScopes=new Set(),now=Date.now();
- const lead={type:'Organization',company:'Équipements Démo',first:'Alex',last:'Martin',phoneName:'Alex Martin',emailName:'Alex Martin',phone:'(514) 555-0123',email:'alex@example.test',street:'100 rue Exemple',city:'Montréal',state:'QC',postal:'H2X 1Y4',country:'CAN',language:'fr-CA',currency:'CAD',typeId:'Prospect',territory:'MONTREAL',office:'MONTREAL',warehouse:'YUL-01',tax:'GST_QST'};
+ const lead={type:'Organization',company:'Équipements Démo',first:'Alex',last:'Martin',contact:'Alex Martin',phoneName:'Alex Martin',emailName:'Alex Martin',phone:'(514) 555-0123',email:'alex@example.test',street:'100 rue Exemple',city:'Montréal',state:'QC',postal:'H2X 1Y4',country:'CAN',language:'fr-CA',currency:'CAD',typeId:'Prospect',territory:'MONTREAL',office:'MONTREAL',warehouse:'YUL-01',tax:'GST_QST'};
  const orders={readyScope:{mode:'report',salesperson:''},headers:['Sales Order Number','Account Name','Total Not Invoiced','Physical Reserve Qty','ModeOfDelivery','Payment','Status','Customer Reference','Sales Responsible'],rows:Array.from({length:8},(_,i)=>({values:['SO-CA'+(100001+i),['Studio Démo','Productions Exemple','École Démo'][i%3],['1 250,00','3 850,75','727,10'][i%3],String(i+2),i%2?'GROUND':'PICK UP',i%3?'NET30':'PAYÉ','Open order','DEMO-2026-'+i,i%2?'ALEX MARTIN':'JULIE EXEMPLE'],href:''})),at:now};
  const headers=['Category','SubCategory','Manufacturer','SKU','D365 Item ID','Description','QTY OWNED','MAX QTY TO SELL','QTY AVAILABLE','Sell Price','NBV','Margin','Usage %','PurchaseCost','AVG_Age','MODEL','DimsAndWeight','HS Code','MadeIn','Product Web Link','Rules'];
  const samples=[
@@ -22,9 +22,15 @@
   ['DEMO-1002','8','42.75','SUPPORT-DEMO','Support réglable de démonstration','EA','ATELIER DÉMO','CAOP','MTL','YUL-01','À vendre','AUDIO','Accessoires','Supports','Réglable'],
   ['DEMO-1003','2','85','ADAPTATEUR-DEMO','Adaptateur vidéo de démonstration','EA','ATELIER DÉMO','SUS','SMIA','SMIA-01','À vendre','VDO','Accessoires','Adaptateurs','HDMI']
  ].map(values=>({values})),currency:'CAD',filters:'Données entièrement fictives · Currency est CAD',sourceName:'Non-Reserved-DEMO.xlsx',sourceSheet:'Non-Reserved',at:now};
+ if(globalThis.__demoOverhaul){
+  for(let i=0;i<8;i++){const r=orders.rows[i];orders.rows.push({...r,values:r.values.map((v,j)=>j===0?'SO-CA'+(100009+i):j===7?'DEMO-2026-'+(8+i):v)});}
+  for(let i=4;i<=9;i++)nonreserved.rows.push({values:['DEMO-100'+i,String(i+2),(i*7.25).toFixed(2),'ACCESSOIRE-DÉMO-'+i,'Accessoire de démonstration · modèle '+i,'EA','ATELIER DÉMO','CAOP','MTL','YUL-01','À vendre','AUDIO','Accessoires','Supports','Réglable']});
+  for(let i=1;i<=3;i++)product.rows.push([['SUPPORT-DÉMO','ADAPTATEUR-DÉMO','CÂBLE-DÉMO'][i-1],'DEMO-200'+i,'ATELIER DÉMO','Accessoire de démonstration','YUL-01','',String(i+2),String(i+4),'2','0','0','0']);
+ }
  const saved={toolboxReadyScope:{mode:'report',salesperson:''},toolboxModule:'home',toolboxLanguage:'fr',toolboxPricing:{values:{cost:'298,90',price:'',margin:'20'},locked:['cost','margin'],discount:'',tax:'14,975',costCurrency:'CAD',priceCurrency:'CAD',tab:'margin',conversionAmount:'100',conversionFrom:'USD',conversionTo:'CAD'},toolboxPricingRate:{rate:'1.40',date:'2026-10-15',checkedAt:now},toolboxContacts:{name:'Alex Martin',phone:'(514) 555-0123',email:'alex@example.test',raw:'Alex Martin\n(514) 555-0123\nalex@example.test'},toolboxProductSearch:product,toolboxPowerBI:orders,toolboxPowerBIStatus:{state:'done'},toolboxUsedPowerBI:used,toolboxUsedPowerBIStatus:{state:'done'}};
  if(globalThis.__demoResponsible){const scope={mode:'seller',salesperson:globalThis.__demoResponsible},col=orders.headers.indexOf('Sales Responsible');saved.toolboxReadyScope=scope;saved.toolboxPowerBI={...orders,readyScope:scope,rows:orders.rows.filter(row=>row.values[col]===scope.salesperson)};}
- const session={toolboxNavigation:{module:'used',at:now},lead:{data:lead,at:now,source:'Démonstration Salesforce'},uiStep:'lead'};
+ const session={toolboxNavigation:{module:globalThis.__demoStart||'used',at:now},lead:{data:lead,at:now,source:'Démonstration Salesforce'},uiStep:globalThis.__demoStep||'lead'};
+ if(globalThis.__demoConversion)saved.toolboxPricing.tab='conversion';
  function get(store,keys){return typeof keys==='string'?{[keys]:store[keys]}:Object.fromEntries((keys||Object.keys(store)).map(k=>[k,store[k]]));}
  async function write(store,values,area){const changes={};for(const [k,v]of Object.entries(values)){if(JSON.stringify(store[k])===JSON.stringify(v))continue;changes[k]={oldValue:store[k],newValue:v};store[k]=v;}if(Object.keys(changes).length)for(const f of listeners)f(changes,area);if(changes.toolboxLanguage){const frame=document.getElementById('hs-frame');if(frame?.srcdoc)frame.srcdoc=globalThis.__demoHS[changes.toolboxLanguage.newValue==='en'?'en':'fr'];}}
  function area(store,name){return {get:async keys=>get(store,keys),set:values=>write(store,values,name),remove:async keys=>{const changes={};for(const k of typeof keys==='string'?[keys]:keys){changes[k]={oldValue:store[k]};delete store[k];}for(const f of listeners)f(changes,name);},clear:async()=>{for(const k of Object.keys(store))delete store[k];}};}
@@ -32,7 +38,12 @@
  function toast(message){let box=document.getElementById('demo-toast');if(!box){box=document.createElement('div');box.id='demo-toast';box.setAttribute('role','status');document.body.append(box);}box.textContent=message;box.hidden=false;clearTimeout(box.timer);box.timer=setTimeout(()=>box.hidden=true,1800);}
  globalThis.__demoCopy=async()=>toast(saved.toolboxLanguage==='en'?'Copied in this demo.':'Copie illustrée dans l’aperçu.');
  const chrome={storage:{local:area(saved,'local'),session:area(session,'session'),onChanged:{addListener:f=>listeners.push(f)}},permissions:{contains:async()=>true,request:async()=>true,onAdded:empty,onRemoved:empty},runtime:{id:'preview',getManifest:()=>({version:'3.5.6'}),onMessage:empty,sendMessage:async m=>{
-  if(m.kind==='nonReservedInit'){if(globalThis.__demoNonReserved&&globalThis.indexedDB&&!await ToolboxNonReservedStore.get())await ToolboxNonReservedStore.put({...ToolboxNonReserved.validate(nonreserved),importedAt:now});return {value:{ready:true}};}
+  if(m.kind==='nonReservedInit'){
+   // The portable overhaul preview never needs browser storage or an authenticated session.
+   if(globalThis.__demoOverhaul){let value={...ToolboxNonReserved.validate(nonreserved),importedAt:now};globalThis.ToolboxNonReservedStore={get:async()=>structuredClone(value),put:async next=>{value=structuredClone(next);}};}
+   else if(globalThis.__demoNonReserved&&globalThis.indexedDB&&!await ToolboxNonReservedStore.get())await ToolboxNonReservedStore.put({...ToolboxNonReserved.validate(nonreserved),importedAt:now});
+   return {value:{ready:true}};
+  }
   if(m.kind==='nonReservedExport')return {error:'Aperçu : l’export automatique nécessite le rapport Power BI connecté.'};
   if(m.kind==='nonReservedImport'){const value={...ToolboxNonReserved.validate(m.data),importedAt:Date.now()};await ToolboxNonReservedStore.put(value);await write(saved,{toolboxNonReservedStamp:Date.now(),toolboxNonReservedStatus:{state:'done',message:'Catalogue de démonstration importé : '+value.rows.length+' lignes.'}},'local');return {value:{count:value.rows.length}};}
   if(m.kind==='nonReservedOpen'){toast('Power BI · démonstration sans ouverture du rapport');return {value:{tabId:8}};}
@@ -40,7 +51,14 @@
   if(m.kind==='nonReservedStop')return {value:{stopped:true}};
   if(m.kind==='pricingRate'){await delay(500);return {value:{rate:'1.40',date:'2026-10-15',checkedAt:now,demo:true}};}
   if(m.kind==='usedPowerBIExportFile')return {error:'Démonstration : l’export automatique nécessite le rapport Power BI connecté.'};
-  if(m.kind==='usedPowerBIInit')return {value:{count:used.rows.length}};
+  if(m.kind==='usedPowerBIInit'){
+   if(globalThis.__demoOverhaul){
+    const inputs=ToolboxUsedRegions.names.map((region,i)=>({region,at:now,data:{...used,regions:[region],rows:used.rows.map((row,j)=>{const values=[...row.values];values[6]=String((j+i)%9+2);values[7]=values[6];values[8]=String((j+i)%7);values[10]=(Number(values[10])*(1-i*.1)).toFixed(2);return {...row,values};})}}));
+    const batch=ToolboxUsedRegions.countryCatalogue(saved.toolboxUsedPowerBI,inputs,{at:now});
+    await write(saved,{toolboxUsedPowerBI:batch.catalogue,toolboxUsedRegionQuantities:batch.quantities,toolboxUsedRegionPrices:batch.prices,toolboxUsedCountryCatalogue:batch.meta},'local');
+   }
+   return {value:{count:used.rows.length}};
+  }
   if(m.kind==='workspacePrepare'){await delay(400);await write(saved,{toolboxWorkspaceDay:{date:ToolboxUsedCatalogue.day(Date.now()),status:'prepared'}},'local');return {value:{total:4,opened:2,reused:2}};}
   if(['usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices'].includes(m.kind)){
    const prices=m.kind==='usedPowerBIReadPrices',operation=prices?'prices':'quantities',region=m.region||'ALL',selected=region==='ALL'?used.rows:used.rows.filter((_,i)=>ToolboxUsedRegions.selection(region).includes(['CANADA','UK','USA'][i%3])),count=selected.length;

@@ -6,7 +6,7 @@
   const state=phase==='preparing'?'busy':completed?'success':problem?'error':'ready',label=t(state==='busy'?'Préparation…':state==='success'?'Prêt !':state==='error'?'Réessayer':'Préparer'),b=el('workspace-start');
   b.disabled=busy;b.setAttribute('aria-busy',String(phase==='preparing'));b.dataset.actionState=state;
   const key=state+'|'+label;if(buttonState===key)return;buttonState=key;
-  const mark=document.createElement('span');mark.className='action-mark';mark.setAttribute('aria-hidden','true');
+  const mark=document.createElement('span');mark.className='action-mark'+(state==='ready'?' action-mark-open':'');mark.setAttribute('aria-hidden','true');
   if(state==='busy'){for(let i=0;i<3;i++)mark.append(document.createElement('i'));}else mark.textContent=state==='success'?'✓':state==='error'?'!':'↗';
   const text=document.createElement('span');text.className='action-label';text.textContent=label;b.replaceChildren(mark,text);
   if(state==='success')globalThis.ToolboxMotion?.success(mark);

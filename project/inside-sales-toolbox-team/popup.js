@@ -6,7 +6,9 @@ async function save(){B.capitalizeNames(data);updateLeadBanner();renderQuoteCont
 function render(){if(data.tax==='Hst_on')data.tax='HST_ON';B.capitalizeNames(data);
 $('editor').replaceChildren();const groupMap={};
 for(const [title,keys] of [['Identité',['type','company','first','last']],['Contact',['phoneName','phone','extension','emailName','email']],['Adresse',['street','city','state','postal','country']],['Paramètres D365',['language','currency','typeId','delivery','terms','tax']]]){
- const fieldset=document.createElement('fieldset'),legend=document.createElement('legend'),grid=document.createElement('div');legend.textContent=title;grid.className='field-grid';fieldset.append(legend,grid);$('editor').append(fieldset);for(const key of keys)groupMap[key]=grid;
+ const fieldset=document.createElement('fieldset'),legend=document.createElement('legend'),grid=document.createElement('div');legend.textContent=title;grid.className='field-grid';fieldset.append(legend,grid);
+ if(title==='Paramètres D365'){const details=document.createElement('details'),summary=document.createElement('summary');details.className='editor-section';summary.textContent=title;details.append(summary,fieldset);$('editor').append(details);}else $('editor').append(fieldset);
+ for(const key of keys)groupMap[key]=grid;
 }
 for(const [key,label] of B.fields){if(data.type==='Person'&&key==='company'||data.type==='Organization'&&['first','last'].includes(key))continue;
 const l=document.createElement('label');l.textContent=key==='type'?'Organisation ou Personne ?':label;let input;
@@ -172,7 +174,7 @@ chrome.storage.session.get('uiStep').then(s=>selectStep(s.uiStep||'lead',false))
 
 // Outcomes stay tied to the real worker result, including partial saves.
 const BA=globalThis.BridgeActions;
-BA.bind('capture',{busy:'Récupération du lead…',done:'Lead récupéré',message:'Lead récupéré. Vérifie les informations ci-dessous.',resetAfter:2400,successDuration:420,after(){for(const id of ['fill','createProspect','quote','quote-contacts'])BA.reset(id);ToolboxMotion.text($('leadTitle'),{duration:360});}});
+BA.bind('capture',{busy:'Récupération du lead…',done:'Lead récupéré',message:'Lead récupéré. Vérifie les informations ci-dessous.',resetAfter:2400,successDuration:200,after(){for(const id of ['fill','createProspect','quote','quote-contacts'])BA.reset(id);ToolboxMotion.text($('leadTitle'),{duration:140});}});
 BA.bind('fill',{progressLabel:'Remplissage du prospect…',busy:'Remplissage du prospect…',done:'Formulaire rempli',message:'Formulaire rempli. Vérifie le rapport avant de créer le prospect.',after(){BA.reset('createProspect');ToolboxMotion.text($('report'));}});
 BA.bind('createProspect',{busy:'Création du prospect…',done:'Prospect créé',message:'Prospect créé. Tu peux passer à la soumission.',state:r=>r?.verified&&r.account&&!r.dimensionsPending?'success':'warning',warning:'Vérifie le prospect et ses dimensions dans D365 avant de continuer.',terminal:r=>!!(r?.account||r?.verified||r?.dimensionsPending),after(){ToolboxMotion.success($('successCard'));}});
 BA.bind('quote',{busy:'Création de la soumission…',done:'Soumission ouverte',message:'Soumission ouverte. Vérifie puis enregistre dans D365.',state:r=>r?.contactsPending||!r?.number?'warning':'success',warning:'Vérifie la soumission et les coordonnées dans D365. Ne la recrée pas.',terminal:r=>!!(r?.clicked||r?.number||r?.contactsPending)});

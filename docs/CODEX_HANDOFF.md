@@ -4,6 +4,8 @@
 
 ## Développement après 3.5.13
 
+La refonte complète de l’interface équipe condense tous les outils : un seul titre, actions dans le bandeau, filtres secondaires repliés, fiches de stock sur des lignes courtes, formulaires rapprochés et animations brèves. Sur les mêmes huit commandes fictives dans un panneau 390 × 820, sept commandes complètes sont visibles contre deux au commit `4fceeb8`. Voir [les changements, la mesure et les douze vues de l’aperçu](diagnostics/compact-toolbox-overhaul.md). Les 63 scripts, 23 suites et parcours Chromium sont vérifiés localement; Power BI/D365 connectés restent à essayer. Aucun nouvel export installable n’est créé.
+
 La vue de produits est compactée, avec filtres repliés et inventaire sur des lignes courtes. Commandes prêtes demande **Sales Responsible**, champ confirmé par Michaël, et contrôle le périmètre du relevé. Les vues du Toolbox disposent de sessions, de résultats et d’onglets de travail indépendants. Voir [le fonctionnement, les tests et l’aperçu](diagnostics/compact-sessions-ready.md). Vérification courante : 63 scripts et 23 suites, plus les parcours Chromium; essais connectés toujours à faire.
 
 L’actualisation Usagé, ses messages et son bouton d’arrêt sont placés tout en bas, après les produits, la pagination et Options du catalogue (commit `ba0a620`).

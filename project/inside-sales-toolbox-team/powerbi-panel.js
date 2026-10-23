@@ -38,6 +38,9 @@
   el('powerbi-scope-caption').textContent=scope.mode==='report'?'Périmètre : filtres actuels du rapport.':scope.salesperson?'Sales Responsible : '+scope.salesperson:'Choisis Sales Responsible avant d’actualiser.';
   const names=data?M.columns(data.headers).salesperson:-1,choices=names>=0?[...new Set(data.rows.map(r=>r.values[names]).filter(Boolean))]:[];el('powerbi-salespeople').replaceChildren(...choices.map(value=>{const option=node('option','source-value',value);option.value=value;return option;}));
   const confirmed=data&&S.same(data.readyScope,scope),selected=confirmed?M.select(data,filters):null;
+  el('powerbi-scope-caption').hidden=!!confirmed;
+  const activeFilters=[filters.delivery,filters.payment].filter(Boolean).length;
+  el('powerbi-filter-count').textContent=activeFilters?'· '+activeFilters+' actif(s)':'';
   options('powerbi-delivery',selected?.deliveryChoices.filter(v=>!M.pickup(v))||[],'Tous les modes',[['@pickup','Ramassage · PICK UP'],['@other','Autres modes']]);
   options('powerbi-payment',selected?.paymentChoices||[],'Tous les paiements');
   if(!confirmed){el('powerbi-count').textContent='';el('powerbi-freshness').textContent='';if(data)root.append(node('p','muted','Actualise pour récupérer les commandes du périmètre choisi.'));return;}
@@ -46,7 +49,8 @@
   for(const r of selected.rows){
    const val=k=>selected.value(r,k),group=selected.group(r);
    if(group!==null&&group!==previousGroup){root.append(node('h3','order-group-heading source-value',globalThis.ToolboxI18n?.t(group)||group));previousGroup=group;}
-   const meta=[];for(const [key,label]of [['delivery',''],['payment',''],['qty','Réservé'],['salesperson','Sales Responsible']])if(val(key))meta.push({label,value:val(key)});
+   // The scope is already visible above the list. Each source field stays in the disclosure.
+   const meta=[];for(const [key,label]of [['delivery',''],['payment',''],['qty','Réservé']])if(val(key))meta.push({label,value:val(key)});
    const record=recordRow({key:'order:'+val('order'),code:val('customer')||val('order'),name:val('customer')?val('order'):'',amount:val('amount'),href:r.href,host:'solotech.operations.dynamics.com',meta});
    addNotes(record,r,selected);root.append(record);
   }

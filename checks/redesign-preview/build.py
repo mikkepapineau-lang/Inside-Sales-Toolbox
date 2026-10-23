@@ -49,14 +49,16 @@ doc = re.sub(r'<link[^>]+href="([^"]+)"[^>]*>', lambda m: '<style>' + css(APP / 
 doc = re.sub(r'(<img\b[^>]*\bsrc=")([^"]+)(")', lambda m: m[1] + uri(APP / m[2]) + m[3], doc)
 hs = {lang: hs_document(lang) for lang in ['fr', 'en']}
 demo = read(ROOT / 'checks/redesign-preview/demo.js').replace("version:'3.5.6'", 'version:'+json.dumps(json.loads(read(APP / 'manifest.json'))['version']))
+if '--overhaul' in sys.argv:
+    demo = 'globalThis.__demoNonReserved=true;globalThis.__demoOverhaul=true;\n' + demo
 if '--nonreserved' in sys.argv:
-    demo = "globalThis.__demoNonReserved=true;\n" + demo.replace("module:'used',at:now", "module:'nonreserved',at:now")
+    demo = "globalThis.__demoNonReserved=true;\n" + demo.replace("module:globalThis.__demoStart||'used',at:now", "module:'nonreserved',at:now")
 if '--prospect' in sys.argv:
-    demo = demo.replace("module:'used',at:now", "module:'bridge',at:now").replace("uiStep:'lead'", "uiStep:'prospect'")
+    demo = demo.replace("module:globalThis.__demoStart||'used',at:now", "module:'bridge',at:now").replace("uiStep:globalThis.__demoStep||'lead'", "uiStep:'prospect'")
 if '--quote' in sys.argv:
-    demo = demo.replace("module:'used',at:now", "module:'bridge',at:now").replace("uiStep:'lead'", "uiStep:'quote'")
+    demo = demo.replace("module:globalThis.__demoStart||'used',at:now", "module:'bridge',at:now").replace("uiStep:globalThis.__demoStep||'lead'", "uiStep:'quote'")
 if '--contacts' in sys.argv:
-    demo = demo.replace("module:'used',at:now", "module:'contacts',at:now").replace("uiStep:'lead'", "uiStep:'quote'")
+    demo = demo.replace("module:globalThis.__demoStart||'used',at:now", "module:'contacts',at:now").replace("uiStep:globalThis.__demoStep||'lead'", "uiStep:'quote'")
     doc = doc.replace('<details id="quote-contact-preview" class="report-card">', '<details id="quote-contact-preview" class="report-card" open>')
 adapter = script('globalThis.__demoHS=' + json.dumps(hs, ensure_ascii=False) + ';\n' + demo)
 
@@ -76,6 +78,13 @@ doc = doc.replace('</head>', '<style>#open-sidepanel{display:none!important}#dem
 assert not re.search(r'\b(fetch|XMLHttpRequest|WebSocket)\s*\(', doc)
 assert not re.search(r'<(?:script|link)\b[^>]+(?:src|href)=', doc)
 (ROOT / 'checks/redesign-preview/preview-document.html').write_text(doc, encoding='utf-8')
+if '--overhaul' in sys.argv:
+    target = Path('/workspace/toolbox-overhaul-preview.html')
+    payload = json.dumps(doc, ensure_ascii=False).replace('</', '<\\/')
+    target.write_text(read(ROOT / 'checks/redesign-preview/overhaul.html').replace('__TOOLBOX_DOCUMENT__', payload), encoding='utf-8')
+    assert target.stat().st_size < 1_200_000
+    print(f'Complete interactive preview: {target}; actual UI, 12 views, fictional data, no external calls.')
+    raise SystemExit(0)
 if '--document-only' in sys.argv:
     print('Actual UI document rebuilt for script checks; published preview unchanged.')
     raise SystemExit(0)

@@ -20,7 +20,7 @@ function module(name,remember=true){
  for(const kind of ['new','used','nonreserved']){el('products-tab-'+kind).setAttribute('aria-selected',String(kind===productKind));el('products-tab-'+kind).tabIndex=kind===productKind?0:-1;}
  el('tool-home').hidden=name==='home';
  if(changed&&!restoring){globalThis.ToolboxMotion?.enter(el(isProducts?(productKind==='new'?'products-new-panel':'tool-'+productKind):name==='home'?'tool-home-panel':'tool-'+name));globalThis.ToolboxMotion?.navigation(document.querySelector('.module-tabs [data-module="'+visible+'"]'));}
- el('tool-label').textContent={home:'Ton espace de travail',bridge:'Salesforce vers Dynamics',contacts:'Coordonnées client',hs:'Vérificateur HS',products:'Recherche de produits',powerbi:'Commandes prêtes',calculator:'Marge et devises'}[visible];
+ el('tool-label').textContent={home:'Ton espace de travail',bridge:'Salesforce → D365',contacts:'Coordonnées client',hs:'Vérificateur HS',products:'Recherche de produits',powerbi:'Commandes prêtes',calculator:'Marge et devises'}[visible];
  if(name==='calculator')globalThis.ToolboxCalculator?.activate();
 }
 for(const kind of ['new','used','nonreserved']){

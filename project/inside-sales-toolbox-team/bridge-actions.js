@@ -8,7 +8,7 @@
   button.replaceChildren(mark,node('span','action-label',text));
  }
  function clearProgress(entry){delete entry.button.dataset.importStage;const p=el(entry.id+'-feedback');if(p){delete p.dataset.presentation;p.setAttribute('aria-live','polite');}}
- function feedback(entry,text,state){const p=el(entry.id+'-feedback');if(!p)return;p.hidden=false;p.dataset.state=state;p.setAttribute('aria-live','polite');p.replaceChildren(node('span','action-feedback-mark',state==='busy'?'':state==='success'?'✓':'!'),node('span','action-feedback-copy',text));p.firstChild.setAttribute('aria-hidden','true');globalThis.ToolboxMotion?.text(p,{duration:entry.config.successDuration||220});if(state!=='busy')globalThis.ToolboxMotion?.success(p.firstChild,{duration:entry.config.successDuration||420});}
+ function feedback(entry,text,state){const p=el(entry.id+'-feedback');if(!p)return;p.hidden=false;p.dataset.state=state;p.setAttribute('aria-live','polite');p.replaceChildren(node('span','action-feedback-mark',state==='busy'?'':state==='success'?'✓':'!'),node('span','action-feedback-copy',text));p.firstChild.setAttribute('aria-hidden','true');globalThis.ToolboxMotion?.text(p,{duration:entry.config.successDuration||140});if(state!=='busy')globalThis.ToolboxMotion?.success(p.firstChild,{duration:entry.config.successDuration||200});}
  function reset(id,hideFeedback=true){const e=entries.get(id);if(!e)return;clearTimeout(e.timer);clearProgress(e);e.button.replaceChildren(...e.original.map(n=>n.cloneNode(true)));delete e.button.dataset.actionState;e.button.removeAttribute('aria-busy');const p=el(id+'-feedback');if(p&&hideFeedback)p.hidden=true;}
  function progress(id,{current,total,label:field,state=''}){
   const entry=entries.get(id);if(!entry||entry.button.dataset.actionState!=='busy'||!Number.isInteger(current)||!Number.isInteger(total)||total<1||current<0||total<current)return;
@@ -28,8 +28,8 @@
    try{
     result=await task();if(result?.toolboxError)throw Error(result.toolboxError);
     state=config.state?.(result)||'success';label(entry,state==='warning'?'Vérification requise':config.done,state);feedback(entry,state==='warning'?(config.warning||'Vérifie le résultat dans D365.'):config.message,state);
-    globalThis.ToolboxMotion?.success(button.querySelector('.action-mark'),{duration:config.successDuration||420});
-    if(state==='success'){config.after?.(result);globalThis.ToolboxMotion?.success(el('bridge-next'),{duration:config.successDuration||420});}
+    globalThis.ToolboxMotion?.success(button.querySelector('.action-mark'),{duration:config.successDuration||200});
+    if(state==='success'){config.after?.(result);globalThis.ToolboxMotion?.success(el('bridge-next'),{duration:config.successDuration||200});}
    }catch(e){result={toolboxError:e.message};label(entry,'À réessayer','error');feedback(entry,e.message,'error');}
    finally{
     button.removeAttribute('aria-busy');el('tool-bridge').removeAttribute('aria-busy');for(const {b,disabled}of locks)if(b.disabled)b.disabled=disabled;
