@@ -39,6 +39,7 @@ def hs_document(language):
     code = code.replace('Source synchronisée avec Canada.ca.', 'Données de démonstration.').replace('Source synchronized with Canada.ca.', 'Demo data.').replace('taux publié', 'taux de démonstration').replace('published rate', 'demo rate')
     adapter = 'globalThis.chrome={storage:{local:{set:async()=>{}},onChanged:{addListener(){}}}};'
     doc = re.sub(r'<script[^>]*src="\.\./motion.js"[^>]*></script>', lambda _: script(read(APP / 'motion.js')), doc)
+    doc = re.sub(r'<script[^>]*src="\.\./appearance.js"[^>]*></script>', lambda _: script(read(APP / 'appearance.js')), doc)
     doc = re.sub(r'<script[^>]*src="popup.js"[^>]*></script>', lambda _: script(adapter + '\n' + core + '\n' + code), doc)
     assert not re.search(r'\bfetch\s*\(', doc)
     return doc

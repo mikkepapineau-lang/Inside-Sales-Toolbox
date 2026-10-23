@@ -14,7 +14,11 @@ Le bandeau de l’outil donne son nom et ses actions immédiates une seule fois.
 
 Les transitions durent généralement 120 à 220 ms. Une recherche ne fait plus bouger la liste pendant la saisie. La préférence de réduction des animations est respectée, y compris lorsqu’elle change pendant une animation. Les cibles tactiles et les champs restent plus grands sur écran tactile.
 
-## Signature visuelle
+## Évolution Liquid Glass
+
+La nouvelle direction demandée par Michaël remplace la signature colorée ci-dessous par des surfaces de verre, une navigation en capsule et deux apparences clair/sombre. La densité de cette refonte reste conservée. Voir [les préférences, les tests et les aperçus](liquid-glass-modes.md).
+
+## Signature visuelle précédente
 
 À la demande de Michaël, la présentation reçoit davantage de caractère après `a16d239` : bandeau violet profond avec lumière et trame diagonale, onglets actifs pleins, accents de couleur par outil et fiches blanches avec un repère latéral et un angle teinté. L’accueil utilise le symbole Solotech et un fond plus expressif. Les boutons et icônes réagissent au survol avec des transitions courtes.
 

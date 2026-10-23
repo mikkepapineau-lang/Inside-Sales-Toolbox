@@ -38,6 +38,24 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
   assert(sizes.price>=16&&sizes.nbv>=14,'Financial values retain emphasis');
   assert(await used.evaluate(()=>Boolean(document.querySelector('#used-results').compareDocumentPosition(document.querySelector('#used-updates'))&Node.DOCUMENT_POSITION_FOLLOWING)));
   await p.screenshot({path:'/workspace/toolbox-overhaul-preview.png'});
+  await p.screenshot({path:'/workspace/toolbox-liquid-glass-light.png'});
+  await p.click('#preview-appearance');
+  for(const frame of [fresh,used,nr,ready])await frame.waitForFunction(()=>document.documentElement.dataset.appearance==='dark');
+  assert.equal((await measure(ready)).orders,density.ready.orders,'Dark mode preserves list density');
+  assert.equal((await measure(nr)).nonreserved,density.nonreserved.nonreserved);
+  await p.screenshot({path:'/workspace/toolbox-liquid-glass-dark.png'});
+  // Text colours remain readable over the actual semi-opaque row material.
+  for(const mode of ['dark','light']){
+   if(mode==='light')await p.click('#preview-appearance');
+   const contrast=await ready.evaluate(()=>{
+    const rgb=value=>value.match(/[\d.]+/g).map(Number),linear=n=>(n/=255)<=.04045?n/12.92:((n+.055)/1.055)**2.4;
+    const luminance=values=>values.slice(0,3).reduce((sum,value,i)=>sum+linear(value)*[.2126,.7152,.0722][i],0);
+    const row=document.querySelector('.record-row'),style=getComputedStyle(row),bg=rgb(style.backgroundColor),base=rgb(getComputedStyle(document.documentElement).backgroundColor);
+    const mixed=bg.slice(0,3).map((v,i)=>v*(bg[3]??1)+base[i]*(1-(bg[3]??1)));
+    return ['.record-code','.record-name','.record-amount'].map(selector=>{const fg=rgb(getComputedStyle(row.querySelector(selector)).color),a=luminance(fg),b=luminance(mixed);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);});
+   });assert(contrast.every(value=>value>=4.5),mode+' order text contrast '+contrast);
+  }
+
   // Explicit seller changes hide old results until a new confirmed extraction.
   await ready.fill('#powerbi-salesperson','JULIE EXEMPLE');assert.equal(await ready.locator('#powerbi-results .record-row').count(),0);await ready.click('#powerbi-refresh');
   await ready.waitForFunction(()=>document.querySelectorAll('#powerbi-results .record-row').length===8);assert.equal(await nr.locator('#nonreserved-results .product-card').count(),9);
@@ -58,14 +76,26 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
   await contacts.locator('.contact-import>summary').click();
   await lead.click('#capture');await lead.waitForFunction(()=>document.querySelector('#capture').dataset.actionState==='success');assert.equal(await lead.locator('#value-company').inputValue(),'Équipements Démo');assert.equal(await lead.locator('#value-company').isEnabled(),true);
   await p.screenshot({path:'/workspace/toolbox-overhaul-crm.png'});
+  await p.screenshot({path:'/workspace/toolbox-liquid-glass-crm-light.png'});
+  await p.click('#preview-appearance');for(const frame of [lead,prospect,quote,contacts])await frame.waitForFunction(()=>document.documentElement.dataset.appearance==='dark');await p.screenshot({path:'/workspace/toolbox-liquid-glass-crm-dark.png'});
+
   await p.click('[data-view=tools]');
   const [home,hs,margin,conversion]=await frames();
   await home.waitForSelector('.tool-tile');await margin.waitForFunction(()=>document.querySelector('#pricing-total').textContent.trim()!=='···');await conversion.waitForSelector('#calculator-conversion:visible');
   await hs.waitForSelector('#hs-frame');const innerHS=await(await hs.locator('#hs-frame').elementHandle()).contentFrame();await innerHS.waitForSelector('#result strong');
   assert.equal(await home.locator('.tool-tile').count(),6);assert((await innerHS.locator('#result').textContent()).includes('démonstration'));
+  await innerHS.waitForFunction(()=>document.documentElement.dataset.appearance==='dark');
+  await p.screenshot({path:'/workspace/toolbox-liquid-glass-tools-dark.png'});
+  await p.click('#preview-appearance');await innerHS.waitForFunction(()=>document.documentElement.dataset.appearance==='light');
   await p.screenshot({path:'/workspace/toolbox-overhaul-tools.png'});
+  await p.screenshot({path:'/workspace/toolbox-liquid-glass-tools-light.png'});
+
   // Navigation, all product kinds and every result family stay usable at narrow widths.
   const panel=await context.newPage();await panel.goto('https://toolbox.test/panel');await panel.waitForSelector('#used-results .product-card');
+  await panel.emulateMedia({colorScheme:'dark'});await panel.waitForFunction(()=>document.documentElement.dataset.appearance==='dark');
+  await panel.emulateMedia({colorScheme:'light'});await panel.waitForFunction(()=>document.documentElement.dataset.appearance==='light');
+  for(const mode of ['light','dark']){
+   if(mode==='dark')await panel.click('#toolbox-appearance');
   for(const width of [320,390,520,900]){
    await panel.setViewportSize({width,height:820});
    for(const module of ['home','bridge','contacts','products','powerbi','calculator','hs']){
@@ -80,8 +110,10 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
     assert.deepEqual(overflow,[],width+'px '+kind+' visible controls/results fit');
    }
   }
+  }
+  await panel.click('#toolbox-appearance');await panel.waitForFunction(()=>document.documentElement.dataset.appearance==='light');
   await panel.setViewportSize({width:390,height:820});await panel.click('.module-tabs [data-module=powerbi]');await panel.screenshot({path:'/workspace/toolbox-overhaul-ready.png'});
-  await panel.click('[data-ui-language=en]');await panel.waitForFunction(()=>document.documentElement.lang==='en-CA');assert.equal(await panel.locator('#powerbi-filters>summary').textContent(),'Filters and sorting ');assert.equal(await panel.locator('.ready-scope>label:first-child').textContent(),'Scope');
+  await panel.click('[data-ui-language=en]');await panel.waitForFunction(()=>document.documentElement.lang==='en-CA');assert.equal(await panel.locator('#powerbi-filters>summary').textContent(),'Filters and sorting ');assert.equal(await panel.locator('.ready-scope>label:first-child').textContent(),'Scope');assert.equal(await panel.locator('#toolbox-appearance').getAttribute('aria-label'),'Switch to dark mode');await panel.click('#toolbox-appearance');assert.equal(await panel.locator('#toolbox-appearance').getAttribute('aria-label'),'Switch to light mode');
   await panel.emulateMedia({reducedMotion:'reduce'});await panel.click('.module-tabs [data-module=contacts]');assert.equal(await panel.evaluate(()=>document.getAnimations().length),0);
   const touchContext=await browser.newContext({viewport:{width:390,height:820},hasTouch:true});
   await touchContext.route('https://toolbox.test/panel',r=>r.fulfill({body:document,contentType:'text/html'}));
@@ -93,6 +125,6 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
   const popup=await context.newPage();await popup.setViewportSize({width:520,height:600});await popup.goto('https://toolbox.test/popup');await popup.waitForSelector('#used-results .product-card');assert.equal(await popup.evaluate(()=>document.documentElement.scrollWidth),520);
   await p.click('[data-view=inventory]');await p.locator('[data-expand]').first().click();assert.equal(await p.locator('main>section:visible').count(),1);await p.click('#overview');assert.equal(await p.locator('main>section:visible').count(),4);
   assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
-  console.log('PASS complete GUI: 12 live demo views, '+density.ready.orders+' complete orders / '+density.nonreserved.nonreserved+' complete NR products initially visible, exact seller refresh, three-country finances, contact parsing, CRM import, HS, margin/conversion, all modules at 320/390/520/900px, popup 520x600, FR/EN, reduced motion and no external calls');
+  console.log('PASS complete GUI: 12 live demo views in light/dark modes with system preference, accessible text contrast and HS inheritance, '+density.ready.orders+' complete orders / '+density.nonreserved.nonreserved+' complete NR products initially visible at '+density.ready.width+'x'+density.ready.height+', exact seller refresh, three-country finances, contact parsing, CRM import, HS, margin/conversion, all modules at 320/390/520/900px, popup 520x600, FR/EN, reduced motion and no external calls');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

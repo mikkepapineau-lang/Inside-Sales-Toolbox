@@ -4,7 +4,7 @@
 
 ## Développement après 3.5.13
 
-La signature visuelle est renforcée à la demande de Michaël : bandeau violet texturé, couleurs par outil, onglets actifs plus marqués et fiches compactes avec accents graphiques. L’aperçu interactif couvre toujours douze vues; sept commandes complètes et quatre produits Non-Reserved restent visibles dans les panneaux de démonstration. Voir [la signature et ses vérifications](diagnostics/compact-toolbox-overhaul.md#signature-visuelle).
+La direction visuelle est reprise à la demande de Michaël dans un style inspiré du Liquid Glass : navigation en capsule, surfaces translucides et reflets doux. Un bouton lune/soleil propose **clair et sombre**, avec préférence de l’appareil par défaut et choix mémorisé par instance. Le module HS suit son Toolbox, les autres onglets restent indépendants. Les douze vues et la densité des listes sont conservées. Vérifications : 64 scripts, 24 suites, parcours Chromium dans les deux modes et persistance/isolation du stockage réel. Voir [le fonctionnement, l’aperçu et les limites](diagnostics/liquid-glass-modes.md). Aucun nouvel export installable n’est créé.
 
 La refonte complète de l’interface équipe condense tous les outils : un seul titre, actions dans le bandeau, filtres secondaires repliés, fiches de stock sur des lignes courtes, formulaires rapprochés et animations brèves. Sur les mêmes huit commandes fictives dans un panneau 390 × 820, sept commandes complètes sont visibles contre deux au commit `4fceeb8`. Voir [les changements, la mesure et les douze vues de l’aperçu](diagnostics/compact-toolbox-overhaul.md). Les 63 scripts, 23 suites et parcours Chromium sont vérifiés localement; Power BI/D365 connectés restent à essayer. Aucun nouvel export installable n’est créé.
 

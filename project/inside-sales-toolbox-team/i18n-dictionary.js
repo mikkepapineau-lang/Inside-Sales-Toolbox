@@ -694,3 +694,5 @@ Object.assign(globalThis.ToolboxDictionary,{
  "Choisis Sales Responsible ou les filtres actuels du rapport avant d’actualiser.":"Select Sales Responsible or the current report filters before refreshing."
 });
 Object.assign(globalThis.ToolboxDictionary,{"Coût moy.":"Avg. cost","Qté":"Qty"});
+
+Object.assign(globalThis.ToolboxDictionary,{"Activer le mode sombre":"Switch to dark mode","Activer le mode clair":"Switch to light mode"});

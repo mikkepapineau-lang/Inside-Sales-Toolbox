@@ -2,17 +2,30 @@
 <html lang="fr-CA">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Inside Sales Toolbox · Identité visuelle</title>
+<title>Inside Sales Toolbox · Liquid Glass · Clair & sombre</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:'Segoe UI',system-ui,sans-serif;color:#30293f;background:#efedf4}body{display:flex;flex-direction:column;height:100dvh}header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 22px 8px;background:#faf9fc;border-bottom:1px solid #ded9e7}h1{margin:0;font-size:17px;line-height:1.4;letter-spacing:-.3px;font-weight:650}h1 span{font-weight:450;color:#756880}nav{display:flex;gap:4px;margin-left:auto}button{font:550 12px/1.4 'Segoe UI',system-ui,sans-serif;cursor:pointer;border-radius:6px;border:1px solid #d8cde5;background:#fff;color:#59466d;padding:6px 10px}nav button{border-color:transparent;background:transparent}nav button:hover{background:#eee8f6}nav button[aria-pressed=true]{background:#e7def3;border-color:#d6c6e8;color:#422764}button:focus-visible{outline:2px solid #7651a6;outline-offset:2px}.preview-note{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:7px 22px 9px;font-size:11px;color:#70627d;background:#faf9fc}.preview-note strong{color:#564168;font-weight:550}main{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;flex:1;min-height:0;padding:12px 22px 18px}section{display:flex;flex-direction:column;min-width:0;min-height:0}.preview-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 2px 6px;color:#665273;font-size:10px;font-weight:650;letter-spacing:.5px;text-transform:uppercase}.preview-heading button{display:grid;place-items:center;width:23px;height:22px;padding:0;font-size:13px;background:#f9f7fc;border-color:#ddd5e8;color:#755c88}iframe{display:block;flex:1;min-width:0;width:100%;height:100%;min-height:0;border:1px solid #d9d0e5;border-radius:9px;background:#fafafd;box-shadow:0 6px 20px #33223f0b}#overview{display:none;margin-left:4px;padding:4px 8px;font-size:11px}body.focused #overview{display:block}body.focused main{display:flex;justify-content:center}body.focused main section{width:440px;max-width:100%}body.focused section:not(.selected){display:none}@media(max-width:1150px){body{height:auto}main{grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}iframe{height:780px;min-height:780px}nav{margin-left:0}body.focused iframe{height:calc(100dvh - 154px);min-height:620px}}@media(max-width:650px){header{padding:12px 14px 8px;gap:7px}h1{font-size:16px}nav{width:100%}nav button{flex:1;padding:6px;font-size:11px}.preview-note{padding:7px 14px;font-size:10px}main{grid-template-columns:1fr;padding:10px 14px;gap:18px}iframe{height:790px;min-height:790px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+html,body{background:radial-gradient(ellipse at 10% 0,#d8d9f7,transparent 70%),radial-gradient(ellipse at 90% 80%,#ecddea,transparent 70%),#edeef5}
+header,.preview-note{background:#ffffff80}header{border-color:#ffffffa6}iframe{border:1px solid #ffffffb8;border-radius:16px;box-shadow:0 8px 24px #30345712}
+#preview-appearance{display:flex;align-items:center;gap:6px;margin-left:auto;border-radius:20px;background:#ffffffa6}nav{margin-left:0}
+html[data-appearance=dark],html[data-appearance=dark] body{background:radial-gradient(ellipse at 10% 0,#35334d,transparent 70%),radial-gradient(ellipse at 90% 80%,#352e46,transparent 70%),#1b1b2c;color:#efedf8}
+html[data-appearance=dark] header,html[data-appearance=dark] .preview-note{background:#25253880;border-color:#ffffff20}
+html[data-appearance=dark] h1 span,html[data-appearance=dark] .preview-note,html[data-appearance=dark] .preview-heading{color:#b9b3ce}
+html[data-appearance=dark] .preview-note strong{color:#d1c9e4}
+html[data-appearance=dark] button,html[data-appearance=dark] #preview-appearance{background:#393548;color:#e4dcef;border-color:#ffffff30}
+html[data-appearance=dark] nav button[aria-pressed=true]{background:#544469;color:#fff}
+html[data-appearance=dark] iframe{background:#191926;border-color:#ffffff28;box-shadow:0 8px 24px #0000002b}
+@media(max-width:650px){#preview-appearance{font-size:11px;padding:5px 8px}h1 span{font-size:12px}}
 </style>
 </head>
 <body>
-<header><h1>Toolbox <span>/ Identité visuelle</span></h1><button id="overview" type="button">Vue d’ensemble</button><nav aria-label="Parcours de démonstration"><button type="button" data-view="inventory" aria-pressed="true">Stock &amp; commandes</button><button type="button" data-view="crm" aria-pressed="false">Parcours CRM</button><button type="button" data-view="tools" aria-pressed="false">Outils quotidiens</button></nav></header>
+<header><h1>Toolbox <span>/ Liquid Glass · Clair & sombre</span></h1><button id="overview" type="button">Vue d’ensemble</button><button id="preview-appearance" type="button" aria-pressed="false">◐ Mode sombre</button><nav aria-label="Parcours de démonstration"><button type="button" data-view="inventory" aria-pressed="true">Stock &amp; commandes</button><button type="button" data-view="crm" aria-pressed="false">Parcours CRM</button><button type="button" data-view="tools" aria-pressed="false">Outils quotidiens</button></nav></header>
 <div class="preview-note"><strong>Interface réelle du code en développement · Chaque panneau est interactif.</strong><span>Données fictives · Actions externes simulées · Aucun export réel.</span></div>
 <main id="panels"></main>
 <script id="toolbox-document" type="application/json">__TOOLBOX_DOCUMENT__</script>
 <script>
+let appearance='light';document.documentElement.dataset.appearance=appearance;
 const source=JSON.parse(document.getElementById('toolbox-document').textContent);
 const views={
  inventory:[['Neuf · Stock D365','products'],['Usagé · 3 pays','used'],['Non réservé · Entrepôts','nonreserved'],['Commandes · Sales Responsible','powerbi']],
@@ -26,11 +39,16 @@ function show(name){
  for(const [i,[title,module,step]]of views[name].entries()){
   const section=document.createElement('section'),heading=document.createElement('div');heading.className='preview-heading';const label=document.createElement('span');label.textContent=title;heading.append(label);
   const expand=document.createElement('button');expand.type='button';expand.innerHTML='<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3H3v10h10v-3M8 3h5v5M7 9l6-6"/></svg>';expand.dataset.expand='';expand.setAttribute('aria-label','Agrandir : '+title);expand.setAttribute('aria-expanded','false');expand.onclick=()=>{const opening=!section.classList.contains('selected');overview();if(opening){document.body.classList.add('focused');section.classList.add('selected');expand.setAttribute('aria-expanded','true');}};heading.append(expand);section.append(heading);
-  const frame=document.createElement('iframe');frame.title=title;
-  const setup='globalThis.__demoStart='+JSON.stringify(module)+';globalThis.__demoStep='+JSON.stringify(step==='conversion'?'lead':step||'lead')+';globalThis.__demoConversion='+String(step==='conversion')+';globalThis.__demoInstance='+JSON.stringify('overhaul-'+name+'-'+i)+';globalThis.__demoResponsible="ALEX MARTIN";';
+  const frame=document.createElement('iframe');frame.title=title;frame.onload=()=>{if(frame.contentWindow.ToolboxAppearance?.value!==appearance)frame.contentDocument.querySelector('#toolbox-appearance')?.click();};
+  const setup='globalThis.__demoAppearance='+JSON.stringify(appearance)+';globalThis.__demoStart='+JSON.stringify(module)+';globalThis.__demoStep='+JSON.stringify(step==='conversion'?'lead':step||'lead')+';globalThis.__demoConversion='+String(step==='conversion')+';globalThis.__demoInstance='+JSON.stringify('overhaul-'+name+'-'+i)+';globalThis.__demoResponsible="ALEX MARTIN";';
   frame.srcdoc=source.replace('globalThis.__demoHS=',setup+'globalThis.__demoHS=');section.append(frame);host.append(section);
  }
 }
+document.getElementById('preview-appearance').onclick=()=>{
+ appearance=appearance==='light'?'dark':'light';document.documentElement.dataset.appearance=appearance;
+ const button=document.getElementById('preview-appearance');button.setAttribute('aria-pressed',String(appearance==='dark'));button.textContent=appearance==='dark'?'◐ Mode clair':'◐ Mode sombre';
+ for(const frame of document.querySelectorAll('main iframe'))if(frame.contentWindow.ToolboxAppearance?.value!==appearance)frame.contentDocument.querySelector('#toolbox-appearance')?.click();
+};
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));document.getElementById('overview').onclick=overview;show('inventory');
 </script>
 </body>
