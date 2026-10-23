@@ -4,6 +4,14 @@
 
 Les changements en cours restent suivis par des commits jusqu'à la prochaine demande d'export.
 
+## Équipe 3.5.15 — Teenage Engineering, essai de branche (2026-10-23)
+
+- Sessions indépendantes par fenêtre du navigateur, avec continuité entre les onglets d’une même fenêtre.
+- Liaison facultative entre fenêtres, séparation avec copie de l’état courant et reprise d’une session précédente.
+- « Préparer ma journée » utilise une fenêtre de travail distincte et réutilisable; les étapes du parcours CRM restent synchronisées entre les fenêtres liées.
+- Design Solotech × Teenage Engineering adouci : orange conservé, Segoe UI, contours plus souples et en-tête simplifié.
+- Préversion installable depuis la branche d’essai. Contrôles locaux du code et du ZIP; essais Power BI/D365 connectés toujours à faire.
+
 ## Équipe 3.5.14 — Teenage Engineering, essai de branche (2026-10-23)
 
 - Export installable de `preview/teenage-engineering`, sur demande explicite : surfaces mates gris/orange, commandes rectangulaires, légendes techniques et afficheurs numériques, avec modes clair et sombre.

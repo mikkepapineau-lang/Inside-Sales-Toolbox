@@ -1043,6 +1043,23 @@
       "prerelease": true,
       "variant": "Teenage Engineering (essai)",
       "date_meaning": "Date de préparation de cet export de branche depuis les sources Codex; distinct des archives originales importées et des snapshots reconstruits."
+    },
+    {
+      "edition": "equipe",
+      "version": "3.5.15",
+      "kind": "exported-release-archive",
+      "git_ref": "equipe-v3.5.15",
+      "source_path": "downloads/Inside-Sales-Toolbox-Equipe-v3.5.15.zip",
+      "source_bytes": 1252644,
+      "source_sha256": "72f6de12a2f2ab7980e8175e36a93abbfccf8f96b6680da2cfc003d9c4996450",
+      "source_prefix": "",
+      "source_root": "project/inside-sales-toolbox-team",
+      "source_file_count": 93,
+      "exported_at": "2026-10-23",
+      "source_branch": "preview/teenage-engineering",
+      "prerelease": true,
+      "variant": "Teenage Engineering (essai, sessions par fenêtre)",
+      "date_meaning": "Date de préparation de cet export de branche depuis les sources Codex; distinct des archives originales importées et des snapshots reconstruits."
     }
   ]
 }
