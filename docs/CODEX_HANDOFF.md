@@ -6,7 +6,14 @@
 
 Michaël demande explicitement un ZIP installable de `preview/teenage-engineering`, après l’aperçu `e6f4250`. Le matériau industriel de la maquette est chargé dans l’extension réelle, avec clair/sombre et icônes sans texte. Le manifest et les mentions embarquées portent 3.5.14 et TE (test). Le workflow de publication est adapté sur cette branche pour publier uniquement une préversion équipe; aucune intégration de ce style sur `main` n’est demandée. Voir [les notes et l’installation](releases/equipe-3.5.14.md).
 
-Archive préparée : downloads/Inside-Sales-Toolbox-Equipe-v3.5.14.zip, 1244951 octets, 89 fichiers, SHA256 `0c61512edb79ee27134795e5820367bdc1bb2d1ce254ca40e9829f9f0d6bfdc5`. Les 64 scripts, 24 suites, douze vues Chromium et tests d’instances sont vérifiés localement; les essais connectés restent distincts. Le ZIP est contrôlé par CRC et comparaison exacte aux sources. Le tag de prépublication attendu est `equipe-v3.5.14`.
+Archive préparée : downloads/Inside-Sales-Toolbox-Equipe-v3.5.14.zip, 1244951 octets, 89 fichiers, SHA256 `0c61512edb79ee27134795e5820367bdc1bb2d1ce254ca40e9829f9f0d6bfdc5`. Les 64 scripts, 24 suites, douze vues Chromium et tests d’instances sont vérifiés localement; les essais connectés restent distincts. Le ZIP est contrôlé par CRC et comparaison exacte aux sources. Le tag `equipe-v3.5.14` est vérifié sur le commit [`0b9b4b526bb3862c1f0bee30e90f0da2080f2d45`](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/commit/0b9b4b526bb3862c1f0bee30e90f0da2080f2d45).
+
+Résultats distants vérifiés pour cet export :
+
+- [Vérifications GitHub 39961251990](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/actions/runs/39961251990), **Success**.
+- [Publication GitHub 39961252047](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/actions/runs/39961252047), **Success**, depuis la branche `preview/teenage-engineering`.
+- [Prépublication équipe 3.5.14](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/releases/tag/equipe-v3.5.14) : le badge Pre-release est confirmé. Le [ZIP effectivement publié](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/releases/download/equipe-v3.5.14/Inside-Sales-Toolbox-Equipe-v3.5.14.zip) a été retéléchargé : 1 244 951 octets, 89 fichiers, CRC valide, égalité octet pour octet avec le ZIP local et manifeste TE (test) 3.5.14. Son [fichier SHA256](https://github.com/mikkepapineau-lang/Inside-Sales-Toolbox/releases/download/equipe-v3.5.14/Inside-Sales-Toolbox-Equipe-v3.5.14.zip.sha256) publié est également vérifié.
+- `main` reste sur `af368ba0eba8fdb3ba8170aa920fa62750255a9e` avec sa direction Liquid Glass et les icônes sans texte. L’essai installable Teenage Engineering demeure sur sa branche et son tag. Les archives et tags précédents sont conservés.
 
 ## Développement après 3.5.13
 
