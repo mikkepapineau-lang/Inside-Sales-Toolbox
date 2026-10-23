@@ -1,6 +1,7 @@
 // One work group per browser window; grouping never aborts a CRM operation.
 (()=>{
- const title='Solotech Toolbox';let queue=Promise.resolve();
+ const create=chrome=>{
+ const title=chrome.__toolboxScope?'Toolbox · '+chrome.__toolboxScope:'Solotech Toolbox';let queue=Promise.resolve();
  async function groupFor(windowId){
   const saved=(await chrome.storage.session.get('toolboxTabGroups')).toolboxTabGroups||{};
   let group;
@@ -42,11 +43,14 @@
   if(active?.groupId===groupId){
    const outside=open.find(t=>t.id===initialActive?.id&&t.groupId!==groupId)||open.find(t=>t.groupId!==groupId);
    if(outside)await chrome.tabs.update(outside.id,{active:true});
-   else await chrome.tabs.create({windowId,url:chrome.runtime.getURL('popup.html')+'?toolboxWindow=1',active:true});
+   else await chrome.tabs.create({windowId,url:chrome.runtime.getURL('popup.html')+'?toolboxWindow=1'+(chrome.__toolboxScope?'&instance='+chrome.__toolboxScope:''),active:true});
   }
   const updated=await chrome.tabGroups.update(groupId,{title,color:'purple',collapsed:true});if(!updated.collapsed)throw Error('Le groupe n’a pas pu être réduit. Réessaie.');await chrome.storage.local.remove('toolboxTabGroupWarning');
   return {groupId};
  }
  function prepare(tabs,windowId){const job=queue.then(()=>prepareNow(tabs,windowId));queue=job.catch(()=>{});return job;}
- globalThis.ToolboxTabGroup={add,prepare};
+ return {add,prepare,title};
+ };
+ const cache=new Map();const forChrome=api=>{const key=api.__toolboxScope||'';if(!cache.has(key))cache.set(key,create(api));return cache.get(key);};
+ globalThis.ToolboxTabGroup={...forChrome(globalThis.chrome),forChrome};
 })();

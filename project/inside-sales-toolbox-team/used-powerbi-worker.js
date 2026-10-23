@@ -1,3 +1,6 @@
+(()=>{
+const build=chrome=>{
+const ToolboxTabGroup=globalThis.ToolboxTabGroup?.forChrome?.(chrome)||globalThis.ToolboxTabGroup;
 const USED_POWERBI_REPORT_URL='https://app.powerbi.com/groups/ff3be965-02e9-4c0f-b9eb-b73e3bb4e51f/reports/458f40a9-2b3f-4518-a3cb-d699fef65baa/ReportSection7cb28c98171347d49c0a?ctid=c2f120b6-e8fc-402c-9972-fa891cb53927&experience=power-bi';
 let usedPowerBIBusy=false,usedPowerBIStop=false,usedNativeExportTarget=null;
 let usedCatalogueInit=null;
@@ -34,10 +37,12 @@ async function usedPowerBITab(){
   tab=matches.find(t=>(t.pendingUrl||t.url)===saved.usedPowerBIResolvedURL)||matches.find(t=>t.active)||matches.sort((a,b)=>(b.lastAccessed||0)-(a.lastAccessed||0)||a.id-b.id)[0];
  }
  if(!tab)tab=await chrome.tabs.create({url:USED_POWERBI_REPORT_URL,active:false});
+ if(chrome.__toolboxScope)tab=await ToolboxInstances.reserve(chrome,tab,{url:USED_POWERBI_REPORT_URL});
  await chrome.storage.session.set({usedPowerBITab:tab.id});await ToolboxTabGroup.add(tab);return tab;
 }
 const usedRegionScriptId='toolbox-used-region-frames-v1',usedRegionDiscoveries=new Map();let usedRegionRegistration=null;
 async function ensureUsedRegionFrames(){
+ if(chrome.__toolboxScope)return ToolboxInstances.worker('used').ensureUsedRegionFrames();
  if(!chrome.scripting.registerContentScripts||!chrome.scripting.getRegisteredContentScripts||!chrome.tabs.sendMessage)return {supported:false,registered:false};
  if(usedRegionRegistration)return usedRegionRegistration;
  usedRegionRegistration=(async()=>{
@@ -373,3 +378,9 @@ async function readUsedPowerBI(kind,payload={}){
  }finally{usedPowerBIBusy=false;}
 }
 chrome.runtime.onMessage.addListener((m,s,reply)=>{if(s.id!==chrome.runtime.id)return;if(m?.kind==='usedPowerBIStop'){usedPowerBIStop=true;if(usedNativeExportTarget)chrome.scripting.executeScript({target:usedNativeExportTarget,world:'MAIN',func:()=>globalThis.ToolboxUsedExportUI?.cancel()}).catch(()=>{});reply({value:{stopping:true}});return;}if(!['usedPowerBIBeginCountries','usedPowerBIAbortCountries','usedPowerBIImportCountries','usedPowerBIInit','usedPowerBIRead','usedPowerBIReadForce','usedPowerBIReadPrices','usedPowerBIExportFile','usedPowerBIImportExport','usedPowerBIOpen','usedPowerBIDiagnostic','usedPowerBIBind','usedCatalogueImport','usedCatalogueReset'].includes(m?.kind))return;readUsedPowerBI(m.kind,m).then(value=>reply({value}),e=>reply({error:e.message}));return true;});
+
+return {initialUsedCatalogue,ensureUsedCatalogue,usedPowerBITab,ensureUsedRegionFrames,usedRegionProbeValid,discoverUsedRegionFrames,uniqueUsedRegionFrame,usedRegionFrameCommand,consumeUsedExport,exportUsedFile,usedCountryBatch,beginUsedCountries,abortUsedCountries,importUsedCountries,readUsedPowerBI,USED_POWERBI_REPORT_URL,isUsedPowerBI};
+};
+const values=globalThis.ToolboxInstances?ToolboxInstances.register('used',build):build(globalThis.chrome);
+Object.defineProperties(globalThis,Object.getOwnPropertyDescriptors(values));
+})();

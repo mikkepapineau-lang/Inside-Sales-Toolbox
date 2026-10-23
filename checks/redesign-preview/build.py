@@ -8,7 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / 'project/inside-sales-toolbox-team'
-DEST = Path('/workspace/toolbox-used-preview.html')
+DEST = Path('/workspace/toolbox-nonreserved-preview.html' if '--nonreserved' in sys.argv else '/workspace/toolbox-used-preview.html')
 
 def read(path):
     return path.read_text(encoding='utf-8')
@@ -44,10 +44,13 @@ def hs_document(language):
     return doc
 
 doc = read(APP / 'sidepanel.html')
+doc = re.sub(r'<script src="instances.js"></script><script src="instance-ui.js" data-toolbox-scripts="([^"]+)"></script>', lambda m: ''.join('<script src="'+name+'"></script>' for name in m[1].split(',')), doc)
 doc = re.sub(r'<link[^>]+href="([^"]+)"[^>]*>', lambda m: '<style>' + css(APP / m[1]) + '</style>', doc)
 doc = re.sub(r'(<img\b[^>]*\bsrc=")([^"]+)(")', lambda m: m[1] + uri(APP / m[2]) + m[3], doc)
 hs = {lang: hs_document(lang) for lang in ['fr', 'en']}
-demo = read(ROOT / 'checks/redesign-preview/demo.js')
+demo = read(ROOT / 'checks/redesign-preview/demo.js').replace("version:'3.5.6'", 'version:'+json.dumps(json.loads(read(APP / 'manifest.json'))['version']))
+if '--nonreserved' in sys.argv:
+    demo = "globalThis.__demoNonReserved=true;\n" + demo.replace("module:'used',at:now", "module:'nonreserved',at:now")
 if '--prospect' in sys.argv:
     demo = demo.replace("module:'used',at:now", "module:'bridge',at:now").replace("uiStep:'lead'", "uiStep:'prospect'")
 if '--quote' in sys.argv:
@@ -76,11 +79,17 @@ assert not re.search(r'<(?:script|link)\b[^>]+(?:src|href)=', doc)
 if '--document-only' in sys.argv:
     print('Actual UI document rebuilt for script checks; published preview unchanged.')
     raise SystemExit(0)
-fragment = read(DEST)
+fragment = read(DEST) if DEST.exists() and '--nonreserved' not in sys.argv else '''<!doctype html><html lang="fr-CA"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Toolbox · Aperçu interactif</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f1f8;color:#2e1b5a;font-family:system-ui,sans-serif}main{max-width:1120px;margin:auto;display:grid;grid-template-columns:1fr 440px;gap:56px;padding:32px;align-items:start}aside{padding-top:56px}small{font-weight:700;letter-spacing:.08em}h1{font-size:36px;line-height:1.15;margin:20px 0}p,li{font-size:16px;line-height:1.7}li{margin:12px 0}iframe{width:440px;height:calc(100vh - 64px);min-height:660px;border:1px solid #ddd1ec;border-radius:14px;box-shadow:0 12px 40px #28163f18;background:white}button{background:#2e1b5a;color:white;border:0;border-radius:8px;padding:12px 16px;font:600 14px system-ui;cursor:pointer}footer{font-size:13px;line-height:1.6;color:#78658b;margin-top:28px}@media(max-width:800px){main{display:block;padding:16px}aside{padding:0 0 24px}h1{font-size:28px}iframe{width:100%;height:85vh}li{margin:6px 0}}</style><main><aside><small>APERÇU INTERACTIF · DONNÉES FICTIVES</small><h1>Recherche de produits</h1><p>Neuf, usagé et non réservé dans la même interface.</p><ul><li>Change les onglets et essaie les filtres.</li><li>Les fiches regroupent les lignes par produit et conservent chaque entrepôt.</li><li>Déplie les détails pour voir les colonnes du fichier.</li></ul><button onclick="document.querySelector('iframe').contentDocument.querySelector('#nonreserved-results').scrollIntoView({block:'center',behavior:'smooth'})">Voir les produits non réservés ↓</button><footer>Interface du code en développement. Données entièrement fictives. Les actions Power BI sont simulées et ne lancent aucun export réel. Le bloc d’actualisation se trouve tout en bas.</footer></aside><iframe title="Interface Toolbox de démonstration" srcdoc="TOOLBOX_DOCUMENT"></iframe></main></html>'''
+if '--nonreserved' in sys.argv:
+    fragment = fragment.replace('max-width:1120px', 'max-width:1400px').replace('grid-template-columns:1fr 440px', 'grid-template-columns:minmax(220px,1fr) 390px 390px').replace('gap:56px', 'gap:28px').replace('width:440px', 'width:390px').replace('padding-top:56px', 'padding-top:24px').replace('max-width:800px', 'max-width:1100px')
+    fragment = fragment.replace('<h1>Recherche de produits</h1>', '<h1>Plus de produits à l’écran.</h1>').replace('Neuf, usagé et non réservé dans la même interface.', 'Fiches compactes, filtres repliés et inventaire par entrepôt.').replace('Change les onglets et essaie les filtres.', 'Change les onglets ou ouvre les filtres au besoin.').replace('Déplie les détails pour voir les colonnes du fichier.', 'Dans Commandes prêtes, choisis Sales Responsible avant de relire le rapport.')
+    fragment = fragment.replace('<iframe title="Interface Toolbox de démonstration" srcdoc="TOOLBOX_DOCUMENT"></iframe>', '<section><small>PRODUITS · NON RÉSERVÉ</small><iframe title="Produits non réservés" srcdoc="TOOLBOX_DOCUMENT"></iframe></section><section><small>COMMANDES PRÊTES</small><iframe title="Commandes prêtes" srcdoc="READY_DOCUMENT"></iframe></section>')
+    ready = doc.replace("module:'nonreserved',at:now", "module:'powerbi',at:now").replace('globalThis.__demoNonReserved=true;', "globalThis.__demoNonReserved=true;globalThis.__demoInstance='preview-orders';globalThis.__demoResponsible='ALEX MARTIN';", 1)
+    fragment = fragment.replace('READY_DOCUMENT', html.escape(ready, quote=True))
 if 'TOOLBOX_DOCUMENT' in fragment:
     fragment = fragment.replace('TOOLBOX_DOCUMENT', html.escape(doc, quote=True))
 else:
     fragment = re.sub(r'(\bsrcdoc=")[^"]*(")', lambda m: m[1] + html.escape(doc, quote=True) + m[2], fragment)
 DEST.write_text(fragment, encoding='utf-8')
-assert DEST.stat().st_size < 1_000_000
+assert DEST.stat().st_size < (2_000_000 if '--nonreserved' in sys.argv else 1_000_000)
 print(f'Interactive preview: {DEST.stat().st_size:,} bytes; actual UI, local fixtures, no network calls.')

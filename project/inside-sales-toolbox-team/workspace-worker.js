@@ -1,5 +1,7 @@
-// Open a reusable, collapsed workspace. No CRM writes or report reads are run here.
 (()=>{
+// Open a reusable, collapsed workspace. No CRM writes or report reads are run here.
+const build=chrome=>{
+ const ToolboxTabGroup=globalThis.ToolboxTabGroup?.forChrome?.(chrome)||globalThis.ToolboxTabGroup;
  const registryKey='toolboxWorkspaceTabs';let running=null,registryQueue=Promise.resolve();
  const usedId='458f40a9-2b3f-4518-a3cb-d699fef65baa';
  const reportId=value=>{
@@ -21,7 +23,7 @@
   if(!await chrome.permissions.contains({origins:['https://solotech.operations.dynamics.com/*','https://app.powerbi.com/*']}))throw Error('Autorise les accès D365 et Power BI avant de préparer les onglets.');
   if(!chrome.tabs.group||!chrome.tabGroups)throw Error('Le regroupement des onglets n’est pas disponible dans ce navigateur.');
   windowId=await normalWindow(windowId);
-  const [session,local,tabs,groups]=await Promise.all([chrome.storage.session.get(['d365TargetId','productSearchTab','powerBITab','powerBIResolvedURL','usedPowerBITab','usedPowerBIResolvedURL']),chrome.storage.local.get([registryKey,'toolboxPowerBI','toolboxPowerBIResolvedURL']),chrome.tabs.query({url:['https://solotech.operations.dynamics.com/*','https://app.powerbi.com/*']}),chrome.tabGroups.query({title:'Solotech Toolbox'})]);
+  const [session,local,tabs,groups]=await Promise.all([chrome.storage.session.get(['d365TargetId','productSearchTab','powerBITab','powerBIResolvedURL','usedPowerBITab','usedPowerBIResolvedURL']),chrome.storage.local.get([registryKey,'toolboxPowerBI','toolboxPowerBIResolvedURL']),chrome.tabs.query({url:['https://solotech.operations.dynamics.com/*','https://app.powerbi.com/*']}),chrome.tabGroups.query({title:ToolboxTabGroup.title||'Solotech Toolbox'})]);
   const registry=local[registryKey]||{},groupIds=new Set(groups.map(g=>g.id)),knownReady=session.powerBIResolvedURL||local.toolboxPowerBIResolvedURL||registry.ready?.url;
   const definitions=[
    {slot:'prospects',key:'d365TargetId',url:D365_URL,matches:t=>ToolboxTabs.matches({...t,url:urlOf(t)},['smmBusinessRelationsListPage'])},
@@ -31,7 +33,8 @@
   ];
   const results=await Promise.allSettled(definitions.map(async d=>{
    const candidates=tabs.filter(t=>!t.pinned&&d.matches(t));
-   const tab=candidates.find(t=>t.id===session[d.key])||candidates.find(t=>t.id===registry[d.slot]?.id)||candidates.find(t=>t.windowId===windowId)||candidates[0]||await chrome.tabs.create({windowId,url:d.url,active:false});
+   let tab=candidates.find(t=>t.id===session[d.key])||candidates.find(t=>t.id===registry[d.slot]?.id)||candidates.find(t=>t.windowId===windowId)||candidates[0]||await chrome.tabs.create({windowId,url:d.url,active:false});
+   if(chrome.__toolboxScope)tab=await ToolboxInstances.reserve(chrome,tab,{windowId,url:d.url});
    const continuation=d.slot==='prospects'&&tabs.some(t=>t.id===session.d365TargetId&&ToolboxTabs.matches({...t,url:urlOf(t)},['smmBusRelTable','SalesQuotationTable']));
    if(!continuation)await chrome.storage.session.set({[d.key]:tab.id});return {d,tab,reused:candidates.some(t=>t.id===tab.id)};
   }));
@@ -51,5 +54,7 @@
   if(!change.url||!bi(change.url))return;
   updateRegistry(saved=>{const r=saved.ready;if(!r||r.id!==id||[usedId,'d8c07521-770e-41bd-be72-a23a1dbf41ff'].includes(reportId(change.url)))return null;const old=reportId(r.url),fresh=reportId(change.url);if(!fresh||old&&old!==fresh)return null;r.url=change.url;return saved;}).catch(()=>{});
  });
- globalThis.ToolboxWorkspace={prepare};
+ return {prepare};
+};
+globalThis.ToolboxWorkspace=globalThis.ToolboxInstances?ToolboxInstances.register('workspace',build):build(globalThis.chrome);
 })();

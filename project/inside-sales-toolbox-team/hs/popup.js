@@ -1,4 +1,5 @@
 import {SOURCE,parseSource,search} from './core.js';
+if(parent!==window&&parent.ToolboxInstances?.current)globalThis.chrome=parent.chrome;
 const $=id=>document.getElementById(id);
 let language='fr';
 const t=(fr,en)=>language==='en'?en:fr;

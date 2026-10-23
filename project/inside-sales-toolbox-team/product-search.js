@@ -1,3 +1,8 @@
+(()=>{
+const build=chrome=>{
+const ToolboxTabs=globalThis.ToolboxTabs?.forChrome?.(chrome)||globalThis.ToolboxTabs;
+const ToolboxTabGroup=globalThis.ToolboxTabGroup?.forChrome?.(chrome)||globalThis.ToolboxTabGroup;
+const ToolboxNavigation={remember:module=>chrome.storage.session.set({toolboxNavigation:{module,at:Date.now()}})};
 const PRODUCT_SEARCH_URL='https://solotech.operations.dynamics.com/?cmp=CAOP&mi=SOLMCRProductQuickQuote';
 let productSearchBusy=false;
 async function searchProduct(selection){
@@ -12,6 +17,7 @@ async function searchProduct(selection){
  const saved=await chrome.storage.session.get('productSearchTab');
  let tab=await ToolboxTabs.find(['SOLMCRProductQuickQuote'],saved.productSearchTab);
  if(!tab)tab=await chrome.tabs.create({url:PRODUCT_SEARCH_URL,active:false});
+ if(chrome.__toolboxScope)tab=await ToolboxInstances.reserve(chrome,tab,{url:PRODUCT_SEARCH_URL});
  await ToolboxTabGroup.add(tab);
  await chrome.storage.session.set({productSearchTab:tab.id});
  await ToolboxNavigation.remember('products');
@@ -61,3 +67,9 @@ async function searchProduct(selection){
  }catch(e){await ToolboxNavigation.remember('products');await chrome.storage.local.set({toolboxProductSearch:{query:text,state:'error',message:e.message,headers:[],rows:[],tabId:(await chrome.storage.session.get('productSearchTab')).productSearchTab}});throw e;}finally{productSearchBusy=false;}
 }
 chrome.runtime.onMessage.addListener((m,s,reply)=>{if(s.id!==chrome.runtime.id||m?.kind!=='productSearch')return;searchProduct(m.text).then(value=>reply({value}),e=>reply({error:e.message}));return true;});
+
+return {searchProduct,PRODUCT_SEARCH_URL};
+};
+const values=globalThis.ToolboxInstances?ToolboxInstances.register('products',build):build(globalThis.chrome);
+Object.defineProperties(globalThis,Object.getOwnPropertyDescriptors(values));
+})();

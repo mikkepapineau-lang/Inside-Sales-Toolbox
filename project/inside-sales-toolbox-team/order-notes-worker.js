@@ -1,3 +1,5 @@
+(()=>{
+const build=chrome=>{
 // Enrich report rows from already-open, authorized D365 order forms only.
 async function collectPowerBIOrderNotes(data,requestedOrder=''){
  const M=ToolboxOrderModel,cols=M.columns(data.headers),wanted=new Set(data.rows.filter(r=>requestedOrder?String(r.values[cols.order])===requestedOrder:!M.notes(data,r).available).map(r=>String(r.values[cols.order]).toUpperCase()));
@@ -24,7 +26,8 @@ async function collectPowerBIOrderNotes(data,requestedOrder=''){
 }
 async function readPowerBIOrderNotes(order){
  if(typeof order!=='string'||!/^SO-[A-Z0-9]+(?:-[A-Z0-9]+)*$/i.test(order))throw Error('Numéro de SO invalide.');
- if(powerBIBusy)throw Error('Une lecture des commandes est déjà en cours.');powerBIBusy=true;
+ const state=chrome.__toolboxScope?ToolboxInstances.worker('powerbi',chrome.__toolboxScope):globalThis;
+ if(state.powerBIBusy)throw Error('Une lecture des commandes est déjà en cours.');state.powerBIBusy=true;
  try{
   const data=(await chrome.storage.local.get('toolboxPowerBI')).toolboxPowerBI;
   if(!data?.rows?.some(r=>String(r.values[ToolboxOrderModel.columns(data.headers).order])===order))throw Error('Cette SO n’est plus dans le relevé courant. Actualise la liste.');
@@ -32,5 +35,11 @@ async function readPowerBIOrderNotes(order){
   const current=(await chrome.storage.local.get('toolboxPowerBI')).toolboxPowerBI;
   if(JSON.stringify(current)!==JSON.stringify(data))throw Error('Le relevé a changé. Relance la lecture des Internal Notes.');
   await chrome.storage.local.set({toolboxPowerBI:result.data});return {order,matched:result.matched};
- }finally{powerBIBusy=false;}
+ }finally{state.powerBIBusy=false;}
 }
+
+return {collectPowerBIOrderNotes,readPowerBIOrderNotes};
+};
+const values=globalThis.ToolboxInstances?ToolboxInstances.register('notes',build):build(globalThis.chrome);
+Object.defineProperties(globalThis,Object.getOwnPropertyDescriptors(values));
+})();

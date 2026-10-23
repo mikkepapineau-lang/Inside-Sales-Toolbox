@@ -1,3 +1,7 @@
+(()=>{
+const build=chrome=>{
+const ToolboxTabs=globalThis.ToolboxTabs?.forChrome?.(chrome)||globalThis.ToolboxTabs;
+const ToolboxTabGroup=globalThis.ToolboxTabGroup?.forChrome?.(chrome)||globalThis.ToolboxTabGroup;
 const D365_ORIGIN='https://solotech.operations.dynamics.com';
 const D365_URL=D365_ORIGIN+'/?cmp=CAOP&mi=smmBusinessRelationsListPage';
 const pauseD365=ms=>new Promise(r=>setTimeout(r,ms));
@@ -12,6 +16,7 @@ async function targetD365(action='fill'){
  // A new prospect starts from All prospects. Product Search and orders are never targets.
  if(!tab)tab=await ToolboxTabs.find(action==='fill'?['smmBusinessRelationsListPage']:prospectModules,state.d365TargetId);
  if(!tab){if(!['fill','show'].includes(action))throw Error('Onglet All prospects introuvable. Ouvre le prospect à utiliser dans D365.');tab=await chrome.tabs.create({url:D365_URL,active:false});}
+ if(chrome.__toolboxScope)tab=await ToolboxInstances.reserve(chrome,tab,{url:D365_URL});
  await chrome.storage.session.set({d365TargetId:tab.id});
  await ToolboxTabGroup.add(tab);
  const end=Date.now()+25000;while(Date.now()<end){tab=await chrome.tabs.get(tab.id);if(tab.status==='complete')break;await pauseD365(300);}
@@ -105,3 +110,9 @@ chrome.runtime.onMessage.addListener((m,s,reply)=>{
  }
  chrome.storage.session.set(values).then(()=>reply({accepted:true}),()=>reply({accepted:false}));return true;
 });
+
+return {correctCompany,targetD365,wakeD365,restoreD365,createdQuotationTarget,openCreatedQuotation,d365Run,D365_ORIGIN,D365_URL};
+};
+const values=globalThis.ToolboxInstances?ToolboxInstances.register('d365',build):build(globalThis.chrome);
+Object.defineProperties(globalThis,Object.getOwnPropertyDescriptors(values));
+})();

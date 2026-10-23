@@ -4,7 +4,7 @@
  const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
  function state(value={}){
   if(!value||typeof value!=='object')value={};
-  return {subregion:ToolboxUsedRegions.normalize(value.subregion),query:typeof value.query==='string'?value.query.slice(0,5000):'',availableOnly:value.availableOnly===true,expanded:value.expanded!==false,
+  return {subregion:ToolboxUsedRegions.normalize(value.subregion),query:typeof value.query==='string'?value.query.slice(0,5000):'',availableOnly:value.availableOnly===true,expanded:value.expanded===true,
    selections:Object.fromEntries(fields.map(f=>[f.key,new Set((Array.isArray(value.selections?.[f.key])?value.selections[f.key]:[]).filter(v=>typeof v==='string'&&v.length<=32000).slice(0,15000))]))};
  }
  function serialize(s){return {subregion:ToolboxUsedRegions.normalize(s.subregion),query:s.query,availableOnly:s.availableOnly,expanded:s.expanded,selections:Object.fromEntries(fields.map(f=>[f.key,[...s.selections[f.key]].sort()]))};}

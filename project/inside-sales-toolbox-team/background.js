@@ -1,3 +1,4 @@
+importScripts('instances.js');
 importScripts('navigation.js','tab-group.js','i18n-dictionary.js','model.js','company.js');
 async function lookup(domain){
  if(Bridge.domain('lookup@'+domain)!==domain)throw Error('Domaine non valide.');
@@ -37,7 +38,7 @@ importScripts('product-search.js','contact-model.js','context-menu.js');
 
 importScripts('google-address-worker.js');
 
-importScripts('order-model.js','order-notes-worker.js','powerbi-worker.js');
+importScripts('ready-scope.js','order-model.js','order-notes-worker.js','powerbi-worker.js');
 
 importScripts('used-catalogue.js','used-regions.js','used-powerbi-worker.js');
 importScripts('workspace-worker.js');

@@ -8,7 +8,7 @@ Un troisième onglet **Non réservé** complète Neuf / Stock D365 et Usagé. Il
 2. Vérifier la devise et les filtres voulus dans Power BI. Le Toolbox conserve ces filtres; il ne choisit pas de sous-région et ne crée pas trois exports pour ce rapport.
 3. Tout en bas du module, déplier Actualisation du catalogue puis cliquer une fois sur Actualiser par Excel.
 4. Le moteur identifie le tableau par ITEMID, QtyNotReserved et ses colonnes de produit/coût, puis utilise les trois points de ce visuel. Il choisit Exporter les données et l’option Excel de tableau disponible. Le fichier est récupéré puis importé automatiquement, y compris lorsque le navigateur attend encore Ouvrir / Enregistrer.
-5. Rechercher un produit ou filtrer société, site, entrepôt, fabricant et catégories présentes dans l’export. Les résultats sont affichés par tranches de 80 produits.
+5. Rechercher un produit ou déplier Filtres pour choisir société, site, entrepôt, fabricant et catégories présentes dans l’export. Les résultats sont affichés par tranches de 80 produits.
 
 Les fiches partagent le layout D365. PRODUCTNAME sert de SKU, ITEMID de numéro D365, PRODUCTDESCRIPTION de description et MANUFACTURER de fabricant. QtyNotReserved est une quantité non réservée et AvgUnitCost un **coût unitaire moyen**. Ce coût n’est ni un prix de vente ni un NBV. Les lignes d’un même produit sont regroupées sans additionner les quantités ni moyenner les coûts entre sociétés, sites ou entrepôts. Les détails conservent toutes les colonnes du fichier, notamment celles situées hors de la zone visible du tableau.
 
@@ -33,3 +33,5 @@ Ces essais utilisent des données fictives. Le rapport Power BI connecté, ses p
 ## Mise à jour du code
 
 Le module ajoute `nonreserved-model.js`, `nonreserved-store.js`, `nonreserved-reader.js`, `nonreserved-worker.js` et `nonreserved-panel.js`. Les interfaces popup/panneau, la navigation, le chargement du background, le parseur XLSX et le moteur d’export sont actualisés ensemble. Remplacer le dossier complet de sources de l’édition équipe puis recharger l’extension pour un essai de développement. Le ZIP publié 3.5.13 ne contient pas encore cet onglet.
+
+La présentation compacte et la séparation des sessions sont décrites dans [la note du 23 octobre](compact-sessions-ready.md).

@@ -1,4 +1,6 @@
 importScripts('google-address.js');
+(()=>{
+const build=chrome=>{
 let googleAddressBusy=false;
 async function googleAddress(candidate,email){
  if(googleAddressBusy)throw Error('Une recherche Google est déjà en cours.');
@@ -38,3 +40,9 @@ chrome.runtime.onMessage.addListener((m,s,reply)=>{
  if(s.id!==chrome.runtime.id||m?.kind!=='googleAddress')return;
  googleAddress(m.candidate,m.email).then(value=>reply({value}),e=>reply({error:e.message}));return true;
 });
+
+return {googleAddress};
+};
+const values=globalThis.ToolboxInstances?ToolboxInstances.register('google',build):build(globalThis.chrome);
+Object.defineProperties(globalThis,Object.getOwnPropertyDescriptors(values));
+})();

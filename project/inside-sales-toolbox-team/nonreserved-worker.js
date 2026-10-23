@@ -1,3 +1,7 @@
+(()=>{
+const build=chrome=>{
+const ToolboxTabGroup=globalThis.ToolboxTabGroup?.forChrome?.(chrome)||globalThis.ToolboxTabGroup;
+const ToolboxNonReservedStore=globalThis.ToolboxNonReservedStore.forInstance?.(chrome.__toolboxScope||'')||globalThis.ToolboxNonReservedStore;
 let nonReservedBusy=false,nonReservedStopped=false,nonReservedTarget=null;
 const nonReservedReport=tab=>ToolboxNonReserved.matches(tab?.pendingUrl||tab?.url);
 async function nonReservedTab(){
@@ -5,6 +9,7 @@ async function nonReservedTab(){
  const session=await chrome.storage.session.get('nonReservedTab');let tab;try{tab=await chrome.tabs.get(session.nonReservedTab);}catch{}
  if(!nonReservedReport(tab)){const tabs=(await chrome.tabs.query({url:'https://app.powerbi.com/*'})).filter(nonReservedReport);tab=tabs.find(t=>t.active)||tabs[0]||await chrome.tabs.create({url,active:false});}
  if(new URL(tab.pendingUrl||tab.url).pathname!==new URL(url).pathname)tab=await chrome.tabs.update(tab.id,{url});
+ if(chrome.__toolboxScope)tab=await ToolboxInstances.reserve(chrome,tab,{url:url});
  await chrome.storage.session.set({nonReservedTab:tab.id});await ToolboxTabGroup.add(tab);return {tab,url};
 }
 async function nonReservedCommand(kind,payload={}){
@@ -55,3 +60,9 @@ chrome.runtime.onMessage.addListener((m,s,reply)=>{
  if(!['nonReservedInit','nonReservedExport','nonReservedImport','nonReservedOpen','nonReservedSetURL'].includes(m?.kind))return;
  nonReservedCommand(m.kind,m).then(value=>reply({value}),e=>reply({error:e.message}));return true;
 });
+
+return {nonReservedTab,nonReservedCommand};
+};
+const values=globalThis.ToolboxInstances?ToolboxInstances.register('nonreserved',build):build(globalThis.chrome);
+Object.defineProperties(globalThis,Object.getOwnPropertyDescriptors(values));
+})();

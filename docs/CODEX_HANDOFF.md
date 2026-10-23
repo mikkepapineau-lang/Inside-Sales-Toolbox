@@ -1,8 +1,10 @@
 # Reprise du projet dans Codex
 
-État du 22 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
+État du 23 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
 ## Développement après 3.5.13
+
+La vue de produits est compactée, avec filtres repliés et inventaire sur des lignes courtes. Commandes prêtes demande **Sales Responsible**, champ confirmé par Michaël, et contrôle le périmètre du relevé. Les vues du Toolbox disposent de sessions, de résultats et d’onglets de travail indépendants. Voir [le fonctionnement, les tests et l’aperçu](diagnostics/compact-sessions-ready.md). Vérification courante : 63 scripts et 23 suites, plus les parcours Chromium; essais connectés toujours à faire.
 
 L’actualisation Usagé, ses messages et son bouton d’arrêt sont placés tout en bas, après les produits, la pagination et Options du catalogue (commit `ba0a620`).
 

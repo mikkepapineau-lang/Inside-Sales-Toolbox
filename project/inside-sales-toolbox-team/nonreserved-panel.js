@@ -13,6 +13,7 @@
   if(!data){el('nonreserved-count').textContent='';root.append(node('p','muted','Actualise par Excel ou importe un fichier Non-Reserved pour commencer.'));el('nonreserved-more').hidden=true;return;}
   const cols=M.indexes(data.headers),get=(r,key)=>String(cols[key]>=0?r.values[cols[key]]??'':'');
   const query=M.norm(el('nonreserved-query').value),available=el('nonreserved-available').checked;
+  const active=controls.slice(1).filter(key=>el('nonreserved-'+key).value).length;el('nonreserved-filter-count').textContent=active?'· '+active+' actif(s)':'';
   const filtered=index.filter(x=>(!query||x.search.includes(query))&&(!available||x.quantity>0)&&controls.slice(1).every(key=>!el('nonreserved-'+key).value||get(x.row,key)===el('nonreserved-'+key).value));
   const groups=new Map();for(const {row,i}of filtered){const key=get(row,'item')?'item:'+get(row,'item'):'row:'+i;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
   el('nonreserved-count').textContent=groups.size+' article(s) · '+filtered.length+' / '+data.rows.length+' ligne(s)';el('nonreserved-more').hidden=groups.size<=limit;
@@ -22,9 +23,9 @@
    const stocks=node('div','product-warehouses');
    for(const row of rows){
     const block=node('section','product-warehouse'),h=node('div','product-warehouse-heading'),q=N(get(row,'quantity')),stock=node('div','stock-quantity '+(q===null?'is-unverified':q>0?'is-available':'is-empty'));
-    stock.append(node('strong','source-value',q===null?'?':get(row,'quantity')),node('span','stock-quantity-label',q===null?'À vérifier':'Non réservé'));h.append(node('h4','source-value',get(row,'warehouse')||'Entrepôt non renseigné'),stock);block.append(h);
+    stock.append(node('strong','source-value',q===null?'?':get(row,'quantity')),node('span','stock-quantity-label',q===null?'À vérifier':'Qté'));h.append(node('h4','source-value',[get(row,'warehouse')||'Entrepôt non renseigné',get(row,'entity'),get(row,'site')].filter(Boolean).join(' · ')),stock);block.append(h);
     block.append(node('p','product-location source-value',[get(row,'entity'),get(row,'site')].filter(Boolean).join(' · ')));
-    const dl=node('dl','product-metrics product-warehouse-metrics'),pair=node('div','');pair.append(node('dt','','Coût unitaire moyen'),node('dd','source-value',money(get(row,'cost'))));dl.append(pair);block.append(dl);stocks.append(block);
+    const dl=node('dl','product-metrics product-warehouse-metrics'),pair=node('div','');pair.append(node('dt','','Coût moy.'),node('dd','source-value',money(get(row,'cost'))));dl.append(pair);block.append(dl);stocks.append(block);
    }card.append(stocks);
    const details=node('details','product-details');details.append(node('summary','','Toutes les informations · '+rows.length+' ligne(s)'));const source=node('div','product-source-lines');
    rows.forEach((row,i)=>{const section=node('section','product-source-line');section.append(node('h4','source-value',[get(row,'entity'),get(row,'site'),get(row,'warehouse')].filter(Boolean).join(' · ')||'Ligne source '+(i+1)));const dl=node('dl','product-all-values');data.headers.forEach((label,j)=>{const pair=node('div','');pair.append(node('dt','',label),node('dd','source-value',row.values[j]||'Non renseigné'));dl.append(pair);});section.append(dl);source.append(section);});details.append(source);card.append(details);root.append(card);
@@ -50,6 +51,7 @@
  }
  let queryTimer;el('nonreserved-query').oninput=()=>{clearTimeout(queryTimer);queryTimer=setTimeout(()=>{limit=80;render();},120);};
  for(const key of controls.slice(1))el('nonreserved-'+key).onchange=()=>{limit=80;render();};el('nonreserved-available').onchange=()=>{limit=80;render();};
+ el('nonreserved-filter-reset').onclick=()=>{for(const key of controls.slice(1))el('nonreserved-'+key).value='';limit=80;render();};
  el('nonreserved-more').onclick=()=>{limit+=80;render();};el('nonreserved-refresh').onclick=()=>refresh();el('nonreserved-import').onclick=()=>el('nonreserved-file').click();el('nonreserved-file').onchange=()=>{const file=el('nonreserved-file').files?.[0];if(file)return refresh(file);};
  el('nonreserved-stop').onclick=async()=>{cancelled=true;try{await command('nonReservedStop');}catch(e){status={state:'error',message:e.message};render();}};
  el('nonreserved-open').onclick=async()=>{try{await command('nonReservedOpen');}catch(e){status={state:'error',message:e.message};render();}};

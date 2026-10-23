@@ -13,7 +13,7 @@
  }
  function columns(headers){
   const keys=headers.map(key),find=names=>{for(const name of names){const i=keys.indexOf(name);if(i>=0)return i;}return -1;};
-  return {order:find(['salesordernumber','sonumber','numerodecommande','numerocommande']),customer:find(['accountname','customername','nomducompte','nomduclient','customer','client']),amount:find(['totalnotinvoiced','totalnonfacture','amount','montant']),qty:find(['physicalreserveqty','quantitereserveephysiquement']),delivery:find(['modeofdelivery','deliverymode','modedelivraison']),payment:find(['paymentterms','termsofpayment','termesdepaiement','conditionsdepaiement','payment','paiement']),notes:find(['internalnotes','internalnote','solinternalnotes','notesinternes','noteinterne'])};
+  return {salesperson:find(['salesresponsible','salespersonresponsible','responsablecommercial']),order:find(['salesordernumber','sonumber','numerodecommande','numerocommande']),customer:find(['accountname','customername','nomducompte','nomduclient','customer','client']),amount:find(['totalnotinvoiced','totalnonfacture','amount','montant']),qty:find(['physicalreserveqty','quantitereserveephysiquement']),delivery:find(['modeofdelivery','deliverymode','modedelivraison']),payment:find(['paymentterms','termsofpayment','termesdepaiement','conditionsdepaiement','payment','paiement']),notes:find(['internalnotes','internalnote','solinternalnotes','notesinternes','noteinterne'])};
  }
  function notes(data,row){
   const cols=columns(data.headers),i=cols.notes;

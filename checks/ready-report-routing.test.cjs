@@ -13,7 +13,7 @@ function fixture(tabs,session={},local={}){
  for(const url of [direct,embed,legacy]){f=fixture([{id:3,url},{id:4,url:'https://app.powerbi.com/reportEmbed?reportId='+used}],{powerBITab:4});assert.equal((await f.c.powerBITab()).id,3);assert.equal(f.created.length,0);assert.equal(f.session.powerBITab,3);}
  f=fixture([{id:3,url:embed,active:true},{id:4,url:direct}]);assert.equal((await f.c.powerBITab()).id,4);assert.equal(f.created.length,0);
  f=fixture([{id:3,url:'https://app.powerbi.com/',pendingUrl:embed}]);assert.equal((await f.c.powerBITab()).id,3);
- f=fixture([{id:3,url:'https://app.powerbi.com/reportEmbed?reportId='+used}]);assert.equal((await f.c.powerBITab()).id,99);assert(f.created[0].url.includes(id));assert(f.created[0].url.includes('visual=e012a952be9d5b6b572d'));
+ f=fixture([{id:3,url:'https://app.powerbi.com/reportEmbed?reportId='+used}]);assert.equal((await f.c.powerBITab()).id,99);assert(f.created[0].url.includes(id));assert(!f.created[0].url.includes('bookmarkGuid='));assert(!f.created[0].url.includes('shareVisual'));
  const custom='https://app.powerbi.com/groups/me/reports/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/ReportSection';f=fixture([{id:8,url:custom}],{}, {toolboxPowerBIResolvedURL:custom});assert.equal((await f.c.powerBITab()).id,8);assert.equal(f.created.length,0);
  console.log('PASS Open Orders routing: user visual URL, embedded URL and short link, Used rejection, duplicate/host guards, stale-tab recovery, persisted binding, pending navigation and no duplicate report tabs');
 })().catch(e=>{console.error(e);process.exitCode=1;});
