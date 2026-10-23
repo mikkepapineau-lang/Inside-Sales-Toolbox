@@ -30,7 +30,7 @@ async function readPowerBI(kind){
    if(!isReadyPowerBI(active,active?.url))throw Error('Affiche le rapport Power BI dans l’onglet actif, puis réessaie.');
    await chrome.storage.session.set({powerBITab:active.id,powerBIResolvedURL:active.url});await chrome.storage.local.set({toolboxPowerBIResolvedURL:active.url});await ToolboxTabGroup.add(active);return {tabId:active.id};
   }
-  if(kind==='powerBIRead'&&globalThis.ToolboxReadyScope){stage='Choix de Sales Responsible';scope=ToolboxReadyScope.requireSelection((await chrome.storage.local.get('toolboxReadyScope')).toolboxReadyScope);}
+  if(kind==='powerBIRead'&&globalThis.ToolboxReadyScope){stage='Choix de Sales Rep Name';scope=ToolboxReadyScope.requireSelection((await chrome.storage.local.get('toolboxReadyScope')).toolboxReadyScope);}
   stage='Ouverture ou récupération de l’onglet';tab=await powerBITab();
   if(kind==='powerBIOpen'){const opened=await chrome.tabs.update(tab.id,{active:true});await chrome.windows.update(opened.windowId,{focused:true});return {tabId:tab.id};}
   if(kind==='powerBIRead')await chrome.storage.local.set({toolboxPowerBIStatus:{state:'loading',tabId:tab.id}});
@@ -43,7 +43,7 @@ async function readPowerBI(kind){
    stage='Accès au contenu · '+label;
    await chrome.scripting.executeScript({target,files:scope?['powerbi-reader.js','ready-salesperson.js']:['powerbi-reader.js']});
    stage='Lecture du tableau · '+label;
-   return chrome.scripting.executeScript({target,func:async(diagnostic,scope)=>{try{if(diagnostic)return {diagnostic:globalThis.ToolboxPowerBIReader.diagnostic()};await globalThis.ToolboxPowerBIReader.ensureReady();if(scope)await globalThis.ToolboxReadySalesperson.apply(scope);const value=await globalThis.ToolboxPowerBIReader.read();if(scope){const proof=globalThis.ToolboxReadySalesperson.confirmed(scope);if(!proof.verified)throw Error('Sales Responsible a changé pendant la lecture.');return {...value,readyFilter:proof};}return value;}catch(e){return {error:e.message,diagnostic:globalThis.ToolboxPowerBIReader.diagnostic()};}},args:[kind==='powerBIDiagnostic',scope]});
+   return chrome.scripting.executeScript({target,func:async(diagnostic,scope)=>{try{if(diagnostic)return {diagnostic:globalThis.ToolboxPowerBIReader.diagnostic()};await globalThis.ToolboxPowerBIReader.ensureReady();if(scope)await globalThis.ToolboxReadySalesperson.apply(scope);const value=await globalThis.ToolboxPowerBIReader.read();if(scope){const proof=globalThis.ToolboxReadySalesperson.confirmed(scope);if(!proof.verified)throw Error('Sales Rep Name a changé pendant la lecture.');return {...value,readyFilter:proof};}return value;}catch(e){return {error:e.message,diagnostic:globalThis.ToolboxPowerBIReader.diagnostic()};}},args:[kind==='powerBIDiagnostic',scope]});
   }
   // A sandboxed child frame must not block extraction from the main report page.
   let frames=await inspect({tabId:tab.id},'page principale');

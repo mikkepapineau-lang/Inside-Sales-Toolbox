@@ -43,10 +43,14 @@
  async function reload(){const id=++loadId;try{const value=await ToolboxNonReservedStore.get();if(id===loadId)install(value||null);}catch(e){if(id===loadId){status={state:'error',message:e.message};render();}}}
  async function command(kind,payload={}){const result=await chrome.runtime.sendMessage({kind,...payload});if(result?.error)throw Error(result.error);return result?.value;}
  async function refresh(file){
-  if(busy||status.state==='loading')return;busy=true;cancelled=false;status={state:'loading',message:file?'Lecture du fichier Non-Reserved…':'Préparation de l’export Non-Reserved…'};render();
+  if(busy||status.state==='loading')return;
+  // Request the narrow Power BI origin directly from the user's click. Chrome
+  // rejects a later background injection when optional host access was never granted.
+  const powerBIAccess=file?null:chrome.permissions.request({origins:['https://app.powerbi.com/*']});
+  busy=true;cancelled=false;status={state:'loading',message:file?'Lecture du fichier Non-Reserved…':'Préparation de l’export Non-Reserved…'};render();
   try{
    let receipt;
-   if(!file){receipt=await command('nonReservedExport');if(!receipt?.base64||receipt.base64.length>35000000)throw Error('Le fichier Excel Non-Reserved n’a pas été reçu.');const bytes=Uint8Array.from(atob(receipt.base64),c=>c.charCodeAt(0)),hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');if(bytes.length!==receipt.size||hash!==receipt.sha256)throw Error('L’empreinte du fichier Non-Reserved ne correspond pas.');file=new File([bytes],'Non-Reserved.xlsx');}
+   if(!file){if(!await powerBIAccess)throw Error('Accès à Power BI refusé. Autorise app.powerbi.com pour lancer l’export Non-Reserved.');receipt=await command('nonReservedExport');if(!receipt?.base64||receipt.base64.length>35000000)throw Error('Le fichier Excel Non-Reserved n’a pas été reçu.');const bytes=Uint8Array.from(atob(receipt.base64),c=>c.charCodeAt(0)),hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');if(bytes.length!==receipt.size||hash!==receipt.sha256)throw Error('L’empreinte du fichier Non-Reserved ne correspond pas.');file=new File([bytes],'Non-Reserved.xlsx');}
    const parsed=await ToolboxUsedExcel.read(file,'nonreserved');if(cancelled)throw Error('Actualisation Non-Reserved arrêtée.');
    const result=await command('nonReservedImport',{data:parsed,...(receipt?{exportId:receipt.exportId,sha256:receipt.sha256}:{manual:true})});status={state:'done',message:'Catalogue Non-Reserved importé : '+result.count+' lignes.'};await reload();
   }catch(e){status={state:'error',message:e.message};await chrome.storage.local.set({toolboxNonReservedStatus:status}).catch(()=>{});}
@@ -57,7 +61,7 @@
  el('nonreserved-filter-reset').onclick=()=>{for(const key of controls.slice(1))el('nonreserved-'+key).value='';saveFilters();limit=80;render();};
  el('nonreserved-more').onclick=()=>{limit+=80;render();};el('nonreserved-refresh').onclick=()=>refresh();el('nonreserved-import').onclick=()=>el('nonreserved-file').click();el('nonreserved-file').onchange=()=>{const file=el('nonreserved-file').files?.[0];if(file)return refresh(file);};
  el('nonreserved-stop').onclick=async()=>{cancelled=true;try{await command('nonReservedStop');}catch(e){status={state:'error',message:e.message};render();}};
- el('nonreserved-open').onclick=async()=>{try{await command('nonReservedOpen');}catch(e){status={state:'error',message:e.message};render();}};
+ el('nonreserved-open').onclick=async()=>{try{const access=chrome.permissions.request({origins:['https://app.powerbi.com/*']});if(!await access)throw Error('Accès à Power BI refusé. Autorise app.powerbi.com pour ouvrir le rapport Non-Reserved.');await command('nonReservedOpen');}catch(e){status={state:'error',message:e.message};render();}};
  el('nonreserved-url-save').onclick=async()=>{try{await command('nonReservedSetURL',{url:el('nonreserved-url').value.trim()});el('nonreserved-url-status').textContent='Lien du rapport enregistré.';}catch(e){el('nonreserved-url-status').textContent=e.message;}};
  chrome.storage.onChanged.addListener((changes,area)=>{if(area!=='local')return;if(changes.toolboxNonReservedStatus){status=changes.toolboxNonReservedStatus.newValue||{};render();}if(changes.toolboxNonReservedFilters&&JSON.stringify(changes.toolboxNonReservedFilters.newValue)!==JSON.stringify(filterState)){filtersTouched=true;applyFilters(changes.toolboxNonReservedFilters.newValue);limit=80;render();}if(changes.toolboxNonReservedStamp)reload();if(changes.toolboxLanguage)render();});
  command('nonReservedInit').then(()=>chrome.storage.local.get(['toolboxNonReservedStatus','toolboxNonReservedReportURL','toolboxNonReservedFilters'])).then(saved=>{if(!filtersTouched)applyFilters(saved.toolboxNonReservedFilters);status=saved.toolboxNonReservedStatus||{};el('nonreserved-url').value=saved.toolboxNonReservedReportURL||M.reportURL;return reload();}).catch(e=>{status={state:'error',message:e.message};render();});

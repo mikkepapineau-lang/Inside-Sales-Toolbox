@@ -92,13 +92,19 @@ label {font-size:11px;font-weight:600}
 .tool-tile>span {font:10px/1.5 var(--font)}
 .workspace-prep,.tool-access,fieldset,.action-card,.dimension-card,.quote-card,.company-card,.editor-section,#toolbox-quick {background:var(--glass-strong);border:1px solid var(--line);border-radius:8px;box-shadow:inset 0 1px 0 #ffffff30}
 .bridge-step-footer {background:var(--canvas);border-color:var(--line);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
-.pricing-fields {background:var(--instrument);border:1px solid var(--line);border-radius:8px;box-shadow:inset 0 0 0 3px var(--surface-soft);padding:3px}
-.pricing-field {border-color:#76667e}
-.pricing-field-heading label,.pricing-currency-symbol,.pricing-unit,.pricing-result-tag {color:var(--readout);font-family:var(--font);font-size:10px}
-.pricing-input-row input {font-family:var(--font);color:var(--readout);font-size:26px;letter-spacing:-.35px}
-.pricing-field.is-result {background:#ffffff0c;box-shadow:inset 3px 0 0 var(--signal)}
-.pricing-lock {color:#e5dae9}
+.pricing-fields {background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:inset 0 0 0 3px var(--surface-soft);padding:3px}
+.pricing-field {border-color:var(--line)}
+.pricing-field-heading label,.pricing-currency-symbol,.pricing-unit,.pricing-result-tag {color:var(--ink);font-family:var(--font);font-size:10px}
+.pricing-input-row input {font-family:var(--font);color:var(--ink);font-size:26px;letter-spacing:-.35px}
+.pricing-field.is-result {background:var(--surface-soft);box-shadow:inset 3px 0 0 var(--signal)}
+.pricing-lock {color:var(--muted)}
 .pricing-lock[aria-pressed=true] {background:var(--signal);color:#302016}
+:root[data-appearance=dark] .pricing-fields {background:var(--instrument);box-shadow:inset 0 0 0 3px var(--surface-soft)}
+:root[data-appearance=dark] .pricing-field {border-color:#76667e}
+:root[data-appearance=dark] .pricing-field-heading label,:root[data-appearance=dark] .pricing-currency-symbol,:root[data-appearance=dark] .pricing-unit,:root[data-appearance=dark] .pricing-result-tag,:root[data-appearance=dark] .pricing-input-row input {color:var(--readout)}
+:root[data-appearance=dark] .pricing-field.is-result {background:#ffffff0c}
+:root[data-appearance=dark] .pricing-lock {color:#e5dae9}
+:root[data-appearance=dark] .pricing-lock[aria-pressed=true] {color:#302016}
 .pricing-tax-total,.conversion-output,body.hs-app #result {border-radius:8px;background:var(--surface-soft);border:1px solid var(--line);box-shadow:inset 3px 0 0 var(--signal)}
 .pricing-tax-total strong {font-family:var(--font);color:var(--ink);font-size:20px;letter-spacing:-.35px}
 .pricing-rate,.pricing-rate p,.calculator-instruction {font-family:var(--font)}

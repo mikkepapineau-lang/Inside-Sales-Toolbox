@@ -35,7 +35,7 @@
   el('powerbi-status').textContent=status.state==='loading'?(status.message||'Lecture du rapport Power BI…'):status.message||(data?'Lecture terminée.':'Clique sur Actualiser. Ready to PIK sera sélectionné automatiquement dans le rapport.');
   el('powerbi-status').dataset.state=status.state||'idle';el('powerbi-status').hidden=!!data&&status.state!=='loading'&&status.state!=='error'&&!status.message;
   el('powerbi-salesperson-field').hidden=scope.mode==='report';el('powerbi-scope-mode').disabled=status.state==='loading';el('powerbi-salesperson').disabled=status.state==='loading';
-  el('powerbi-scope-caption').textContent=scope.mode==='report'?'Périmètre : filtres actuels du rapport.':scope.salesperson?'Sales Responsible : '+scope.salesperson:'Choisis Sales Responsible avant d’actualiser.';
+  el('powerbi-scope-caption').textContent=scope.mode==='report'?'Périmètre : filtres actuels du rapport.':scope.salesperson?'Sales Rep Name : '+scope.salesperson:'Choisis Sales Rep Name avant d’actualiser.';
   const names=data?M.columns(data.headers).salesperson:-1,choices=names>=0?[...new Set(data.rows.map(r=>r.values[names]).filter(Boolean))]:[];el('powerbi-salespeople').replaceChildren(...choices.map(value=>{const option=node('option','source-value',value);option.value=value;return option;}));
   const confirmed=data&&S.same(data.readyScope,scope),selected=confirmed?M.select(data,filters):null;
   el('powerbi-scope-caption').hidden=!!confirmed;

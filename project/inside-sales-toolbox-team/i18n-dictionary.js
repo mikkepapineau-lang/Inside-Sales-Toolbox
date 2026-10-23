@@ -685,14 +685,14 @@ Object.assign(globalThis.ToolboxDictionary,{
  "La lecture ralentit si l’onglet passe en arrière-plan ou si la fenêtre est réduite.":"Reading slows down when the tab is in the background or the window is minimized."
 });
 Object.assign(globalThis.ToolboxDictionary,{
- "Choisir Sales Responsible":"Select Sales Responsible",
+ "Choisir Sales Rep Name":"Select Sales Rep Name",
  "Filtres actuels du rapport":"Current report filters",
- "Nom de Sales Responsible dans Power BI":"Sales Responsible name in Power BI",
+ "Nom de Sales Rep Name dans Power BI":"Sales Rep Name in Power BI",
  "Nom tel qu’il apparaît dans Power BI":"Name as displayed in Power BI",
- "Choisis Sales Responsible avant d’actualiser.":"Select Sales Responsible before refreshing.",
+ "Choisis Sales Rep Name avant d’actualiser.":"Select Sales Rep Name before refreshing.",
  "Périmètre : filtres actuels du rapport.":"Scope: current report filters.",
  "Actualise pour récupérer les commandes du périmètre choisi.":"Refresh to retrieve orders for the selected scope.",
- "Choisis Sales Responsible ou les filtres actuels du rapport avant d’actualiser.":"Select Sales Responsible or the current report filters before refreshing."
+ "Choisis Sales Rep Name ou les filtres actuels du rapport avant d’actualiser.":"Select Sales Rep Name or the current report filters before refreshing."
 });
 Object.assign(globalThis.ToolboxDictionary,{"Coût moy.":"Avg. cost","Qté":"Qty"});
 

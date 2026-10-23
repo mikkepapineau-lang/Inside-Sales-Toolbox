@@ -86,9 +86,12 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
   await home.waitForSelector('.tool-tile');await margin.waitForFunction(()=>document.querySelector('#pricing-total').textContent.trim()!=='···');await conversion.waitForSelector('#calculator-conversion:visible');
   await hs.waitForSelector('#hs-frame');const innerHS=await(await hs.locator('#hs-frame').elementHandle()).contentFrame();await innerHS.waitForSelector('#result strong');
   assert.equal(await home.locator('.tool-tile').count(),6);assert((await innerHS.locator('#result').textContent()).includes('démonstration'));
-  await innerHS.waitForFunction(()=>document.documentElement.dataset.appearance==='dark');
+  await innerHS.waitForFunction(()=>document.documentElement.dataset.appearance==='dark');await margin.waitForFunction(()=>document.documentElement.dataset.appearance==='dark');
+  const calculatorPalette=()=>margin.evaluate(()=>{const values=value=>value.match(/[\d.]+/g).slice(0,3).map(Number),brightness=rgb=>rgb.reduce((sum,value,index)=>sum+value*[.2126,.7152,.0722][index],0);return {mode:document.documentElement.dataset.appearance,surface:brightness(values(getComputedStyle(document.querySelector('.pricing-fields')).backgroundColor)),text:brightness(values(getComputedStyle(document.querySelector('.pricing-input-row input')).color))};});
+  const calculatorDark=await calculatorPalette();assert(calculatorDark.surface<100&&calculatorDark.text>160,'Dark calculator keeps its instrument treatment: '+JSON.stringify(calculatorDark));
   await p.screenshot({path:'/workspace/toolbox-liquid-glass-tools-dark.png'});
-  await p.click('#preview-appearance');await innerHS.waitForFunction(()=>document.documentElement.dataset.appearance==='light');
+  await p.click('#preview-appearance');await innerHS.waitForFunction(()=>document.documentElement.dataset.appearance==='light');await margin.waitForFunction(()=>document.documentElement.dataset.appearance==='light');
+  const calculatorLight=await calculatorPalette();assert(calculatorLight.surface>180&&calculatorLight.text<100,'Light calculator uses a light surface and dark text: '+JSON.stringify(calculatorLight));
   await p.screenshot({path:'/workspace/toolbox-overhaul-tools.png'});
   await p.screenshot({path:'/workspace/toolbox-liquid-glass-tools-light.png'});
 

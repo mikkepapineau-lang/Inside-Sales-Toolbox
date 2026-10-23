@@ -1,6 +1,7 @@
 (()=>{
 const groups=[
  {label:'Dynamics 365',origins:['https://solotech.operations.dynamics.com/*']},
+ {label:'Power BI',origins:['https://app.powerbi.com/*']},
  {label:'Salesforce',origins:['https://*.salesforce.com/*','https://*.force.com/*']},
  {label:'Canada.ca · vérificateur HS',origins:['https://www.canada.ca/*']},
  {label:'Localisation des adresses',origins:['https://photon.komoot.io/*']},

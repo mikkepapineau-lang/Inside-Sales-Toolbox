@@ -2,6 +2,10 @@
 
 État du 23 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
+## Correctifs après 3.5.15
+
+Michaël corrige le champ de périmètre des Commandes prêtes : le filtre réel est **Sales Rep Name**. Le lecteur, les preuves de filtre, la colonne de contrôle et l’interface sont alignés sur ce nom; `Sales Responsible` reste distinct et n’est plus accepté. Le module Non réservé demande aussi l’accès ciblé à `app.powerbi.com` directement depuis le clic de l’utilisateur avant de lancer l’export ou d’ouvrir le rapport. Enfin, les champs du calculateur utilisent une surface claire en mode clair et gardent l’afficheur foncé en mode sombre. Ces changements sont postérieurs à l’export 3.5.15 et n’ont pas encore de nouveau ZIP installable.
+
 ## Export 3.5.15 : fenêtres indépendantes et design adouci
 
 La demande est précisée : indépendance **par fenêtre du navigateur**, avec continuité entre ses onglets et liaison facultative entre fenêtres. Le panneau global remplace les panneaux par onglet. Le bouton de chaîne permet de lier, séparer en copiant les données ou reprendre le travail précédent. « Préparer ma journée » utilise une fenêtre de travail distincte, en arrière-plan, accessible depuis ce menu; les fenêtres liées la partagent. Les réservations de rapports et les données Non réservé restent séparées entre sessions indépendantes.
@@ -38,7 +42,7 @@ La direction visuelle est reprise à la demande de Michaël dans un style inspir
 
 La refonte complète de l’interface équipe condense tous les outils : un seul titre, actions dans le bandeau, filtres secondaires repliés, fiches de stock sur des lignes courtes, formulaires rapprochés et animations brèves. Sur les mêmes huit commandes fictives dans un panneau 390 × 820, sept commandes complètes sont visibles contre deux au commit `4fceeb8`. Voir [les changements, la mesure et les douze vues de l’aperçu](diagnostics/compact-toolbox-overhaul.md). Les 63 scripts, 23 suites et parcours Chromium sont vérifiés localement; Power BI/D365 connectés restent à essayer. Aucun nouvel export installable n’est créé.
 
-La vue de produits est compactée, avec filtres repliés et inventaire sur des lignes courtes. Commandes prêtes demande **Sales Responsible**, champ confirmé par Michaël, et contrôle le périmètre du relevé. Les vues du Toolbox disposent de sessions, de résultats et d’onglets de travail indépendants. Voir [le fonctionnement, les tests et l’aperçu](diagnostics/compact-sessions-ready.md). Vérification courante : 63 scripts et 23 suites, plus les parcours Chromium; essais connectés toujours à faire.
+La vue de produits est compactée, avec filtres repliés et inventaire sur des lignes courtes. Le premier développement utilisait **Sales Responsible**; Michaël a ensuite corrigé le champ en **Sales Rep Name**, comme consigné en tête de ce document. Les vues du Toolbox disposent de sessions, de résultats et d’onglets de travail indépendants. Voir [le fonctionnement, les tests et l’aperçu](diagnostics/compact-sessions-ready.md). Les essais connectés restent à faire.
 
 L’actualisation Usagé, ses messages et son bouton d’arrêt sont placés tout en bas, après les produits, la pagination et Options du catalogue (commit `ba0a620`).
 

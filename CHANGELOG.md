@@ -4,6 +4,10 @@
 
 Les changements en cours restent suivis par des commits jusqu'à la prochaine demande d'export.
 
+- Non réservé demande directement l’autorisation ciblée `app.powerbi.com` depuis le clic d’export ou d’ouverture, avant toute injection dans le rapport.
+- Commandes prêtes utilise maintenant le filtre et la colonne **Sales Rep Name**, conformément à la correction de Michaël; **Sales Responsible** n’est plus accepté comme équivalent.
+- Le calculateur utilise des cartes claires en mode clair et conserve ses afficheurs foncés en mode sombre.
+
 ## Équipe 3.5.15 — Teenage Engineering, essai de branche (2026-10-23)
 
 - Sessions indépendantes par fenêtre du navigateur, avec continuité entre les onglets d’une même fenêtre.
