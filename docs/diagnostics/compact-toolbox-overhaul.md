@@ -14,6 +14,14 @@ Le bandeau de l’outil donne son nom et ses actions immédiates une seule fois.
 
 Les transitions durent généralement 120 à 220 ms. Une recherche ne fait plus bouger la liste pendant la saisie. La préférence de réduction des animations est respectée, y compris lorsqu’elle change pendant une animation. Les cibles tactiles et les champs restent plus grands sur écran tactile.
 
+## Signature visuelle
+
+À la demande de Michaël, la présentation reçoit davantage de caractère après `a16d239` : bandeau violet profond avec lumière et trame diagonale, onglets actifs pleins, accents de couleur par outil et fiches blanches avec un repère latéral et un angle teinté. L’accueil utilise le symbole Solotech et un fond plus expressif. Les boutons et icônes réagissent au survol avec des transitions courtes.
+
+Le CRM utilise le turquoise, les contacts le framboise, les commandes l’indigo, les calculs le violet et les codes HS l’ambre. Dans les produits, le neuf est vert émeraude, l’usagé violet et le non réservé bleu. Les quantités disponibles, les avertissements et les erreurs conservent leurs couleurs fonctionnelles et leurs libellés.
+
+Les résultats gardent leur densité : le parcours Chromium sur douze vues affiche toujours sept commandes complètes et quatre produits Non-Reserved complets dans les panneaux de démonstration. Les contrastes du texte blanc sur les fonds d’onglets actifs dépassent 4,5:1, y compris aux extrémités des dégradés. Les contrôles de largeur, de clavier, de tactile et de réduction des animations passent avec cette signature visuelle.
+
 ## Mesure de densité
 
 Comparaison locale Chromium avec les mêmes huit commandes fictives, le même périmètre « filtres actuels du rapport » et un panneau de **390 × 820 px**. Référence précédente : `4fceeb8`.

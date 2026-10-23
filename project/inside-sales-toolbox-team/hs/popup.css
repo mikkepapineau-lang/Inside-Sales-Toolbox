@@ -9,21 +9,21 @@ main{padding:8px 12px 12px}
 .hs-search-grid>div{min-width:0}
 label{margin:0;font-size:11px}
 input,select{margin:3px 0 0;min-height:32px}
-#code{padding:4px 8px;color:#49315f;font:600 16px/1.4 var(--mono);letter-spacing:.1px}
+#code{padding:4px 8px;color:var(--module-ink);font:600 16px/1.4 var(--mono);letter-spacing:.1px}
 #code::placeholder{font-size:11px;letter-spacing:0}
 .hint{margin:4px 0 6px;font-size:10px;color:var(--muted);line-height:1.5}
 #status{margin:4px 0 7px;font-size:11px;line-height:1.45;white-space:pre-line;color:var(--muted)}
-#result{padding:10px;border:1px solid #dbd2e5;border-left:3px solid #765299;border-radius:6px;background:#f5f1fa}
+#result{padding:10px;border:1px solid var(--module-edge);border-left:3px solid var(--module);border-radius:8px;background:radial-gradient(ellipse at 100% 0,#f6d39760,transparent 65%),linear-gradient(115deg,#fff0d9,#fff9f0);box-shadow:0 2px 6px #73451e0a}
 #result:empty{display:none}
-#result strong{display:block;color:#49315f;font:700 20px/1.3 var(--display);letter-spacing:-.4px;margin:0 0 4px}
-#result p{font-size:11px;line-height:1.5;color:#64516f;margin:0}
+#result strong{display:block;color:var(--module-ink);font:700 20px/1.3 var(--display);letter-spacing:-.4px;margin:0 0 4px}
+#result p{font-size:11px;line-height:1.5;color:#6c5339;margin:0}
 #result p+p{margin-top:4px}
 #rows{margin:5px 0 0;min-width:0}
 .item{padding:8px 0;border-bottom:1px solid var(--line);min-width:0}
 .item-top{display:flex;align-items:center;justify-content:space-between;gap:7px}
-.item-top button{min-height:27px;padding:4px 6px;border:1px solid #d8cce3;border-radius:4px;background:#f0eaf7;color:#5d3e7b;font:600 11px/1.4 var(--mono)}
-.item-top button:hover{background:#e8dff3}
-.rate{padding:3px 6px;border-radius:4px;background:#fff0d7;color:#82581c;font-size:11px;font-weight:650;white-space:nowrap}
+.item-top button{min-height:27px;padding:4px 6px;border:1px solid var(--module-edge);border-radius:4px;background:var(--module-soft);color:var(--module-ink);font:600 11px/1.4 var(--mono)}
+.item-top button:hover{background:#f8e5c9;border-color:var(--module)}
+.rate{padding:3px 6px;border-radius:4px;background:#995617;color:#fff;font-size:11px;font-weight:650;white-space:nowrap}
 .item p{margin:4px 0 0;color:#5a4c65;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
 .item details{margin-top:5px;padding-top:4px;border-top:1px dashed var(--line)}
 .item details summary{font-size:10px;color:#715783}
