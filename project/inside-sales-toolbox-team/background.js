@@ -1,4 +1,5 @@
 importScripts('instances.js');
+importScripts('window-sessions.js');
 importScripts('navigation.js','tab-group.js','i18n-dictionary.js','model.js','company.js');
 async function lookup(domain){
  if(Bridge.domain('lookup@'+domain)!==domain)throw Error('Domaine non valide.');

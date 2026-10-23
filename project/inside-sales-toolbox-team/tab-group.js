@@ -10,6 +10,7 @@
   return {group,saved};
  }
  async function addNow(tab){
+  if(chrome.__toolboxScope&&globalThis.ToolboxWindowSessions)return;
   if(!chrome.tabs.group||!chrome.tabGroups||tab.pinned)return;
   const current=await chrome.tabs.get(tab.id),{group,saved}=await groupFor(current.windowId);
   const groupId=await chrome.tabs.group({tabIds:[current.id],...(group?{groupId:group.id}:{createProperties:{windowId:current.windowId}})});

@@ -137,6 +137,7 @@
  }
  el('used-foreground').onchange=()=>chrome.storage.local.set({toolboxUsedForeground:el('used-foreground').checked}).catch(()=>{});
  el('used-export-excel').onclick=()=>refresh('usedPowerBIExportFile');el('used-refresh').onclick=()=>refresh();el('used-refresh-prices').onclick=()=>refresh('usedPowerBIReadPrices');el('used-force').onclick=()=>refresh('usedPowerBIReadForce');el('used-open').onclick=()=>action('usedPowerBIOpen');el('used-bind').onclick=()=>action('usedPowerBIBind');el('used-diagnostic').onclick=()=>action('usedPowerBIDiagnostic');
+ document.addEventListener('toolbox-before-session-change',event=>{clearTimeout(filterSaveTimer);event.detail.push(chrome.storage.local.set({toolboxUsedFilters:filterUI.serialize()}));});
  el('used-query').oninput=()=>changeFilters(true,true);el('used-available').onchange=()=>changeFilters();el('used-more').onclick=()=>{visibleLimit+=80;render();};el('used-stop').onclick=()=>{batchCancelled=true;return action('usedPowerBIStop');};el('used-clear').onclick=async()=>{const result=await action('usedCatalogueReset');if(result){filterUI.state.subregion='ALL';shownRegion='ALL';changeFilters();}};
  el('used-import').onclick=()=>el('used-file').click();
  el('used-file').onchange=async()=>{

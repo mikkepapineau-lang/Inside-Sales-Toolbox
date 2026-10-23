@@ -59,8 +59,9 @@
   root.append(list);
   globalThis.ToolboxMotion?.results(root);
  }
+ el('product-query').oninput=()=>chrome.storage.local.set({toolboxProductQuery:el('product-query').value}).catch(()=>{});
  el('product-form').onsubmit=async e=>{e.preventDefault();const text=el('product-query').value.trim();if(!text)return;el('product-submit').disabled=true;try{const r=await chrome.runtime.sendMessage({kind:'productSearch',text});if(r?.error)el('product-status').textContent=r.error;}catch(e){el('product-status').textContent=e.message;}finally{el('product-submit').disabled=false;}};
  el('product-open').onclick=async()=>{if(current?.tabId){try{const t=await chrome.tabs.update(current.tabId,{active:true});await chrome.windows.update(t.windowId,{focused:true});}catch{el('product-status').textContent='L’onglet D365 a été fermé. Relance la recherche.';}}};
- chrome.storage.onChanged.addListener((changes,area)=>{if(area==='local'&&changes.toolboxProductSearch)render(changes.toolboxProductSearch.newValue);});
- chrome.storage.local.get('toolboxProductSearch').then(s=>render(s.toolboxProductSearch));
+ chrome.storage.onChanged.addListener((changes,area)=>{if(area!=='local')return;if(changes.toolboxProductSearch)render(changes.toolboxProductSearch.newValue);if(changes.toolboxProductQuery)el('product-query').value=changes.toolboxProductQuery.newValue||'';});
+ chrome.storage.local.get(['toolboxProductSearch','toolboxProductQuery']).then(s=>{render(s.toolboxProductSearch);if(typeof s.toolboxProductQuery==='string')el('product-query').value=s.toolboxProductQuery;});
 })();

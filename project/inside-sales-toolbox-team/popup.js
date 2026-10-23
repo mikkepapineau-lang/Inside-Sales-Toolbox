@@ -1,8 +1,9 @@
+const leadEditorId=crypto.randomUUID();
 const $=id=>document.getElementById(id);const B=Bridge;let data=B.normalize({}),currentScan=null,tabId=null,createdQuotation=null;const TTL=8*60*60*1000;
 const LEAD_SESSION_KEYS=['lead','report','uiStep','d365Record','d365LastResult','d365Status','googleAddressStatus','quoteResult','d365Quotation','d365FillProgress'];
 function relevant(){return B.fields.filter(([k])=>k!=='type'&&(data.type==='Person'?k!=='company':!['first','last'].includes(k)));}
 function status(s){$('status').textContent=s;if($('bridge-status-summary'))$('bridge-status-summary').textContent=String(s).split('\n')[0]||'Messages du parcours';globalThis.ToolboxMotion?.text($('status'));if($('quoteStatus'))$('quoteStatus').textContent=s;}
-async function save(){B.capitalizeNames(data);updateLeadBanner();renderQuoteContacts();const old=await chrome.storage.session.get('lead');await chrome.storage.session.set({lead:{...(old.lead||{}),data,at:old.lead?.at||Date.now()}});}
+async function save(){B.capitalizeNames(data);updateLeadBanner();renderQuoteContacts();const old=await chrome.storage.session.get('lead');await chrome.storage.session.set({lead:{...(old.lead||{}),data,editor:leadEditorId,at:old.lead?.at||Date.now()}});}
 function render(){if(data.tax==='Hst_on')data.tax='HST_ON';B.capitalizeNames(data);
 $('editor').replaceChildren();const groupMap={};
 for(const [title,keys] of [['Identité',['type','company','first','last']],['Contact',['phoneName','phone','extension','emailName','email']],['Adresse',['street','city','state','postal','country']],['Paramètres D365',['language','currency','typeId','delivery','terms','tax']]]){
@@ -20,7 +21,7 @@ function renderQuoteContacts(){
  let values;try{values=ContactModel.values(ContactModel.fromLead(data));$('quote-contact-note').textContent='Ces coordonnées seront remplies dans la soumission après sa création.';}catch{$('quote-contact-note').textContent='Complète le nom, le téléphone et le courriel à l’étape Lead pour les reprendre dans la soumission.';}
  for(const key of ['delivery','notes','email'])$('quote-contact-'+key).value=values?.[key]||'';
 }
-async function active(){const source=globalThis.ToolboxInstances?.sourceTabId;if(Number.isInteger(source))return chrome.tabs.get(source);const [t]=await chrome.tabs.query({active:true,currentWindow:true});if(!t?.id)throw Error('Onglet introuvable.');return t;}
+async function active(){const [t]=await chrome.tabs.query({active:true,currentWindow:true});if(!t?.id)throw Error('Onglet introuvable.');return t;}
 async function page(method,arg,target){const t=target||await active();await chrome.scripting.executeScript({target:{tabId:t.id},files:['page.js']});const [r]=await chrome.scripting.executeScript({target:{tabId:t.id},func:async(m,a)=>{try{return {value:await globalThis.solotechBridge[m](a)}}catch(e){return {error:e.message}}},args:[method,arg||null]});if(r.result?.error)throw Error(r.result.error);if(!r.result)throw Error('Page inaccessible.');return r.result.value;}
 function safe(fn){return async()=>{try{return await fn();}catch(e){status(e.message);return {toolboxError:e.message};}};}
 $('capture').onclick=safe(async()=>{$('successCard').hidden=true;const result=await page('read');data=B.updateTax(B.normalize(result.data));quoteAddress='';$('quote').disabled=false;$('quote-contacts').disabled=false;await chrome.storage.session.remove(['d365Record','d365LastResult','d365Status','googleAddressStatus','quoteResult','d365Quotation','d365FillProgress']);showQuotation(null);await chrome.storage.session.set({lead:{data,at:Date.now(),source:result.url},report:[]});currentScan=null;$('report').textContent='';render();$('source').textContent=result.url;await globalThis.ToolboxMotion?.fillFields($('editor'),{onStep:step=>globalThis.BridgeActions?.progress('capture',step)});status(['Lead récupéré. Vérifie le nom, la compagnie, l’adresse et la taxe.',data.type==='Person'?'Courriel personnel reconnu : Personne proposée. Vérifie le prénom et le nom.':'Organisation sélectionnée par défaut. Complète le nom de compagnie au besoin.',data.companyNote,...result.warnings].filter(Boolean).join('\n'));return result;});
@@ -131,7 +132,7 @@ $('clear').onclick=safe(async()=>{$('successCard').hidden=true;$('quote-contacts
 
 chrome.storage.onChanged.addListener((changes,area)=>{
  if(area==='session'&&changes.googleAddressStatus)status(changes.googleAddressStatus.newValue||'');
- if(area==='session'&&changes.lead?.newValue?.data?.addressGoogleAt&&changes.lead.newValue.data.addressGoogleAt!==data.addressGoogleAt){data=changes.lead.newValue.data;render();}
+ if(area==='session'&&changes.lead?.newValue?.data&&(changes.lead.newValue.editor!==leadEditorId||changes.lead.newValue.data.addressGoogleAt!==data.addressGoogleAt)&&JSON.stringify(changes.lead.newValue.data)!==JSON.stringify(data)){data=changes.lead.newValue.data;render();}
  if(area==='session'&&changes.quoteResult)showQuotation(changes.quoteResult.newValue);
  if(area==='session'&&changes.d365FillProgress?.newValue)globalThis.BridgeActions?.progress('fill',changes.d365FillProgress.newValue);
  if(area==='session'&&changes.d365Status)status(changes.d365Status.newValue||'');

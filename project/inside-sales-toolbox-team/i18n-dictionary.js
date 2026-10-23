@@ -697,3 +697,18 @@ Object.assign(globalThis.ToolboxDictionary,{
 Object.assign(globalThis.ToolboxDictionary,{"Coût moy.":"Avg. cost","Qté":"Qty"});
 
 Object.assign(globalThis.ToolboxDictionary,{"Activer le mode sombre":"Switch to dark mode","Activer le mode clair":"Switch to light mode"});
+
+Object.assign(globalThis.ToolboxDictionary,{
+ "Fenêtres indépendantes":"Independent windows",
+ "Fenêtres liées":"Linked windows",
+ "Fenêtres du Toolbox":"Toolbox windows",
+ "Ces fenêtres partagent leur navigation, leurs brouillons et leurs résultats.":"These windows share navigation, drafts and results.",
+ "Le travail reste dans cette fenêtre quand tu changes d’onglet.":"Your work stays in this window when you switch tabs.",
+ "Séparer cette fenêtre":"Unlink this window",
+ "Lier adopte le travail de la fenêtre choisie. Ton travail précédent reste conservé.":"Linking adopts the selected window’s work. Your previous session is retained.",
+ "Lier à la fenêtre":"Link to window",
+ "Reprendre ma session précédente":"Resume my previous session",
+ "Afficher la fenêtre de travail":"Show work window",
+ "Attends la fin de l’opération en cours avant de changer la liaison.":"Wait for the current operation to finish before changing the link.",
+ "Ouverture de la fenêtre de travail…":"Opening the work window…"
+});

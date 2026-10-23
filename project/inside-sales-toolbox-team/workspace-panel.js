@@ -16,7 +16,7 @@
   banner.hidden=loading||!busy&&!problem&&daily.date===day();
   banner.dataset.state=phase==='leaving'?'leaving':problem?'error':phase==='preparing'?'loading':completed?'success':'ready';banner.dataset.complete=String(completed);
   el('workspace-open').disabled=busy;el('workspace-dismiss').disabled=busy;renderButton();
-  el('workspace-prep-state').textContent=problem||t(completed?total+' onglets ouverts ou réutilisés · groupe réduit.':phase==='preparing'?'Ouverture et regroupement des onglets…':'D365 · Product Search · 2 rapports Power BI');
+  el('workspace-prep-state').textContent=problem||t(completed?total+' onglets prêts · fenêtre de travail séparée.':phase==='preparing'?'Ouverture de la fenêtre de travail…':'D365 · Product Search · 2 rapports Power BI');
   if(feedbackMessage&&!el('workspace-feedback').hidden)el('workspace-feedback').textContent=t(feedbackMessage);
   if(wasHidden&&!banner.hidden)globalThis.ToolboxMotion?.enter(banner);
  }
@@ -40,7 +40,7 @@
    if(!response?.value||response.value.total!==4)throw Error('La préparation n’a pas été confirmée. Réessaie.');
    daily={date:day(),status:'prepared'};total=response.value.total;completed=true;phase='success';render();
    // This short hold makes the real confirmation visible before the banner collapses.
-   await pause(900);await leaveBanner();feedback(total+' onglets ouverts ou réutilisés · groupe réduit.');
+   await pause(900);await leaveBanner();feedback(total+' onglets prêts · fenêtre de travail séparée.');
   }catch(e){problem=e.message;completed=false;}finally{busy=false;phase='idle';render();}
  }
  el('workspace-start').onclick=start;el('workspace-open').onclick=start;

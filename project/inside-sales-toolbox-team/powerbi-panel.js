@@ -62,6 +62,7 @@
  }
  async function action(kind){try{if(kind==='powerBIRead'){clearTimeout(scopeTimer);scope=S.requireSelection(scope);await chrome.storage.local.set({toolboxReadyScope:scope});}const r=await chrome.runtime.sendMessage({kind});if(r?.error)throw Error(r.error);if(kind==='powerBIDiagnostic')diagnostics('powerbi-diagnostic-output',r.value);if(kind==='powerBIBind')el('powerbi-status').textContent='Onglet associé. Clique sur Actualiser.';}catch(e){el('powerbi-status').textContent=e.message;}}
  function scopeChange(){scope=S.state({mode:el('powerbi-scope-mode').value,salesperson:el('powerbi-salesperson').value});render();clearTimeout(scopeTimer);const value={...scope};scopeTimer=setTimeout(()=>chrome.storage.local.set({toolboxReadyScope:value}).catch(()=>{}),150);}
+ document.addEventListener('toolbox-before-session-change',event=>{clearTimeout(timer);clearTimeout(scopeTimer);event.detail.push(chrome.storage.local.set({toolboxOrderFilters:filters,toolboxReadyScope:scope}));});
  el('powerbi-scope-mode').onchange=scopeChange;el('powerbi-salesperson').oninput=scopeChange;
  el('powerbi-refresh').onclick=()=>action('powerBIRead');el('powerbi-open').onclick=()=>action('powerBIOpen');el('powerbi-diagnostic').onclick=()=>action('powerBIDiagnostic');el('powerbi-bind').onclick=()=>action('powerBIBind');
  el('powerbi-query').oninput=()=>change(true);for(const id of ['powerbi-delivery','powerbi-payment','powerbi-sort'])el(id).onchange=()=>change();

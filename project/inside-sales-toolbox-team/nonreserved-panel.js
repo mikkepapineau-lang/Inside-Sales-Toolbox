@@ -1,7 +1,10 @@
 (()=>{
  const el=id=>document.getElementById(id),{node}=ToolboxList,M=ToolboxNonReserved,N=ToolboxUsedCatalogue.number;
- let data=null,status={},busy=false,cancelled=false,limit=80,loadId=0,index=[];
+ let data=null,status={},busy=false,cancelled=false,limit=80,loadId=0,index=[],filterState={},filtersTouched=false;
  const controls=['query','entity','site','warehouse','manufacturer','category','category1','category2','category3','category4'];
+ function filterValues(){return {...Object.fromEntries(controls.map(k=>[k,el('nonreserved-'+k).value])),available:el('nonreserved-available').checked};}
+ function applyFilters(value){filterState=value&&typeof value==='object'?value:{};for(const key of controls)el('nonreserved-'+key).value=typeof filterState[key]==='string'?filterState[key]:'';el('nonreserved-available').checked=!!filterState.available;}
+ function saveFilters(){filtersTouched=true;filterState=filterValues();return chrome.storage.local.set({toolboxNonReservedFilters:filterState}).catch(()=>{});}
  const date=at=>new Intl.DateTimeFormat(document.documentElement.lang==='en-CA'?'en-CA':'fr-CA',{dateStyle:'medium',timeStyle:'short'}).format(new Date(at));
  const money=value=>{const number=N(value);if(number===null)return value||'Non renseigné';return new Intl.NumberFormat(document.documentElement.lang==='en-CA'?'en-CA':'fr-CA',data.currency?{style:'currency',currency:data.currency}:{minimumFractionDigits:2,maximumFractionDigits:2}).format(number);};
  function render(){
@@ -35,7 +38,7 @@
  function install(catalogue){
   data=catalogue;const cols=data?M.indexes(data.headers):{};index=(data?.rows||[]).map((row,i)=>({row,i,search:M.norm(row.values.join(' ')),quantity:N(row.values[cols.quantity])}));
   for(const key of controls.slice(1)){const select=el('nonreserved-'+key),selected=select.value;select.replaceChildren(node('option','','Tous'));select.children[0].value='';const values=data&&cols[key]>=0?[...new Set(data.rows.map(r=>r.values[cols[key]]).filter(Boolean))].sort((a,b)=>a.localeCompare(b)):[];for(const value of values){const option=node('option','source-value',value);option.value=value;select.append(option);}select.disabled=!values.length;if(values.includes(selected))select.value=selected;else select.value='';}
-  el('nonreserved-source').textContent=data?.filters||'';limit=80;render();
+  el('nonreserved-source').textContent=data?.filters||'';applyFilters(filterState);limit=80;render();
  }
  async function reload(){const id=++loadId;try{const value=await ToolboxNonReservedStore.get();if(id===loadId)install(value||null);}catch(e){if(id===loadId){status={state:'error',message:e.message};render();}}}
  async function command(kind,payload={}){const result=await chrome.runtime.sendMessage({kind,...payload});if(result?.error)throw Error(result.error);return result?.value;}
@@ -49,13 +52,13 @@
   }catch(e){status={state:'error',message:e.message};await chrome.storage.local.set({toolboxNonReservedStatus:status}).catch(()=>{});}
   finally{busy=false;el('nonreserved-file').value='';render();}
  }
- let queryTimer;el('nonreserved-query').oninput=()=>{clearTimeout(queryTimer);queryTimer=setTimeout(()=>{limit=80;render();},120);};
- for(const key of controls.slice(1))el('nonreserved-'+key).onchange=()=>{limit=80;render();};el('nonreserved-available').onchange=()=>{limit=80;render();};
- el('nonreserved-filter-reset').onclick=()=>{for(const key of controls.slice(1))el('nonreserved-'+key).value='';limit=80;render();};
+ let queryTimer;el('nonreserved-query').oninput=()=>{clearTimeout(queryTimer);saveFilters();queryTimer=setTimeout(()=>{limit=80;render();},120);};
+ for(const key of controls.slice(1))el('nonreserved-'+key).onchange=()=>{saveFilters();limit=80;render();};el('nonreserved-available').onchange=()=>{saveFilters();limit=80;render();};
+ el('nonreserved-filter-reset').onclick=()=>{for(const key of controls.slice(1))el('nonreserved-'+key).value='';saveFilters();limit=80;render();};
  el('nonreserved-more').onclick=()=>{limit+=80;render();};el('nonreserved-refresh').onclick=()=>refresh();el('nonreserved-import').onclick=()=>el('nonreserved-file').click();el('nonreserved-file').onchange=()=>{const file=el('nonreserved-file').files?.[0];if(file)return refresh(file);};
  el('nonreserved-stop').onclick=async()=>{cancelled=true;try{await command('nonReservedStop');}catch(e){status={state:'error',message:e.message};render();}};
  el('nonreserved-open').onclick=async()=>{try{await command('nonReservedOpen');}catch(e){status={state:'error',message:e.message};render();}};
  el('nonreserved-url-save').onclick=async()=>{try{await command('nonReservedSetURL',{url:el('nonreserved-url').value.trim()});el('nonreserved-url-status').textContent='Lien du rapport enregistré.';}catch(e){el('nonreserved-url-status').textContent=e.message;}};
- chrome.storage.onChanged.addListener((changes,area)=>{if(area!=='local')return;if(changes.toolboxNonReservedStatus){status=changes.toolboxNonReservedStatus.newValue||{};render();}if(changes.toolboxNonReservedStamp)reload();if(changes.toolboxLanguage)render();});
- command('nonReservedInit').then(()=>chrome.storage.local.get(['toolboxNonReservedStatus','toolboxNonReservedReportURL'])).then(saved=>{status=saved.toolboxNonReservedStatus||{};el('nonreserved-url').value=saved.toolboxNonReservedReportURL||M.reportURL;return reload();}).catch(e=>{status={state:'error',message:e.message};render();});
+ chrome.storage.onChanged.addListener((changes,area)=>{if(area!=='local')return;if(changes.toolboxNonReservedStatus){status=changes.toolboxNonReservedStatus.newValue||{};render();}if(changes.toolboxNonReservedFilters&&JSON.stringify(changes.toolboxNonReservedFilters.newValue)!==JSON.stringify(filterState)){filtersTouched=true;applyFilters(changes.toolboxNonReservedFilters.newValue);limit=80;render();}if(changes.toolboxNonReservedStamp)reload();if(changes.toolboxLanguage)render();});
+ command('nonReservedInit').then(()=>chrome.storage.local.get(['toolboxNonReservedStatus','toolboxNonReservedReportURL','toolboxNonReservedFilters'])).then(saved=>{if(!filtersTouched)applyFilters(saved.toolboxNonReservedFilters);status=saved.toolboxNonReservedStatus||{};el('nonreserved-url').value=saved.toolboxNonReservedReportURL||M.reportURL;return reload();}).catch(e=>{status={state:'error',message:e.message};render();});
 })();

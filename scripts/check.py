@@ -4,7 +4,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = (
-    'appearance', 'pricing-model', 'pricing-rate', 'order-custom-scrollbar', 'order-horizontal-reader',
+    'window-sessions', 'appearance', 'pricing-model', 'pricing-rate', 'order-custom-scrollbar', 'order-horizontal-reader',
     'ready-report-routing', 'order-notes-report', 'order-notes', 'workspace',
     'used-reader', 'used-financial-horizontal', 'used-regions', 'used-regional-prices', 'used-prices-worker', 'used-native-export', 'used-country-catalogue', 'used-country-worker', 'used-embedded-frames', 'used-regional-worker', 'used-subregion-reader',
     'ready-scope', 'ready-seller-worker', 'nonreserved-catalogue', 'nonreserved-worker',

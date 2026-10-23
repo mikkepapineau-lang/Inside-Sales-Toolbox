@@ -2,6 +2,12 @@
 
 État du 23 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
+## Après 3.5.14 : fenêtres indépendantes et design adouci
+
+La demande est précisée : indépendance **par fenêtre du navigateur**, avec continuité entre ses onglets et liaison facultative entre fenêtres. Le panneau global remplace les panneaux par onglet. Le bouton de chaîne permet de lier, séparer en copiant les données ou reprendre le travail précédent. « Préparer ma journée » utilise une fenêtre de travail distincte, en arrière-plan, accessible depuis ce menu; les fenêtres liées la partagent. Les réservations de rapports et les données Non réservé restent séparées entre sessions indépendantes.
+
+Le style d’essai mélange les repères Solotech et Teenage Engineering, conserve l’orange et reprend Segoe UI, avec des contours plus doux. L’image wordmark intermédiaire est retirée de l’en-tête. Les détails, la portée de conservation, les contrôles et les limites sont dans [le compte rendu](diagnostics/window-sessions-soft-industrial.md). Les 66 scripts, 25 suites et parcours Chromium passent localement; Power BI/D365 connectés restent à vérifier. Le travail reste sur la branche d’essai; le numéro, le ZIP original et le tag 3.5.14 ne sont pas modifiés.
+
 ## Essai Teenage Engineering — export 3.5.14 sur branche
 
 Michaël demande explicitement un ZIP installable de `preview/teenage-engineering`, après l’aperçu `e6f4250`. Le matériau industriel de la maquette est chargé dans l’extension réelle, avec clair/sombre et icônes sans texte. Le manifest et les mentions embarquées portent 3.5.14 et TE (test). Le workflow de publication est adapté sur cette branche pour publier uniquement une préversion équipe; aucune intégration de ce style sur `main` n’est demandée. Voir [les notes et l’installation](releases/equipe-3.5.14.md).

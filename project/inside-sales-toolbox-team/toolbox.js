@@ -85,7 +85,7 @@ el('contact-clear').onclick=()=>{fillEditor({});el('contact-raw').value='';el('c
 el('toolbox-quick-text').oninput=()=>chrome.storage.local.set({toolboxQuick:{text:el('toolbox-quick-text').value,label:'Texte formaté'}});
 el('toolbox-quick-copy').onclick=async()=>{try{await ToolboxAccess.requireAccess({permissions:['clipboardWrite']},'presse-papiers');await navigator.clipboard.writeText(el('toolbox-quick-text').value);el('contact-status').textContent='Texte formaté copié.';}catch(e){el('contact-status').textContent=e.message;}};
 el('toolbox-quick-clear').onclick=()=>{el('toolbox-quick').hidden=true;chrome.storage.local.remove('toolboxQuick');};
-chrome.storage.onChanged.addListener((changes,area)=>{if(area==='session'&&changes[ToolboxNavigation.key]?.newValue){selectedDuringRestore=true;module(ToolboxNavigation.resolve(changes[ToolboxNavigation.key].newValue),false);}});
+chrome.storage.onChanged.addListener((changes,area)=>{if(area==='session'&&changes[ToolboxNavigation.key]?.newValue){selectedDuringRestore=true;module(ToolboxNavigation.resolve(changes[ToolboxNavigation.key].newValue),false);}if(area==='local'&&changes.toolboxContacts?.newValue&&!restoring){const d=changes.toolboxContacts.newValue;el('contact-raw').value=d.raw||'';fillEditor(d);el('contact-warning').textContent=d.warning||'';}});
 module('home',false);
 function activity(){
  if(restoring||Date.now()-lastActivity<15000)return;
@@ -93,7 +93,7 @@ function activity(){
 }
 for(const event of ['pointerdown','keydown','input','scroll'])document.addEventListener(event,activity,{capture:true,passive:true});
 document.addEventListener('visibilitychange',()=>{
- if(!restoring&&document.visibilityState==='visible')chrome.storage.session.get(ToolboxNavigation.key).then(saved=>module(ToolboxNavigation.resolve(saved[ToolboxNavigation.key]),false)).catch(()=>{});
+ if(!restoring&&document.visibilityState==='visible')ToolboxNavigation.remember(activeModule).catch(()=>{});
 });
 const inputs=['contact-raw','contact-name','contact-phone','contact-email','contact-parse','contact-from-lead','contact-clear','contact-copy','contact-fill'];
 for(const id of inputs)el(id).disabled=true;

@@ -12,6 +12,8 @@ Les contrôles standards `select` et combobox/listbox ARIA sont couverts. Un fil
 
 ## Sessions par onglet
 
+**Historique :** cette première implémentation ne correspondait pas au besoin précisé ensuite. Le développement après 3.5.14 passe à des sessions **par fenêtre**, avec liaison facultative et fenêtre de travail séparée. Voir [le fonctionnement actuel et ses vérifications](window-sessions-soft-industrial.md). Les paragraphes ci-dessous décrivent le comportement antérieur.
+
 Le panneau latéral utilise un chemin distinct par onglet; le popup et le panneau d’un même onglet retrouvent sa session. Navigation, lead/contact, calculs, recherches, responsable, relevés, filtres, états et reçus d’export sont séparés. Les fenêtres créées par le menu contextuel reprennent la session de leur onglet source.
 
 `instances.js` fournit le stockage et le routage; `instance-ui.js` résout la session avant de charger les modules. Les traitements de fond possèdent leurs propres verrous et leurs cibles par session. La réservation d’un onglet empêche deux sessions de le piloter. Une réutilisation concurrente crée une cible distincte; une association explicite à la cible déjà possédée par l’autre session est refusée. Les messages de progression des scripts de contenu retrouvent leur session par l’onglet réservé, même après redémarrage du worker.

@@ -1,5 +1,5 @@
 (()=>{
-// Open a reusable, collapsed workspace. No CRM writes or report reads are run here.
+// Open reusable source tabs. Window sessions use a separate, unfocused work window.
 const build=chrome=>{
  const ToolboxTabGroup=globalThis.ToolboxTabGroup?.forChrome?.(chrome)||globalThis.ToolboxTabGroup;
  const registryKey='toolboxWorkspaceTabs';let running=null,registryQueue=Promise.resolve();
@@ -21,8 +21,9 @@ const build=chrome=>{
  async function normalWindow(id){try{const w=await chrome.windows.get(id);if(w.type==='normal')return w.id;}catch{}const windows=await chrome.windows.getAll({windowTypes:['normal']});const w=windows.find(w=>w.focused)||windows[0];if(!w)throw Error('Ouvre une fenêtre normale du navigateur pour préparer les onglets.');return w.id;}
  async function run(windowId){
   if(!await chrome.permissions.contains({origins:['https://solotech.operations.dynamics.com/*','https://app.powerbi.com/*']}))throw Error('Autorise les accès D365 et Power BI avant de préparer les onglets.');
-  if(!chrome.tabs.group||!chrome.tabGroups)throw Error('Le regroupement des onglets n’est pas disponible dans ce navigateur.');
-  windowId=await normalWindow(windowId);
+  const separate=!!chrome.__toolboxScope&&!!globalThis.ToolboxWindowSessions;
+  if(!separate&&(!chrome.tabs.group||!chrome.tabGroups))throw Error('Le regroupement des onglets n’est pas disponible dans ce navigateur.');
+  windowId=separate?await ToolboxWindowSessions.workWindow(chrome.__toolboxScope):await normalWindow(windowId);
   const [session,local,tabs,groups]=await Promise.all([chrome.storage.session.get(['d365TargetId','productSearchTab','powerBITab','powerBIResolvedURL','usedPowerBITab','usedPowerBIResolvedURL']),chrome.storage.local.get([registryKey,'toolboxPowerBI','toolboxPowerBIResolvedURL']),chrome.tabs.query({url:['https://solotech.operations.dynamics.com/*','https://app.powerbi.com/*']}),chrome.tabGroups.query({title:ToolboxTabGroup.title||'Solotech Toolbox'})]);
   const registry=local[registryKey]||{},groupIds=new Set(groups.map(g=>g.id)),knownReady=session.powerBIResolvedURL||local.toolboxPowerBIResolvedURL||registry.ready?.url;
   const definitions=[
@@ -32,7 +33,7 @@ const build=chrome=>{
    {slot:'used',key:'usedPowerBITab',url:USED_POWERBI_REPORT_URL,matches:t=>bi(urlOf(t))&&reportId(urlOf(t))===usedId}
   ];
   const results=await Promise.allSettled(definitions.map(async d=>{
-   const candidates=tabs.filter(t=>!t.pinned&&d.matches(t));
+   const candidates=tabs.filter(t=>!t.pinned&&(!separate||t.windowId===windowId)&&d.matches(t));
    let tab=candidates.find(t=>t.id===session[d.key])||candidates.find(t=>t.id===registry[d.slot]?.id)||candidates.find(t=>t.windowId===windowId)||candidates[0]||await chrome.tabs.create({windowId,url:d.url,active:false});
    if(chrome.__toolboxScope)tab=await ToolboxInstances.reserve(chrome,tab,{windowId,url:d.url});
    const continuation=d.slot==='prospects'&&tabs.some(t=>t.id===session.d365TargetId&&ToolboxTabs.matches({...t,url:urlOf(t)},['smmBusRelTable','SalesQuotationTable']));
@@ -40,11 +41,11 @@ const build=chrome=>{
   }));
   const successes=results.filter(r=>r.status==='fulfilled').map(r=>r.value);
   await updateRegistry(saved=>{for(const {d,tab}of successes)saved[d.slot]={id:tab.id,url:urlOf(tab)||d.url};return saved;});
-  const grouped=successes.length?await ToolboxTabGroup.prepare(successes.map(x=>x.tab),windowId):null;
+  const grouped=successes.length&&!separate?await ToolboxTabGroup.prepare(successes.map(x=>x.tab),windowId):null;
   const failed=results.find(r=>r.status==='rejected');if(failed)throw Error('Certains onglets n’ont pas pu être ouverts. Réessaie; les onglets déjà préparés seront réutilisés. '+String(failed.reason?.message||failed.reason));
   const latest=await Promise.all(successes.map(async item=>({...item,tab:await chrome.tabs.get(item.tab.id)})));
   await updateRegistry(saved=>{for(const {d,tab,reused}of latest){const url=urlOf(tab);if(d.matches(tab)||d.slot==='ready'&&!reused&&bi(url)&&reportId(url)&&reportId(url)!==usedId)saved[d.slot]={id:tab.id,url};}return saved;});
-  const result={total:successes.length,opened:successes.filter(x=>!x.reused).length,reused:successes.filter(x=>x.reused).length,groupId:grouped.groupId,windowId};
+  const result={total:successes.length,opened:successes.filter(x=>!x.reused).length,reused:successes.filter(x=>x.reused).length,groupId:grouped?.groupId??null,windowId,separate};
   await chrome.storage.local.set({toolboxWorkspaceDay:{date:ToolboxUsedCatalogue.day(Date.now()),status:'prepared',at:Date.now(),...result}});return result;
  }
  function prepare(windowId){if(running)return running;running=run(windowId).finally(()=>{running=null;});return running;}
