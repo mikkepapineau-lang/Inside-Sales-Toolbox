@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Solotech · Inside Sales Toolbox · TE (test)",
-  "version": "3.5.15",
+  "version": "3.5.16",
   "description": "Outils ventes internes : Salesforce, coordonnées D365, produits neufs et usagés, calculateur de marge et devises, commandes et codes HS.",
   "permissions": [
     "activeTab",
@@ -39,5 +39,5 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
-  "version_name": "3.5.15 · Teenage Engineering · essai"
+  "version_name": "3.5.16 · Teenage Engineering · essai"
 }

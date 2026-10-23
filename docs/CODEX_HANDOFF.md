@@ -2,9 +2,11 @@
 
 État du 23 octobre 2026. Demande de Michaël : transférer le projet dans Codex et garder le développement et ses versions sur GitHub.
 
-## Correctifs après 3.5.15
+## Export 3.5.16 : accès Power BI, Sales Rep Name et thème clair
 
-Michaël corrige le champ de périmètre des Commandes prêtes : le filtre réel est **Sales Rep Name**. Le lecteur, les preuves de filtre, la colonne de contrôle et l’interface sont alignés sur ce nom; `Sales Responsible` reste distinct et n’est plus accepté. Le module Non réservé demande aussi l’accès ciblé à `app.powerbi.com` directement depuis le clic de l’utilisateur avant de lancer l’export ou d’ouvrir le rapport. Enfin, les champs du calculateur utilisent une surface claire en mode clair et gardent l’afficheur foncé en mode sombre. Ces changements sont postérieurs à l’export 3.5.15 et n’ont pas encore de nouveau ZIP installable.
+Sur demande explicite de Michaël, les correctifs postérieurs à 3.5.15 deviennent la préversion équipe 3.5.16 de la branche d’essai. Le champ de périmètre des Commandes prêtes est **Sales Rep Name**; le lecteur, les preuves de filtre, la colonne de contrôle et l’interface sont alignés sur ce nom, tandis que `Sales Responsible` reste distinct. Le module Non réservé demande l’accès ciblé à `app.powerbi.com` directement depuis le clic de l’utilisateur avant de lancer l’export ou d’ouvrir le rapport. Les champs du calculateur utilisent une surface claire en mode clair et gardent l’afficheur foncé en mode sombre.
+
+Archive préparée : `downloads/Inside-Sales-Toolbox-Equipe-v3.5.16.zip`, 1 253 033 octets, 93 fichiers, SHA256 `8970b3f84a494f2c3bfee6291f3bdcb4190fc84abebea06a1be48f8b9a34d9cd`. Les 66 scripts et 25 suites du noyau passent localement; le ZIP passe son CRC et correspond exactement aux sources. La validation Power BI/D365 connectée reste à faire.
 
 ## Export 3.5.15 : fenêtres indépendantes et design adouci
 

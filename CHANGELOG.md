@@ -4,9 +4,12 @@
 
 Les changements en cours restent suivis par des commits jusqu'à la prochaine demande d'export.
 
+## Équipe 3.5.16 — Teenage Engineering, correctifs de branche (2026-10-23)
+
 - Non réservé demande directement l’autorisation ciblée `app.powerbi.com` depuis le clic d’export ou d’ouverture, avant toute injection dans le rapport.
 - Commandes prêtes utilise maintenant le filtre et la colonne **Sales Rep Name**, conformément à la correction de Michaël; **Sales Responsible** n’est plus accepté comme équivalent.
 - Le calculateur utilise des cartes claires en mode clair et conserve ses afficheurs foncés en mode sombre.
+- Export complet de la branche d’essai. Contrôles locaux du code et du ZIP; essais Power BI/D365 connectés toujours à faire.
 
 ## Équipe 3.5.15 — Teenage Engineering, essai de branche (2026-10-23)
 
