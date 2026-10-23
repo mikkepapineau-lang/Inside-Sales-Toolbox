@@ -65,9 +65,8 @@ h1 {color:inherit;font-size:18px;line-height:1.15;letter-spacing:-.5px;font-weig
 .toolbar-button:hover {background:#ffffff18}
 .toolbox-shell {grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
 .module-tabs {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;padding:3px 6px;background:#fdfbff;border-bottom:1px solid #dfd5e9}
-.module-tabs button {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:34px;padding:3px 1px;border:0;border-radius:6px;background:none;color:var(--muted)}
-.module-tabs button svg {width:17px;height:17px;stroke-width:1.7;stroke:var(--tool-accent);transition:transform .18s,opacity .18s}
-.module-tabs button span {font-size:9px;font-weight:550;line-height:1.1;letter-spacing:-.15px}
+.module-tabs button {display:flex;align-items:center;justify-content:center;min-width:0;min-height:34px;padding:3px 1px;border:0;border-radius:6px;background:none;color:var(--muted)}
+.module-tabs button svg {width:20px;height:20px;stroke-width:1.7;stroke:var(--tool-accent);transition:transform .18s,opacity .18s}
 .module-tabs button:hover {color:var(--tool-accent);background:var(--tool-soft)}
 .module-tabs button.is-active {color:#fff;background:linear-gradient(135deg,var(--tool-accent) 25%,color-mix(in srgb,var(--tool-accent) 78%,var(--tool-bright)));box-shadow:0 2px 5px color-mix(in srgb,var(--tool-accent) 25%,transparent)}
 .module-tabs button.is-active svg {stroke:#fff;stroke-width:2}
@@ -569,7 +568,6 @@ html[data-toolbox-view=panel] .module-tabs button.is-active {box-shadow:0 2px 5p
  :root {--gutter:10px}
  .brand-copy {display:block}
  .solotech-wordmark {display:none}
- .module-tabs button span {font-size:8px}
  #tool-label {font-size:13px}
  .context-actions .primary,.context-actions .secondary {padding:4px 6px;font-size:10px}
  .workspace-company {display:none}

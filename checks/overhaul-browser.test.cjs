@@ -23,6 +23,8 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
   await fresh.waitForSelector('#product-results .product-card');await used.waitForFunction(()=>document.querySelectorAll('#used-results .product-card').length===36&&document.querySelector('#used-results').textContent.includes('Canada'));
   await nr.waitForFunction(()=>document.querySelectorAll('#nonreserved-results .product-card').length===9);
   await ready.waitForFunction(()=>document.querySelectorAll('#powerbi-results .record-row').length===8);
+  for(const frame of [fresh,used,nr,ready])assert(await frame.evaluate(()=>[...document.querySelectorAll('.module-tabs button')].every(button=>!button.textContent.trim()&&button.title.trim()&&button.getAttribute('aria-label')===button.title)),'Icon-only navigation retains native tooltips and accessible names');
+
   const measure=frame=>frame.evaluate(()=>{
    const full=selector=>[...document.querySelectorAll(selector)].filter(e=>{const r=e.getBoundingClientRect();return r.height&&r.top>=0&&r.bottom<=innerHeight;}).length;
    return {width:innerWidth,height:innerHeight,orders:full('#powerbi-results .record-row'),nonreserved:full('#nonreserved-results .product-card'),firstOrder:document.querySelector('#powerbi-results .record-row')?.getBoundingClientRect().top};
@@ -102,6 +104,7 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
     await panel.click('.module-tabs [data-module='+module+']');
     const layout=await panel.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,nav:[...document.querySelectorAll('.module-tabs button')].map(e=>{const r=e.getBoundingClientRect();return [r.left,r.right];}),title:document.querySelector('#tool-label').getBoundingClientRect().height}));
     assert(layout.scroll<=width+1,'No horizontal document overflow: '+JSON.stringify({width,module,layout}));assert(layout.nav.every(([left,right])=>left>=0&&right<=width+1));assert(layout.title>0);
+    assert(await panel.evaluate(()=>[...document.querySelectorAll('.module-tabs button')].every(button=>{const icon=button.querySelector('svg').getBoundingClientRect(),box=button.getBoundingClientRect();return !button.textContent.trim()&&icon.left>=box.left&&icon.right<=box.right&&icon.top>=box.top&&icon.bottom<=box.bottom;})),'Icons fit their buttons without text overlap');
    }
    await panel.click('.module-tabs [data-module=products]');
    for(const kind of ['new','used','nonreserved']){
@@ -113,7 +116,7 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
   }
   await panel.click('#toolbox-appearance');await panel.waitForFunction(()=>document.documentElement.dataset.appearance==='light');
   await panel.setViewportSize({width:390,height:820});await panel.click('.module-tabs [data-module=powerbi]');await panel.screenshot({path:'/workspace/toolbox-overhaul-ready.png'});
-  await panel.click('[data-ui-language=en]');await panel.waitForFunction(()=>document.documentElement.lang==='en-CA');assert.equal(await panel.locator('#powerbi-filters>summary').textContent(),'Filters and sorting ');assert.equal(await panel.locator('.ready-scope>label:first-child').textContent(),'Scope');assert.equal(await panel.locator('#toolbox-appearance').getAttribute('aria-label'),'Switch to dark mode');await panel.click('#toolbox-appearance');assert.equal(await panel.locator('#toolbox-appearance').getAttribute('aria-label'),'Switch to light mode');
+  await panel.click('[data-ui-language=en]');await panel.waitForFunction(()=>document.documentElement.lang==='en-CA');assert.equal(await panel.locator('#powerbi-filters>summary').textContent(),'Filters and sorting ');assert.equal(await panel.locator('.ready-scope>label:first-child').textContent(),'Scope');assert.equal(await panel.locator('.module-tabs [data-module=products]').getAttribute('title'),'Products');assert.equal(await panel.locator('.module-tabs [data-module=products]').getAttribute('aria-label'),'Products');await panel.hover('.module-tabs [data-module=products]');assert.equal(await panel.locator('#toolbox-appearance').getAttribute('aria-label'),'Switch to dark mode');await panel.click('#toolbox-appearance');assert.equal(await panel.locator('#toolbox-appearance').getAttribute('aria-label'),'Switch to light mode');
   await panel.emulateMedia({reducedMotion:'reduce'});await panel.click('.module-tabs [data-module=contacts]');assert.equal(await panel.evaluate(()=>document.getAnimations().length),0);
   const touchContext=await browser.newContext({viewport:{width:390,height:820},hasTouch:true});
   await touchContext.route('https://toolbox.test/panel',r=>r.fulfill({body:document,contentType:'text/html'}));
@@ -125,6 +128,6 @@ execFileSync('python3',['checks/redesign-preview/build.py','--overhaul']);
   const popup=await context.newPage();await popup.setViewportSize({width:520,height:600});await popup.goto('https://toolbox.test/popup');await popup.waitForSelector('#used-results .product-card');assert.equal(await popup.evaluate(()=>document.documentElement.scrollWidth),520);
   await p.click('[data-view=inventory]');await p.locator('[data-expand]').first().click();assert.equal(await p.locator('main>section:visible').count(),1);await p.click('#overview');assert.equal(await p.locator('main>section:visible').count(),4);
   assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
-  console.log('PASS complete GUI: 12 live demo views in light/dark modes with system preference, accessible text contrast and HS inheritance, '+density.ready.orders+' complete orders / '+density.nonreserved.nonreserved+' complete NR products initially visible at '+density.ready.width+'x'+density.ready.height+', exact seller refresh, three-country finances, contact parsing, CRM import, HS, margin/conversion, all modules at 320/390/520/900px, popup 520x600, FR/EN, reduced motion and no external calls');
+  console.log('PASS complete GUI: 12 live demo views in light/dark modes with system preference, accessible text contrast and HS inheritance, '+density.ready.orders+' complete orders / '+density.nonreserved.nonreserved+' complete NR products initially visible at '+density.ready.width+'x'+density.ready.height+', exact seller refresh, three-country finances, contact parsing, CRM import, HS, margin/conversion, icon-only navigation with native tooltips/accessibility FR/EN, all modules at 320/390/520/900px, popup 520x600, FR/EN, reduced motion and no external calls');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

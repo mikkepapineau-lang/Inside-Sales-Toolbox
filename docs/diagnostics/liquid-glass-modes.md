@@ -4,6 +4,8 @@
 
 Les bandeaux fortement colorés par outil sont remplacés par des matières translucides cohérentes, un fond lumineux diffus, des reflets fins et une navigation en capsule. Les formulaires, les produits Neuf/Usagé/Non réservé, les commandes, les contacts, le parcours CRM, le calculateur et le module HS suivent cette matière. Les résultats conservent leur densité et leurs informations : les fiches n’ont pas de flou individuel. Le flou est réservé aux surfaces communes et aux menus ouverts pour limiter le coût de rendu.
 
+La navigation garde uniquement les icônes, sans texte dessous. Le nom de l’outil est disponible au survol dans l’infobulle native du navigateur et dans son nom accessible, en français ou en anglais. Le titre de l’outil actif reste dans le bandeau.
+
 ## Choisir l’apparence
 
 Le bouton lune/soleil de l’en-tête bascule immédiatement entre clair et sombre. Sans choix enregistré, le Toolbox suit la préférence de l’appareil et ses changements. Après un choix explicite, cette préférence reste prioritaire.
