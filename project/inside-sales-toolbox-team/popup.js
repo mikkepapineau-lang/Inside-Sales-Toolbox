@@ -133,6 +133,10 @@ $('clear').onclick=safe(async()=>{$('successCard').hidden=true;$('quote-contacts
 chrome.storage.onChanged.addListener((changes,area)=>{
  if(area==='session'&&changes.googleAddressStatus)status(changes.googleAddressStatus.newValue||'');
  if(area==='session'&&changes.lead?.newValue?.data&&(changes.lead.newValue.editor!==leadEditorId||changes.lead.newValue.data.addressGoogleAt!==data.addressGoogleAt)&&JSON.stringify(changes.lead.newValue.data)!==JSON.stringify(data)){data=changes.lead.newValue.data;render();}
+ if(area==='session'&&changes.lead){$('source').textContent=changes.lead.newValue?.source||'';if(!changes.lead.newValue){data=B.normalize({});currentScan=null;render();}}
+ if(area==='session'&&changes.uiStep?.newValue&&motionStep!==changes.uiStep.newValue)selectStep(changes.uiStep.newValue,false);
+ if(area==='session'&&changes.report)$('report').textContent=(changes.report.newValue||[]).join('\n');
+ if(area==='session'&&changes.d365LastResult)showSuccess(changes.d365LastResult.newValue);
  if(area==='session'&&changes.quoteResult)showQuotation(changes.quoteResult.newValue);
  if(area==='session'&&changes.d365FillProgress?.newValue)globalThis.BridgeActions?.progress('fill',changes.d365FillProgress.newValue);
  if(area==='session'&&changes.d365Status)status(changes.d365Status.newValue||'');

@@ -5,10 +5,10 @@
  const write=value=>C.storage.session.set({[key]:value});
  const serial=fn=>{const task=queue.then(fn);queue=task.catch(()=>{});return task;};
  const members=(state,id)=>Object.entries(state.windows).filter(([,v])=>v.id===id).map(([w])=>Number(w));
- async function resolve(windowId,sourceTabId){return serial(async()=>{
+ async function resolve(windowId){return serial(async()=>{
   const window=await C.windows.get(windowId);if(window.type!=='normal')throw Error('Ouvre le Toolbox depuis une fenêtre normale du navigateur.');
   const state=await read();let id=Object.keys(state.work).find(id=>state.work[id]===windowId)||state.windows[windowId]?.id;
-  if(!id){id=Number.isInteger(sourceTabId)?'tab-'+sourceTabId:'window-'+windowId+'-'+crypto.randomUUID();state.windows[windowId]={id};await write(state);}return {id,windowId};
+  if(!id){id='window-'+windowId+'-'+crypto.randomUUID();state.windows[windowId]={id};await write(state);}return {id,windowId};
  });}
  async function allowed(id){const state=await read(),list=members(state,id);if(state.work[id])list.push(state.work[id]);return list.length?list:undefined;}
  async function host(id){const state=await read();return members(state,id)[0]||state.work[id];}
@@ -33,7 +33,7 @@
  C.runtime.onMessage.addListener((message,sender,reply)=>{
   if(message?.kind!=='windowSession'||sender.id!==C.runtime.id||!sender.url?.startsWith(C.runtime.getURL('')))return;
   const run=async()=>{const w=Number(message.windowId);if(!Number.isInteger(w))throw Error('Fenêtre introuvable.');
-   if(message.action==='resolve')return resolve(w,message.sourceTabId);
+   if(message.action==='resolve')return resolve(w);
    if(message.action==='info')return info(w);
    if(message.action==='createTab'){const current=await info(w);return createTab(current.id,message.options||{});}
    if(['link','split','restore'].includes(message.action))return change(w,Number(message.targetWindowId),message.action==='split',message.action==='restore');

@@ -6,6 +6,8 @@ Développement du 23 octobre 2026 sur la branche d’essai Teenage Engineering, 
 
 Le panneau utilise désormais le contexte global `sidepanel.html`, ouvert avec `windowId`. Aucune option de panneau propre à un onglet n’est enregistrée. Changer d’onglet dans la même fenêtre conserve le document du panneau, son module et ses données. Le popup retrouve la session de cette fenêtre. Le menu contextuel et les captures suivent la fenêtre source, même si une autre fenêtre a pris le focus.
 
+L’identité d’une nouvelle fenêtre ne réutilise jamais celle d’un onglet : déplacer un onglet vers une autre fenêtre ne lie donc pas implicitement les sessions. Entre fenêtres explicitement liées, la saisie du lead, son effacement et les étapes Lead/Prospect/Soumission se mettent aussi à jour. L’éditeur qui saisit un champ n’est pas reconstruit à chaque notification de sa propre sauvegarde.
+
 Le bouton de chaîne dans l’en-tête ouvre les commandes de liaison :
 
 - Chaque fenêtre normale est indépendante par défaut.
@@ -35,7 +37,7 @@ Les logos et références disponibles dans le dépôt servent de repères Solote
 ## Vérifications
 
 - `python3 scripts/check.py` : 66 scripts et 25 suites, dont stabilité des identités, créations concurrentes de fenêtres, liaison/séparation/restauration, refus pendant une opération, échec de copie, fermeture et contrôle des messages.
-- `node checks/instances-browser.test.cjs` : bootstrap, workers et stockage IndexedDB réels dans Chromium; transport Chrome et onglets fictifs. Deux fenêtres, changement d’onglet et de focus, préparation répétée dans une fenêtre séparée, partage du calculateur et des contacts, fenêtre de travail commune, séparation avec copie du catalogue et transfert des réservations d’onglets, rechargement et redémarrage du worker.
+- `node checks/instances-browser.test.cjs` : bootstrap, workers et stockage IndexedDB réels dans Chromium; transport Chrome et onglets fictifs. Deux fenêtres, changement d’onglet et de focus, préparation répétée dans une fenêtre séparée, partage du calculateur, des contacts et du lead, saisie continue sans reconstruction de son propre éditeur, effacement et étapes CRM synchronisés, fenêtre de travail commune, séparation avec copie du catalogue et transfert des réservations d’onglets, rechargement et redémarrage du worker.
 - `node checks/overhaul-browser.test.cjs` : douze vues, clair/sombre, contraste du texte, contrôles FR/EN et clavier, largeurs 320/390/520/900, popup, mouvement réduit. Six commandes complètes et quatre fiches Non réservé visibles dans le panneau de référence 375 × 756.
 - `python3 scripts/verify-version-archives.py --archives-only` : archives et snapshots stockés, sans égalité imposée entre ce développement et le dernier ZIP.
 - `python3 checks/redesign-preview/teenage.py` : aperçu interactif des quatre vues réelles, données fictives. Captures en 1600 × 900, clair/sombre, police Segoe UI et un seul logo dans chaque en-tête.
